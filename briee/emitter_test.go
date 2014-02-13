@@ -3,7 +3,6 @@ package briee
 import (
 	"sync"
 	"testing"
-	//"log"
 )
 
 type A struct {
@@ -21,11 +20,13 @@ func TestEmitter(t *testing.T) {
 	ee = NewEventEmitter()
 	go ee.Run()
 
-	PublA := ee.Publish("A", A{}).(chan<- A)
+	PublA1 := ee.Publish("A", A{}).(chan<- A)
 	PublA2 := ee.Publish("A", A{}).(chan<- A)
+
 	SubsB1 := ee.Subscribe("B", B{}).(<-chan B)
 	SubsA1 := ee.Subscribe("A", A{}).(<-chan A)
-	PublB := ee.Publish("B", B{}).(chan<- B)
+
+	PublB1 := ee.Publish("B", B{}).(chan<- B)
 	SubsA2 := ee.Subscribe("A", A{}).(<-chan A)
 
 	Adata := A{42, "A data"}
@@ -47,9 +48,9 @@ func TestEmitter(t *testing.T) {
 	}()
 
 	go func(){
-		PublA <- Adata
+		PublA1 <- Adata
 		PublA2 <- Adata
-		PublB <- Bdata
+		PublB1 <- Bdata
 		wg.Done()
 	}()
 
@@ -66,8 +67,5 @@ func TestEmitter(t *testing.T) {
 	if Bdata != recvB1 {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
-	//fmt.Printf("Got data %v, want %v\n", recvA1, Adata)
-	//fmt.Printf("Got data %v, want %v\n", recvA2, Adata)
-	//fmt.Printf("Got data %v, want %v\n", recvB1, Bdata)
 }
 

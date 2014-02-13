@@ -9,11 +9,11 @@ import (
 type EventEmitter interface {
 	Publish(chid string, v interface{}) interface{}
 	Subscribe(chid string, v interface{}) interface{}
-	Run() // Creates and runs the emitter
+	Run() // Runs the emitter
 }
 
 type Event struct {
-	ElemType      reflect.Type // Element type
+	ElemType      reflect.Type	// Element type
 	PublSend      reflect.Value // Write only channel
 	PublRecv      reflect.Value // Read only channel
 	Subscribers   reflect.Value // Slice of wrtie only channels
@@ -28,17 +28,16 @@ type LocalEventEmitter struct {
 func makeSendRecv(vtype reflect.Type) (chvSend, chvRecv reflect.Value) {
 	// Get channel type
 	chtype := reflect.ChanOf(reflect.BothDir, vtype)
-	//log.Printf("<Publish> Type of chtype: %v\n", chtype)
 
 	// Create the directed channel types
 	chtypeSend := reflect.ChanOf(reflect.SendDir, vtype)
 	chtypeRecv := reflect.ChanOf(reflect.RecvDir, vtype)
 
 	if !chtype.ConvertibleTo(chtypeSend) {
-		//log.Printf("<Publish> I can not convert to one way channel... \n")
+		log.Panic("<Publish> Cannot convert bi-directional channel to write-only\n")
 	}
 	if !chtype.ConvertibleTo(chtypeRecv) {
-		//log.Printf("<Publish> I can not convert to one way channel... \n")
+		log.Panic("<Publish> Cannot convert bi-directional channel to read-only\n")
 	}
 
 	// Make a two-way channel
@@ -63,28 +62,24 @@ func makeSlice(elemType reflect.Type) (sliceValue reflect.Value) {
 }
 
 func (e *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
-	// Publish creates a new Event with the string identifier chid.
-	// If Publish is called with an already existing Event, Publish will
-	// return the already created Publisher channel unless the types are
-	// inconsistent and will cause a panic.
+	// Publish returns a write-only channel with element type of parameter v
 
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
-	//log.Printf("<Publish> Type of vtype: %v\n", vtype)
 
 	if vtype.Kind() != reflect.Struct {
 		log.Panic("<Publish> Element type must be a struct")
 	}
 
 	// Make directed channels
-	chvSend, chvRecv := makeSendRecv(vtype) // TODO Refactor to after the if statements
-	slicev := makeSlice(chvSend.Type())     // TODO Refactor to after the if statements
+
+	// TODO Refactor if performance is an issue. The channels/slice does not need to be constructed in all cases.
+	chvSend, chvRecv := makeSendRecv(vtype)
+	slicev := makeSlice(chvSend.Type())
 
 	event, ok := e.eventMap[chid]
 
 	if ok {
-		// This kind of event already exists
-		// But we don't know if they have the same elem type
 		if event.ElemType != vtype {
 			log.Panic("<Publish> Tried to publish on a existing event with different element types")
 		}
@@ -107,7 +102,7 @@ func (e *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 		event = e.eventMap[chid]
 	}
 
-	// The event exists at this point with the publchans missing
+	// The event exists at this point with the publisher channels missing
 	e.eventMap[chid].PublSend = chvSend
 	e.eventMap[chid].PublRecv = chvRecv
 	e.eventMap[chid].NumPublishers += 1
@@ -116,12 +111,10 @@ func (e *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 }
 
 func (e *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
-	// Create a channel of type v
-	// Return the read-only channel and save the write-only in map
+	// Subscribe returns a read-only channel of element type of v
 
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
-	//log.Printf("<Subscribe> Type of vtype: %v\n", vtype)
 
 	if vtype.Kind() != reflect.Struct {
 		log.Panic("<Publish> Element type must be a struct")
@@ -133,14 +126,12 @@ func (e *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 	event, ok := e.eventMap[chid]
 	// Check if element is present
 	if ok {
-		// This kind of event already exists
-		// but we don't know if they have the same elem type
 		if event.ElemType != vtype {
 			log.Panic("<Subscribe> Tried to subscribe on a existing event with different element type")
 		}
 
 	} else {
-		// There are no events present, create one
+		// There are no events with this identifier, creates one
 		slicev := makeSlice(chvSend.Type())
 
 		// Create a new event and store in map
@@ -155,10 +146,10 @@ func (e *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 		event = e.eventMap[chid]
 	}
 
-	// append write only channel
+	// Append write only channel
 	event.Subscribers = reflect.Append(event.Subscribers, chvSend)
 
-	// return read only channel
+	// Return read only channel
 	return chvRecv.Interface()
 
 }
@@ -186,13 +177,11 @@ func (e *LocalEventEmitter) Run() {
 				},
 			}
 
-			//chosen, recv, recvOK := reflect.Select(cases)
 			chosen, recv, _ := reflect.Select(cases)
 			switch chosen {
 			case 0:
-				////log.Printf("Got recv: %v\n", recv)
 
-				/*
+				/* // FIXME This following code can be used for inspecting data 
 					for i := 0; i < recv.NumField(); i++ {
 						recvueField := recv.Field(i)
 						typeField := recv.Type().Field(i)
@@ -201,7 +190,7 @@ func (e *LocalEventEmitter) Run() {
 					}
 				*/
 				if event.Subscribers.Type().Kind() != reflect.Slice {
-					log.Panic("event.Subscribers is not a struct!")
+					log.Panic("event.Subscribers is not a slice")
 				}
 
 				for i := 0; i < event.Subscribers.Len(); i++ {
