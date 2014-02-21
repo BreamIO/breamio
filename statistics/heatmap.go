@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -15,20 +16,24 @@ const (
 )
 
 type HeatMap struct {
+	ee                int /*EventEmitter*/
 	coordinateHandler CoordinateHandler
-	width int
-	height int
+	width             int
+	height            int
+	publish           chan<- *image.RGBA
 }
 
-func NewHeatmap(ee /*EventEmitter*/ int, duration time.Duration, desiredFreq, resX, resY int) *HeatMap {
+func NewHeatmap(ee /*EventEmitter*/ int, etID string, duration time.Duration, desiredFreq, resX, resY int) *HeatMap {
 	return &HeatMap{
-		coordinateHandler: NewCoordinateHandler(make(chan Coordinate), duration, desiredFreq),
-		width: resX,
-		height: resY,
+		ee:                ee,
+		coordinateHandler: NewCoordinateHandler(make(chan *Coordinate) /*ee.Subscribe(etID, Coordinate{}).(<-chan *Coordinate)*/, duration, desiredFreq),
+		width:             resX,
+		height:            resY,
+		publish:           make(chan<- *image.RGBA), /*ee.Publish(etID + ":heatmap", *image.Image)*/
 	}
 }
 
-func (hm HeatMap) Generate(height, width int) image.Image {
+func (hm HeatMap) Generate(height, width int) {
 	heat := make([][]int, height)
 
 	for i := range heat {
@@ -68,7 +73,6 @@ func (hm HeatMap) Generate(height, width int) image.Image {
 		}
 	}
 
-
 	for x, col := range heat {
 		for y := range col {
 			if heat[x][y] > maxHeat {
@@ -83,14 +87,15 @@ func (hm HeatMap) Generate(height, width int) image.Image {
 		for y := 0; y < height; y++ {
 			heatmap.SetRGBA(x, y, color.RGBA{
 				R: 200,
-				G: uint8(math.Max(float64(100-(heat[x][y]/ maxHeat)), 0)),
+				G: uint8(math.Max(float64(100-(heat[x][y]/maxHeat)), 0)),
 				B: 0,
 				A: uint8(255 * heat[x][y] / maxHeat),
 			})
 		}
 	}
-	png.Encode(os.Stdout, heatmap)	
-	return heatmap
+	png.Encode(os.Stdout, heatmap)
+
+	hm.publish <- heatmap
 }
 
 func valid(coord *Coordinate) bool {
@@ -100,7 +105,6 @@ func valid(coord *Coordinate) bool {
 func (hm HeatMap) GetCoordinateHandler() *CoordinateHandler {
 	return hm.GetCoordinateHandler()
 }
-
 
 func (hm HeatMap) SetResolution(width, height int) {
 	hm.height = height
@@ -116,12 +120,6 @@ func (hm HeatMap) SetDuration(duration time.Duration) {
 }
 
 func (hm HeatMap) SetColor(color color.RGBA) {
-//TODO
+	//TODO
+	fmt.Println("SetColor is not implemented yet. sob--- T_T")
 }
-
-
-
-
-
-
-

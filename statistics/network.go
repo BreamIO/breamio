@@ -1,12 +1,12 @@
 package main
 
 import (
-	"net"
-	"encoding/binary"
 	"bytes"
-	"time"
+	"encoding/binary"
 	"fmt"
+	"net"
 	"os"
+	"time"
 )
 
 type CoordinateListener interface {
@@ -42,12 +42,12 @@ func connectTo(ip string) *CoordinateManager {
 
 	buf := make([]byte, 0)
 
-	buf = append(buf, []byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}...)	
-	
+	buf = append(buf, []byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}...)
+
 	conn.Write(buf)
 
 	coordManager := newCoordinateManager()
-	
+
 	go func() {
 
 		for {
@@ -81,27 +81,31 @@ func getPoint(conn net.Conn) *Coordinate {
 		panic(err.Error())
 	}
 
-
 	fmt.Fprintln(os.Stderr, caseInt)
 	switch caseInt {
-		case 1: return getPointHelper(conn)
-		case 2:
-			dropMessage(conn, 8)
-			return nil
-		case 3: return nil
-		case 4: return nil
-		case 5:	
-			dropMessage(conn, 16)
-			return nil
-		case 6: return nil
-		case 7: 
-			dropMessage(conn, 8)
-			return nil
-		default: panic("We are not getting anything that is specified by protocol.")
+	case 1:
+		return getPointHelper(conn)
+	case 2:
+		dropMessage(conn, 8)
+		return nil
+	case 3:
+		return nil
+	case 4:
+		return nil
+	case 5:
+		dropMessage(conn, 16)
+		return nil
+	case 6:
+		return nil
+	case 7:
+		dropMessage(conn, 8)
+		return nil
+	default:
+		panic("We are not getting anything that is specified by protocol.")
 	}
-		
+
 }
-func dropMessage(conn net.Conn, numOfBytes int) *Coordinate{
+func dropMessage(conn net.Conn, numOfBytes int) *Coordinate {
 	bufRead := make([]byte, numOfBytes)
 	_, err := conn.Read(bufRead)
 	if err != nil {
@@ -125,23 +129,15 @@ func getPointHelper(conn net.Conn) *Coordinate {
 	if err != nil {
 		panic(err.Error())
 	}
-	
+
 	binary.Read(bytes.NewBuffer(buf), binary.BigEndian, &y)
 
 	_, err = conn.Read(buf)
 	if err != nil {
 		panic(err.Error())
 	}
-	
+
 	binary.Read(bytes.NewBuffer(buf), binary.BigEndian, nil)
-	
-	return NewCoordinate(x,y,time)
+
+	return NewCoordinate(x, y, time)
 }
-
-
-
-
-
-
-
-

@@ -1,7 +1,6 @@
 package main
 
-import (
-)
+import ()
 
 type Rectangle struct {
 	top, right, bottom, left float64
@@ -30,4 +29,3 @@ func (r Rectangle) RegionName() string {
 func (r Rectangle) SetRegionName(name string) {
 	r.name = name
 }
-

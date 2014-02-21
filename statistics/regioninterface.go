@@ -5,7 +5,7 @@ Region is an interface describing Regions used by RegionHandler
 */
 type Region interface {
 	Contains(*Coordinate) bool //Returns true iff the coordinate is inside or on the borders of Region
-	RegionName() string //Returns the name of the region
+	RegionName() string        //Returns the name of the region
 	SetRegionName(name string) //Sets the name of Region
 }
 

@@ -7,13 +7,15 @@ import (
 
 type RegionStatistics struct {
 	coordinateHandler CoordinateHandler
-	regions  []Region
+	regions           []Region
+	publish           chan<- *RegionStatsMap
 }
 
-func NewRegionStatistics(ee /**EventEmitter*/ int, /*etSource EventEmitter,*/ duration time.Duration, hertz int) *RegionStatistics {
+func NewRegionStatistics(ee /**EventEmitter*/ int, etID string, duration time.Duration, hertz int) *RegionStatistics {
 	return &RegionStatistics{
-		coordinateHandler: NewCoordinateHandler(make(chan Coordinate),  duration, hertz),
-		regions:  make([]Region, 0),
+		coordinateHandler: NewCoordinateHandler(make(chan *Coordinate) /*ee.Subscribe(etID, Coordinate{}).(<-chan *Coordinate)*/, duration, hertz),
+		regions:           make([]Region, 0),
+		publish:           make(chan<- *RegionStatsMap), /*ee.Publish(etID + ":stats", *RegionStatsMap)*/
 	}
 }
 
@@ -27,7 +29,7 @@ func (rs *RegionStatistics) AddRegions(rdm RegionDefinitionMap) {
 	}
 }
 
-func (rs RegionStatistics) Generate() RegionStatsMap {
+func (rs RegionStatistics) Generate() {
 	coords := rs.getCoords()
 	var stats = make([]RegionStatInfo, len(rs.regions))
 	currentEnterTime := make([]*time.Time, len(stats))
@@ -36,7 +38,7 @@ func (rs RegionStatistics) Generate() RegionStatsMap {
 	for coord := range coords {
 		for i, r := range rs.regions {
 			if currentEnterTime[i] == nil && r.Contains(coord) {
-					stats[i].Looks++
+				stats[i].Looks++
 				currentEnterTime[i] = &coord.timestamp
 			} else if currentEnterTime[i] != nil && !r.Contains(coord) {
 				stats[i].TimeInside += InsideTime(coord.timestamp.Sub(*currentEnterTime[i]))
@@ -51,7 +53,7 @@ func (rs RegionStatistics) Generate() RegionStatsMap {
 		retMap[r.RegionName()] = stats[i]
 	}
 
-	return retMap
+	rs.publish <- &retMap
 }
 
 type RegionStatsMap map[string]RegionStatInfo
@@ -77,10 +79,3 @@ func timeToString(t float64) string {
 	}
 	return tmp
 }
-
-
-
-
-
-
-

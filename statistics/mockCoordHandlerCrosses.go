@@ -12,38 +12,37 @@ import (
 
 type MockCoordHandlerCrosses struct {
 	desiredFreq int
-	scaling float64
+	scaling     float64
 }
 
 func NewMockCoordHandlerCrosses(coordSource chan Coordinate, interval time.Duration, desiredFreq int) *MockCoordHandlerCrosses {
 	return &MockCoordHandlerCrosses{
 		//Dump everything except desiredFreq, we don't care for parameters since we want a controlled testing environment.
 		desiredFreq: desiredFreq,
-		scaling: float64(desiredFreq),
+		scaling:     float64(desiredFreq),
 	}
 }
-
 
 func (m MockCoordHandlerCrosses) GetCoords() (coords chan *Coordinate) {
 	coords = make(chan *Coordinate)
 
 	//Generate coords as \
-	for i := 0; i<m.desiredFreq; i++ {
+	for i := 0; i < m.desiredFreq; i++ {
 		coords <- NewCoordinate(float64(i)/m.scaling, float64(i)/m.scaling, time.Now())
 	}
 
 	//Generate coords as /
-	for i := 0; i<m.desiredFreq; i++ {
+	for i := 0; i < m.desiredFreq; i++ {
 		coords <- NewCoordinate(1-(float64(i)/m.scaling), float64(i)/m.scaling, time.Now())
 	}
 
 	//Generate coords as -
-	for i := 0; i<m.desiredFreq; i++ {
+	for i := 0; i < m.desiredFreq; i++ {
 		coords <- NewCoordinate(float64(i)/m.scaling, 0.5, time.Now())
 	}
 
 	//Generate coords as |
-	for i := 0; i<m.desiredFreq; i++ {
+	for i := 0; i < m.desiredFreq; i++ {
 		coords <- NewCoordinate(0.5, float64(i)/m.scaling, time.Now())
 	}
 	return coords

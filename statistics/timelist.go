@@ -5,23 +5,24 @@ import (
 )
 
 type TimeList struct {
-	interval   time.Duration
+	interval    time.Duration
 	desiredFreq int
-	data       []Coordinate
-	start, end int
+	data        []Coordinate
+	start, end  int
 }
 
 /*
 Create a new timelist
 it implements the CoordinateHandler interface
 */
-func newTimeList(coordSource chan Coordinate, interval time.Duration, desiredFreq int) *TimeList {
+func newTimeList(coordSource <-chan *Coordinate, interval time.Duration, desiredFreq int) *TimeList {
+	//TODO  start a go routine that adds coords from coordsource
 	return &TimeList{
-		interval: interval,
+		interval:    interval,
 		desiredFreq: desiredFreq,
-		data:     make([]Coordinate, desiredFreq*int(interval.Seconds())),
-		start:    0,
-		end:      0, //End is not included in the list
+		data:        make([]Coordinate, desiredFreq*int(interval.Seconds())),
+		start:       0,
+		end:         0, //End is not included in the list
 	}
 }
 
