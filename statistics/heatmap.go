@@ -16,11 +16,15 @@ const (
 
 type HeatMap struct {
 	coordinateHandler CoordinateHandler
+	width int
+	height int
 }
 
-func NewHeatmap(ee /*EventEmitter*/ int, duration time.Duration, desiredFreq int) *HeatMap {
+func NewHeatmap(ee /*EventEmitter*/ int, duration time.Duration, desiredFreq, resX, resY int) *HeatMap {
 	return &HeatMap{
 		coordinateHandler: NewCoordinateHandler(make(chan Coordinate), duration, desiredFreq),
+		width: resX,
+		height: resY,
 	}
 }
 
@@ -97,6 +101,19 @@ func (hm HeatMap) GetCoordinateHandler() *CoordinateHandler {
 	return hm.GetCoordinateHandler()
 }
 
+
+func (hm HeatMap) SetResolution(width, height int) {
+	hm.height = height
+	hm.width = width
+}
+
+func (hm HeatMap) SetDesiredFreq(desiredFreq int) {
+	hm.coordinateHandler.SetDesiredFreq(desiredFreq)
+}
+
+func (hm HeatMap) SetDuration(duration time.Duration) {
+	hm.coordinateHandler.SetDuration(duration)
+}
 
 
 

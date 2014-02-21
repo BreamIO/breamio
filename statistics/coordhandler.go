@@ -7,6 +7,8 @@ import (
 //A Coordinate handler is a module that can receive Coordinate structs from a coordSource and maintain them in chronological order. Structs older then now-interval is automagically discarded.
 type CoordinateHandler interface {
 	GetCoords() (coords chan *Coordinate) //Returns a channel containing all cordinates in the CordinateHandler sorted chronologically
+	SetInterval(interval time.Duration)
+	SetDesiredFreq(desiredFreq int)
 }
 
 //listenTo is the channel that the coordinateHandler is should listen to

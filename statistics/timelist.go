@@ -6,6 +6,7 @@ import (
 
 type TimeList struct {
 	interval   time.Duration
+	desiredFreq int
 	data       []Coordinate
 	start, end int
 }
@@ -17,6 +18,7 @@ it implements the CoordinateHandler interface
 func newTimeList(coordSource chan Coordinate, interval time.Duration, desiredFreq int) *TimeList {
 	return &TimeList{
 		interval: interval,
+		desiredFreq: desiredFreq,
 		data:     make([]Coordinate, desiredFreq*int(interval.Seconds())),
 		start:    0,
 		end:      0, //End is not included in the list
@@ -66,4 +68,16 @@ func (t TimeList) refresh() {
 			break
 		}
 	}
+}
+
+//Currently removes all data collected if duration updates
+func (t TimeList) SetInterval(interval time.Duration) {
+	t.interval = interval
+	t.data = make([]Coordinate, t.desiredFreq*int(t.interval.Seconds()))
+}
+
+//Currently removes all data if desiredFreq updates
+func (t TimeList) SetDesiredFreq(desiredFreq int) {
+	t.desiredFreq = desiredFreq
+	t.data = make([]Coordinate, t.desiredFreq*int(t.interval.Seconds()))
 }
