@@ -112,10 +112,12 @@ func (hm HeatMap) SetDesiredFreq(desiredFreq int) {
 }
 
 func (hm HeatMap) SetDuration(duration time.Duration) {
-	hm.coordinateHandler.SetDuration(duration)
+	hm.coordinateHandler.SetInterval(duration)
 }
 
-
+func (hm HeatMap) SetColor(color color.RGBA) {
+//TODO
+}
 
 
 
