@@ -12,33 +12,33 @@ type A struct {
 
 type B struct {
 	Float float64
-	Int int
+	Int   int
 }
 
 func TestEmitter(t *testing.T) {
-	var ee *LocalEventEmitter
-	ee = NewEventEmitter()
+	//var ee *EventEmitter
+	ee := NewEventEmitter()
 	go ee.Run()
 
 	PublA1 := ee.Publish("A", A{}).(chan<- A)
 	PublA2 := ee.Publish("A", A{}).(chan<- A)
 
-	SubsB1 := ee.Subscribe("B", B{}).(<-chan B)
+	SubsB1 := ee.Subscribe("B", &B{}).(<-chan *B)
 	SubsA1 := ee.Subscribe("A", A{}).(<-chan A)
 
-	PublB1 := ee.Publish("B", B{}).(chan<- B)
+	PublB1 := ee.Publish("B", &B{}).(chan<- *B)
 	SubsA2 := ee.Subscribe("A", A{}).(<-chan A)
 
 	Adata := A{42, "A data"}
-	Bdata := B{13.37, 7}
+	Bdata := &B{13.37, 7}
 
 	var recvA1, recvA2 A
-	var recvB1 B
+	var recvB1 *B
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go func(){
+	go func() {
 		recvA1 = <-SubsA1
 		recvA2 = <-SubsA2
 		recvA1 = <-SubsA1
@@ -47,7 +47,7 @@ func TestEmitter(t *testing.T) {
 		wg.Done()
 	}()
 
-	go func(){
+	go func() {
 		PublA1 <- Adata
 		PublA2 <- Adata
 		PublB1 <- Bdata
@@ -68,4 +68,3 @@ func TestEmitter(t *testing.T) {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
 }
-

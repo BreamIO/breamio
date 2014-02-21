@@ -6,14 +6,8 @@ import (
 	"reflect"
 )
 
-type EventEmitter interface {
-	Publish(chid string, v interface{}) interface{}
-	Subscribe(chid string, v interface{}) interface{}
-	Run() // Runs the emitter
-}
-
 type Event struct {
-	ElemType      reflect.Type	// Element type
+	ElemType      reflect.Type  // Element type
 	PublSend      reflect.Value // Write only channel
 	PublRecv      reflect.Value // Read only channel
 	Subscribers   reflect.Value // Slice of wrtie only channels
@@ -67,7 +61,11 @@ func (e *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
 
-	if vtype.Kind() != reflect.Struct {
+	if vtype.Kind() == reflect.Ptr {
+		if reflect.ValueOf(v).Elem().Type().Kind() != reflect.Struct {
+			log.Panic("<Publish> Pointer must point to struct type")
+		}
+	} else if vtype.Kind() != reflect.Struct {
 		log.Panic("<Publish> Element type must be a struct")
 	}
 
@@ -116,8 +114,12 @@ func (e *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
 
-	if vtype.Kind() != reflect.Struct {
-		log.Panic("<Publish> Element type must be a struct")
+	if vtype.Kind() == reflect.Ptr {
+		if reflect.ValueOf(v).Elem().Type().Kind() != reflect.Struct {
+			log.Panic("<Subscribe> Pointer must point to struct type")
+		}
+	} else if vtype.Kind() != reflect.Struct {
+		log.Panic("<Subscribe> Element type must be a struct")
 	}
 
 	// Make directed channels
@@ -154,12 +156,15 @@ func (e *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 
 }
 
-func NewEventEmitter() *LocalEventEmitter {
+
+func NewLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{make(map[string]*Event)}
 }
 
 func (e *LocalEventEmitter) Run() {
 	for { // infinite loop
+
+		// TODO Use a priority queue instead of linear range over the map?
 		for _, event := range e.eventMap {
 
 			chv := event.PublRecv
@@ -181,13 +186,13 @@ func (e *LocalEventEmitter) Run() {
 			switch chosen {
 			case 0:
 
-				/* // FIXME This following code can be used for inspecting data 
-					for i := 0; i < recv.NumField(); i++ {
-						recvueField := recv.Field(i)
-						typeField := recv.Type().Field(i)
+				/* // FIXME This following code can be used for inspecting data
+				for i := 0; i < recv.NumField(); i++ {
+					recvueField := recv.Field(i)
+					typeField := recv.Type().Field(i)
 
-						//log.Printf("Field Name: %s,\t Field Value: %v\n", typeField.Name, recvueField.Interface())
-					}
+					//log.Printf("Field Name: %s,\t Field Value: %v\n", typeField.Name, recvueField.Interface())
+				}
 				*/
 				if event.Subscribers.Type().Kind() != reflect.Slice {
 					log.Panic("event.Subscribers is not a slice")
