@@ -14,8 +14,8 @@ type CoordinateHandler interface {
 //listenTo is the channel that the coordinateHandler is should listen to
 //interval is how old data we accept in this timelist
 //desiredFreq is an upper limit on data per second that the coordinatehandler accepts
-func NewCoordinateHandler(coordSource <-chan *Coordinate, interval time.Duration, desiredFreq int) *TimeList {
-	return newTimeList(coordSource, interval, desiredFreq)
+func NewCoordinateHandler(coordSource <-chan *Coordinate, interval time.Duration, desiredFreq int) *CoordBuffer {
+	return NewCoordBuffer(coordSource, interval, desiredFreq)
 }
 
 //A coordinate represents a point on the screen at a certain time

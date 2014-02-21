@@ -1,0 +1,2 @@
+Interfaces are found in *handler.go, can be found with "ls | grep handler.go".
+All other files are implementations.
