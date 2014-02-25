@@ -4,6 +4,7 @@ package briee
 import (
 	"log"
 	"reflect"
+	"errors"
 )
 
 type Event struct {
@@ -208,4 +209,12 @@ func (e *LocalEventEmitter) Run() {
 			}
 		} // end for
 	} // end if
+}
+
+func (e *LocalEventEmitter) TypeOf (eventID string) (reflect.Type, error){
+	if event, ok := e.eventMap[eventID]; ok {
+		return event.ElemType, nil
+	} else {
+		return nil, errors.New("No event with that string is registred")
+	}
 }

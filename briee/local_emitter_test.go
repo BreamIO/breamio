@@ -3,6 +3,7 @@ package briee
 import (
 	"sync"
 	"testing"
+	"reflect"
 )
 
 type A struct {
@@ -67,4 +68,16 @@ func TestEmitter(t *testing.T) {
 	if Bdata != recvB1 {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
+
+	// Test type of event
+	atype, err := ee.TypeOf("A")
+
+	if err != nil {
+		t.Errorf("Unknown event identifer")
+	}
+
+	if atype != reflect.TypeOf(Adata) {
+		t.Errorf("Unmatched types")
+	}
+
 }
