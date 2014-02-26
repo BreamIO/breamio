@@ -81,3 +81,15 @@ func TestEmitter(t *testing.T) {
 	}
 
 }
+
+func testNilPublisher(t *testing.T) {
+	ee := NewEventEmitter()
+	go ee.Run()
+	
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Nil type in Publish did not trigger panic")
+		}
+	}()
+	_ = ee.Publish("A", nil).(chan<- A)
+}
