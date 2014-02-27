@@ -4,13 +4,15 @@ import (
 	"reflect"
 )
 
+// EventEmitter interface.
 type EventEmitter interface {
 	Publish(chid string, v interface{}) interface{}
 	Subscribe(chid string, v interface{}) interface{}
 	TypeOf(eventID string) (reflect.Type, error)
-	Run() // Runs the emitter
+	Run()
 }
 
+// NewEventEmitter creates and returns a new LocalEventEmitter
 func NewEventEmitter() EventEmitter {
 	return NewLocalEventEmitter()
 }
