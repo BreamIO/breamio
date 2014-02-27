@@ -1,0 +1,20 @@
+{
+  "16:9": {
+    "minimap": {
+      "type": "rect",
+      "x": 0.00,
+      "y": 0.71,
+      "width": 0.19,
+      "height": 0.29
+    },
+    
+    "resources": {
+      "type": "rect",
+      "x": 0.75,
+      "y": 0.0,
+      "width": 0.25,
+      "height": 0.08
+    }
+  }
+}
+
