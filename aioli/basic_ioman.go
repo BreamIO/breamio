@@ -1,72 +1,101 @@
 package aioli
 
 import (
-	//"encoding/gob"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
 	"log"
 	"reflect"
 	"time"
+	"io"
 )
+
+type ChanEntry struct {
+	Event string
+	ID int
+}
 
 type BasicIOManager struct {
 	EEMap map[int]*briee.EventEmitter
-	// Add publisher channels map[eventID](chan<-interface())
+	//Publisher map[ChanEntry]*reflect.Value // TODO
+	dataChan chan ExtPkg
 }
 
 func NewBasicIOManager() *BasicIOManager {
-	return &BasicIOManager{make(map[int]*briee.EventEmitter)}
+	return &BasicIOManager{
+		EEMap:  make(map[int]*briee.EventEmitter),
+		dataChan:  make(chan ExtPkg),
+		//EEChans map[ChanEntry]*reflect.Value // TODO
+		}
 }
 
-func (biom *BasicIOManager) Listen(recvCh <-chan ExtPkg) {
-	// Listen on incomming data of ExtPkg data
-	select {
-	case recvData := (<-recvCh):
-		//log.Printf("Recv data %v", recvData)
+func (biom *BasicIOManager) Listen (r io.Reader){
+	// TODO make private and implement Add/Remove listeners funcionallity
+	var data []byte
+	var ep ExtPkg
+	dec := gob.NewDecoder(r)
 
-		// TODO Check if recvData.ID == 0, if so send on all emitters
-		// TODO Check if an publisher channel already exists for <ee_id, event_name> pair
-
-		if ee, ok := biom.EEMap[recvData.ID]; ok {
-
-			// Check type with emitter
-			rtype, err := (*ee).TypeOf(recvData.Event) // Note ee ptr
-
-			if err != nil {
-				log.Println(err)
-
-			} else {
-				// Decode data as json according to rtype reflect.Type from event emitter
-				// Use a provided decoder, but at this moment json is a hardcoded selection
-
-				zeroValInterface := reflect.Zero(rtype).Interface()
-
-				// publCh is a write only channel of element type of rtype
-				publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
-
-				buf := recvData.Data      // json format
-				ptr := reflect.New(rtype) // New value of that type
-
-				// TODO Replace json.Unmarshal with provided decoder
-				err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
-				if err != nil {
-					log.Println(err)
-				}
-
-				// TODO Save this publisher channel in a map for future use
-				publCh.Send(ptr.Elem()) // Send decoded element on channel
-
-			}
-		} else {
-			log.Printf("No matching event: %v from event emitter\n", recvData.Event)
+	for {
+		err := dec.Decode(&data)
+		if err != nil {
+			log.Printf("Decoding failed, sleep ...")
+			time.Sleep(50 * time.Millisecond)
+			continue
 		}
 
-	default:
-		log.Printf("No data, sleep...")
-		time.Sleep(1 * time.Second)
-	}
+		err = json.Unmarshal(data, &ep)
+		if err != nil {
+			log.Printf("Unmarshal error, ", err)
+		}
 
+		biom.dataChan <- ep
+	}
+}
+
+func (biom *BasicIOManager) Run() {
+	for {
+		select {
+			case recvData := (<-biom.dataChan):
+				biom.handle(recvData)
+		}
+	}
+}
+
+func (biom *BasicIOManager) handle(recvData ExtPkg) {
+
+	if ee, ok := biom.EEMap[recvData.ID]; ok {
+		// Check type with emitter
+		rtype, err := (*ee).TypeOf(recvData.Event) // Note ee ptr
+
+		if err != nil {
+			log.Println(err)
+
+		} else {
+			// Decode data as json according to rtype reflect.Type from event emitter
+			// Use a provided decoder, but at this moment json is a hardcoded selection
+
+			zeroValInterface := reflect.Zero(rtype).Interface()
+
+			// publCh is a write only channel of element type of rtype
+			publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
+
+			buf := recvData.Data      // json format
+			ptr := reflect.New(rtype) // New value of that type
+
+			// TODO Replace json.Unmarshal with provided decoder
+			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
+			if err != nil {
+				log.Println(err)
+			}
+
+			// TODO Save this publisher channel in a map for future use
+			publCh.Send(ptr.Elem()) // Send decoded element on channel
+
+		}
+	} else {
+		log.Printf("No matching event: %v from event emitter\n", recvData.Event)
+	}
 }
 
 func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {

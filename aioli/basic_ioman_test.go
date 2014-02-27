@@ -37,9 +37,7 @@ func TestIOman(t *testing.T) {
 	// Set up emitter
 	ee := briee.NewEventEmitter()
 	go ee.Run()
-	publisher := ee.Publish("event data", Payload{}).(chan<- Payload)
 	subscriber := ee.Subscribe("event data", Payload{}).(<-chan Payload)
-	log.Printf("%v\n", publisher)
 
 	// Set up IO manager
 	ioman := NewIOManager()
@@ -61,26 +59,14 @@ func TestIOman(t *testing.T) {
 	var plRecv Payload
 
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(2)
 
-	dataCh := make(chan ExtPkg)
+	go ioman.Run()
+	go ioman.Listen(&network)
 
 	go func() {
 		// Send decodes and sends payload data on network
 		send(plSend, &network)
-		wg.Done()
-	}()
-
-	go func() {
-		// Decode Data, IO Manager network reciver/parser that is not currently written, will output data on a ExtPkg channel
-		// This function does not know about the Payload struct, but does know of the ExtPkg
-		dataCh <- recvPkg(&network)
-		wg.Done()
-	}()
-
-	go func() {
-		// Listen on data on provided channel and sends data on event emitter
-		ioman.Listen(dataCh)
 		wg.Done()
 	}()
 
@@ -151,7 +137,7 @@ func recvPkg(network *bytes.Buffer) ExtPkg {
 func recv(network *bytes.Buffer) Payload {
 	// Decode Data, IOman reciver that is not currently written, will output data on a ExtPkg channel
 	// This does not know about the Data struct, but does know of the ExtPkg
-	// FIXME Currently unused, see recvPkg instead
+	// FIXME Currently unused, see recvPkg instead, kept as documentation atm
 
 	var jsonPkg []byte
 
@@ -172,7 +158,7 @@ func recv(network *bytes.Buffer) Payload {
 	// Decode as json according to reflect.Type from emitter
 	// But now we do this manually for step-by-step progress
 
-	var pl Payload // What if this is a reflect.Type? TODO
+	var pl Payload // What if this is a reflect.Value? TODO
 
 	err = json.Unmarshal(rawPkg.Data, &pl)
 	if err != nil {

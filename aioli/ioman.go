@@ -2,6 +2,7 @@ package aioli
 
 import (
 	"github.com/maxnordlund/breamio/briee"
+	"io"
 )
 
 type ExtPkg struct {
@@ -13,7 +14,15 @@ type ExtPkg struct {
 
 type IOManager interface {
 	// Methods of the IO manager
-	Listen(recvCh <-chan ExtPkg) // Run, ListenAndServe?
+	/* New layout
+	Listen(r io.Reader), does the current Listen functionallity internaly in Run
+	Run()
+	*/
+	//Listen(r io.Reader)
+	//Run()
+	//Listen(recvCh <-chan ExtPkg) // Run, ListenAndServe?
+	Listen(r io.Reader)
+	Run()
 	AddEE(ee *briee.EventEmitter, id int) error
 	RemoveEE(id int) error
 }
@@ -21,3 +30,10 @@ type IOManager interface {
 func NewIOManager() IOManager {
 	return NewBasicIOManager()
 }
+
+/*
+// TODO
+type Decoder interface {
+	Decode()
+}
+*/
