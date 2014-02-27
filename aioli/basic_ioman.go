@@ -11,22 +11,17 @@ import (
 	"io"
 )
 
-type ChanEntry struct {
-	Event string
-	ID int
-}
-
 type BasicIOManager struct {
 	EEMap map[int]*briee.EventEmitter
-	//Publisher map[ChanEntry]*reflect.Value // TODO
 	dataChan chan ExtPkg
+	//publChans map[string]*reflect.Value // TODO
 }
 
 func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
 		EEMap:  make(map[int]*briee.EventEmitter),
 		dataChan:  make(chan ExtPkg),
-		//EEChans map[ChanEntry]*reflect.Value // TODO
+		// publChans: make(map[string]*reflect.Value), // TODO Event + string(ID) as key
 		}
 }
 
@@ -36,7 +31,7 @@ func (biom *BasicIOManager) Listen (r io.Reader){
 	var ep ExtPkg
 	dec := gob.NewDecoder(r)
 
-	for {
+	for { // inf loop
 		err := dec.Decode(&data)
 		if err != nil {
 			log.Printf("Decoding failed, sleep ...")
@@ -54,6 +49,7 @@ func (biom *BasicIOManager) Listen (r io.Reader){
 }
 
 func (biom *BasicIOManager) Run() {
+	// Run listens on the internal channel of ExtPkg data on which all listerners send data on
 	for {
 		select {
 			case recvData := (<-biom.dataChan):
@@ -63,9 +59,12 @@ func (biom *BasicIOManager) Run() {
 }
 
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
+	// Handle tries to decode and send the provided ExtPkg on one or more event emitters
 
+	// TODO Add broadcast functionality
 	if ee, ok := biom.EEMap[recvData.ID]; ok {
-		// Check type with emitter
+
+		// Look up the type in the event emitter
 		rtype, err := (*ee).TypeOf(recvData.Event) // Note ee ptr
 
 		if err != nil {
@@ -80,8 +79,8 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 			// publCh is a write only channel of element type of rtype
 			publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
 
-			buf := recvData.Data      // json format
-			ptr := reflect.New(rtype) // New value of that type
+			buf := recvData.Data      // buf is of encoded json format
+			ptr := reflect.New(rtype) // New value of that wanted type
 
 			// TODO Replace json.Unmarshal with provided decoder
 			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
