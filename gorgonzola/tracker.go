@@ -9,7 +9,7 @@ import (
 var drivers = make(map[string]Driver)
 
 type Driver interface {
-	Create() (Tracker,error)
+	Create() (Tracker, error)
 	CreateS(identifier string) (Tracker, error)
 	List() []string
 }
@@ -22,16 +22,16 @@ type Tracker interface {
 }
 
 type ETData struct {
-	filtered Point2D
+	filtered  Point2D
 	timestamp time.Time
 }
 
 type Point2D struct {
-	X,Y float64
+	X, Y float64
 }
 
 func List() []string {
-	res := make([]string, 0,32)
+	res := make([]string, 0, 32)
 	for _, driver := range drivers {
 		res = append(res, driver.List()...)
 	}

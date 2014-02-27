@@ -20,34 +20,37 @@ func (d MockDriver) List() []string {
 	return []string{"standard", "constant"}
 }
 
-func (d MockDriver) Create() (Tracker,error) {
+func (d MockDriver) Create() (Tracker, error) {
 	return &MockTracker{mockStandard, 0, false, false}, nil
 }
 func (d MockDriver) CreateS(identifier string) (Tracker, error) {
-	switch (identifier) {
-		case "standard": return d.Create();
-		case "constant": return &MockTracker{mockConstant, 0, false, false}, nil
-		default: return nil, errors.New("No such tracker.")
+	switch identifier {
+	case "standard":
+		return d.Create()
+	case "constant":
+		return &MockTracker{mockConstant, 0, false, false}, nil
+	default:
+		return nil, errors.New("No such tracker.")
 	}
 }
 
 type MockTracker struct {
-	f func(float64) (float64, float64)
-	t float64
+	f                     func(float64) (float64, float64)
+	t                     float64
 	connected, calibrated bool
 }
-	
+
 func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
 	ch := make(chan *ETData)
 	errs := make(chan error, 1)
-	go func(){
+	go func() {
 		for {
 			if m.f == nil {
 				return
 			}
 			x, y := m.f(m.t)
-			ch<-&ETData{Point2D{x, y}, time.Now()}
-			m.t+=0.1
+			ch <- &ETData{Point2D{x, y}, time.Now()}
+			m.t += 0.1
 		}
 	}()
 	return ch, errs
@@ -72,4 +75,3 @@ func (m MockTracker) Calibrate(points <-chan Point2D, errs chan<- error) {
 func (m MockTracker) IsCalibrated() bool {
 	return m.calibrated
 }
-

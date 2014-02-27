@@ -8,7 +8,7 @@ import (
 type GazeDriver struct{}
 
 func (GazeDriver) Create() (Tracker, error) {
-	tracker,err := gaze.AnyEyeTracker()
+	tracker, err := gaze.AnyEyeTracker()
 	return &GazeTracker{tracker, false}, err
 }
 
@@ -30,19 +30,19 @@ func (GazeDriver) List() (res []string) {
 	return
 }
 
-type GazeTracker struct{
+type GazeTracker struct {
 	*gaze.EyeTracker
 	calibrated bool
 }
 
-func (g GazeTracker) Stream() (<-chan *ETData,<-chan error) {
+func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 	ch := make(chan *ETData)
 	errs := make(chan error, 1)
 
 	err := g.StartTracking(func(data *gaze.GazeData) {
 		etdata := new(ETData)
-		etdata.filtered.X = (data.Left().GazePointOnDisplay().X() + data.Right().GazePointOnDisplay().X())/2
-		etdata.filtered.Y = (data.Left().GazePointOnDisplay().Y() + data.Right().GazePointOnDisplay().Y())/2
+		etdata.filtered.X = (data.Left().GazePointOnDisplay().X() + data.Right().GazePointOnDisplay().X()) / 2
+		etdata.filtered.Y = (data.Left().GazePointOnDisplay().Y() + data.Right().GazePointOnDisplay().Y()) / 2
 		etdata.timestamp = data.Timestamp()
 		ch <- etdata
 	})
@@ -52,11 +52,11 @@ func (g GazeTracker) Stream() (<-chan *ETData,<-chan error) {
 	}
 	return ch, errs
 }
-	
+
 func (g *GazeTracker) Calibrate(points <-chan Point2D, errors chan<- error) {
-	for _ = range points{
+	for _ = range points {
 		//Mock implementation until Calibration implemented in gobii
-		errors<- NotImplementedError("Calibrate")
+		errors <- NotImplementedError("Calibrate")
 	}
 	g.calibrated = true
 }
