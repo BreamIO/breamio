@@ -68,8 +68,8 @@ type Tracker interface {
 }
 
 type ETData struct {
-	filtered  Point2D
-	timestamp time.Time
+	Filtered  Point2D
+	Timestamp time.Time
 }
 
 type Point2D struct {

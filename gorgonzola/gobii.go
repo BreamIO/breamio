@@ -41,9 +41,9 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 
 	err := g.StartTracking(func(data *gaze.GazeData) {
 		etdata := new(ETData)
-		etdata.filtered.X = (data.Left().GazePointOnDisplay().X() + data.Right().GazePointOnDisplay().X()) / 2
-		etdata.filtered.Y = (data.Left().GazePointOnDisplay().Y() + data.Right().GazePointOnDisplay().Y()) / 2
-		etdata.timestamp = data.Timestamp()
+		etdata.Filtered.X = (data.Left().GazePointOnDisplay().X() + data.Right().GazePointOnDisplay().X()) / 2
+		etdata.Filtered.Y = (data.Left().GazePointOnDisplay().Y() + data.Right().GazePointOnDisplay().Y()) / 2
+		etdata.Timestamp = data.Timestamp()
 		ch <- etdata
 	})
 
