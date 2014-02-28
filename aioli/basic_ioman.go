@@ -15,7 +15,7 @@ import (
 type BasicIOManager struct {
 	EEMap    map[int]*briee.EventEmitter
 	dataChan chan ExtPkg
-	//publChans map[string]*reflect.Value // TODO
+	publMap  map[publMapEntry]*reflect.Value
 }
 
 // NewBasicIOManager creates a new BasicIOManager.
@@ -23,8 +23,13 @@ func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
 		EEMap:    make(map[int]*briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
-		// publChans: make(map[string]*reflect.Value), // TODO Event + string(ID) as key
+		publMap:  make(map[publMapEntry]*reflect.Value),
 	}
+}
+
+type publMapEntry struct {
+	Event string
+	ID    int
 }
 
 // Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
@@ -65,6 +70,7 @@ func (biom *BasicIOManager) Run() {
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 	// TODO Add broadcast functionality
+
 	if ee, ok := biom.EEMap[recvData.ID]; ok {
 
 		// Look up the type in the event emitter
@@ -74,14 +80,8 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 			log.Println(err)
 
 		} else {
+
 			// Decode data as json according to rtype reflect.Type from event emitter
-			// Use a provided decoder, but at this moment json is a hardcoded selection
-
-			zeroValInterface := reflect.Zero(rtype).Interface()
-
-			// publCh is a write only channel of element type of rtype
-			publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
-
 			buf := recvData.Data      // buf is of encoded json format
 			ptr := reflect.New(rtype) // New value of that wanted type
 
@@ -91,8 +91,18 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 				log.Println(err)
 			}
 
-			// TODO Save this publisher channel in a map for future use
-			publCh.Send(ptr.Elem()) // Send decoded element on channel
+			if pChanPtr, ok := biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}]; ok {
+				(*pChanPtr).Send(ptr.Elem())
+
+			} else {
+				zeroValInterface := reflect.Zero(rtype).Interface()
+				// publCh is a write only channel of element type of rtype
+				publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
+
+				// TODO Save this publisher channel in a map for future use
+				biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}] = &publCh
+				publCh.Send(ptr.Elem()) // Send decoded element on channel
+			}
 
 		}
 	} else {
@@ -101,7 +111,12 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 }
 
 // AddEE adds a pointer to an event emitter and an identifier if not already present. Will return a error if unsuccessful.
+//
+// Provided interger identigier must not be zero as this is reverved for broadcasting all event emitters. Doing so will return an error.
 func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {
+	if id == 0 {
+		return errors.New("Integer identifier zero is reserved for broadcasting")
+	}
 	if _, ok := biom.EEMap[id]; !ok {
 		biom.EEMap[id] = ee
 		return nil
@@ -111,7 +126,12 @@ func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {
 }
 
 // RemoveEE removes the registered event emitter if the provided identifier is present. Will return a error if unsuccessful.
+//
+// Provided interger identigier must not be zero as this is reverved for broadcasting all event emitters. Doing so will return an error.
 func (biom *BasicIOManager) RemoveEE(id int) error {
+	if id == 0 {
+		return errors.New("Integer identifier zero is reserved for broadcasting")
+	}
 	if _, ok := biom.EEMap[id]; ok {
 		delete(biom.EEMap, id)
 		return nil

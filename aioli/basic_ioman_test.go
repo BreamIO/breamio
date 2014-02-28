@@ -33,6 +33,34 @@ func TestAddRemoveEmitters(t *testing.T) {
 	}
 }
 
+func TestAddEEBC(t *testing.T) {
+	ee := briee.NewEventEmitter()
+	ioman := NewIOManager()
+
+	// Add event emitter
+	err := ioman.AddEE(&ee, 0)
+	if err == nil {
+		t.Errorf("Should not be able to add broadcast identifier")
+	}
+}
+
+func TestRemEEBC(t *testing.T) {
+	ee := briee.NewEventEmitter()
+	ioman := NewIOManager()
+
+	// Add event emitter
+	err := ioman.AddEE(&ee, 1)
+	if err != nil {
+		t.Errorf("Unable to add event emitter")
+	}
+
+	// Remove just added event emitter
+	err = ioman.RemoveEE(0)
+	if err == nil {
+		t.Errorf("Should not be able to remove broadcast identifier")
+	}
+}
+
 func TestIOman(t *testing.T) {
 	// Set up emitter
 	ee := briee.NewEventEmitter()
@@ -43,7 +71,7 @@ func TestIOman(t *testing.T) {
 	ioman := NewIOManager()
 
 	// Add event emitter
-	err := ioman.AddEE(&ee, 0)
+	err := ioman.AddEE(&ee, 1)
 	if err != nil {
 		t.Errorf("Unable to add event emitter")
 	}
@@ -67,11 +95,13 @@ func TestIOman(t *testing.T) {
 	go func() {
 		// Send decodes and sends payload data on network
 		send(plSend, &network)
+		send(plSend, &network)
 		wg.Done()
 	}()
 
 	go func() {
 		// Listen on subscriber channel
+		plRecv = <-subscriber
 		plRecv = <-subscriber
 		wg.Done()
 	}()
@@ -96,7 +126,7 @@ func send(pl Payload, network *bytes.Buffer) {
 	// Construct the external package with the encoded payload
 	rawPkg := ExtPkg{
 		Event: "event data",
-		ID:    0,
+		ID:    1,
 		Data:  jsonpl,
 	}
 
