@@ -75,3 +75,7 @@ func (m MockTracker) Calibrate(points <-chan Point2D, errs chan<- error) {
 func (m MockTracker) IsCalibrated() bool {
 	return m.calibrated
 }
+
+func init() {
+	drivers["mock"] = new(MockDriver)
+}
