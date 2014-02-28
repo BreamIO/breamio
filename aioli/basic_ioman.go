@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
+	"io"
 	"log"
 	"reflect"
 	"time"
-	"io"
 )
 
 // BasicIOManager implements IOManager.
 type BasicIOManager struct {
-	EEMap map[int]*briee.EventEmitter
+	EEMap    map[int]*briee.EventEmitter
 	dataChan chan ExtPkg
 	//publChans map[string]*reflect.Value // TODO
 }
@@ -21,14 +21,14 @@ type BasicIOManager struct {
 // NewBasicIOManager creates a new BasicIOManager.
 func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
-		EEMap:  make(map[int]*briee.EventEmitter),
-		dataChan:  make(chan ExtPkg),
+		EEMap:    make(map[int]*briee.EventEmitter),
+		dataChan: make(chan ExtPkg),
 		// publChans: make(map[string]*reflect.Value), // TODO Event + string(ID) as key
-		}
+	}
 }
 
 // Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
-func (biom *BasicIOManager) Listen (r io.Reader){
+func (biom *BasicIOManager) Listen(r io.Reader) {
 	// TODO make private and implement Add/Remove listeners funcionallity
 	var data []byte
 	var ep ExtPkg
@@ -55,8 +55,8 @@ func (biom *BasicIOManager) Listen (r io.Reader){
 func (biom *BasicIOManager) Run() {
 	for {
 		select {
-			case recvData := (<-biom.dataChan):
-				biom.handle(recvData)
+		case recvData := (<-biom.dataChan):
+			biom.handle(recvData)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/* 
+/*
 Package briee defines and implements the EventEmitter interface.
 
 Example use:
@@ -8,7 +8,7 @@ Example use:
 
 		dataSend := MyStruct{...}
 		var dataRecv MyStruct
-		
+
 		// Note explicit type assertion
 		sendChan := ee.Publish("event string identifier", MyStruct{}).(chan<- MyStruct)
 		recvChan := ee.Subscribe("event string identifier", MyStruct{}).(<-chan MyStruct)

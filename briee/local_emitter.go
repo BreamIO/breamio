@@ -1,11 +1,10 @@
 package briee
 
 import (
+	"errors"
 	"log"
 	"reflect"
-	"errors"
 )
-
 
 // Event is the internal representation of a registered event.
 //
@@ -237,7 +236,7 @@ func (ee *LocalEventEmitter) Run() {
 	} // end if
 }
 
-// TypeOf returns the reflect.Type registered for the requested event string 
+// TypeOf returns the reflect.Type registered for the requested event string
 // identifier. Will return nil and an error if requested event is not present.
 //
 // Example:
@@ -246,7 +245,7 @@ func (ee *LocalEventEmitter) Run() {
 //		if err != nil {
 //			fmt.Println(err)
 //		}
-func (ee *LocalEventEmitter) TypeOf (eventID string) (reflect.Type, error){
+func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
 	} else {
