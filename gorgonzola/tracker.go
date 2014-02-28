@@ -22,7 +22,7 @@ type Driver interface {
 	//Creates a tracker connected to the identifier string.
 	//The driver is obliged to return that tracker and only that tracker.
 	//If the identifier is invalid or no longer connected, a error is returned.
-	CreateS(identifier string) (Tracker, error)
+	CreateFromId(identifier string) (Tracker, error)
 	
 	//Returns a list of valid identifiers that can be used with CreateS.
 	//Empty if no trackers can be created.

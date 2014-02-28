@@ -12,7 +12,7 @@ func (GazeDriver) Create() (Tracker, error) {
 	return &GazeTracker{tracker, false}, err
 }
 
-func (GazeDriver) CreateS(id string) (Tracker, error) {
+func (GazeDriver) CreateFromId(id string) (Tracker, error) {
 	//TODO fix this to use the real function
 	tracker, err := gaze.EyeTrackerFromURL("tet-usb://" + id)
 	return &GazeTracker{tracker, false}, err

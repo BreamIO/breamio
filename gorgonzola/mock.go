@@ -23,7 +23,7 @@ func (d MockDriver) List() []string {
 func (d MockDriver) Create() (Tracker, error) {
 	return &MockTracker{mockStandard, 0, false, false}, nil
 }
-func (d MockDriver) CreateS(identifier string) (Tracker, error) {
+func (d MockDriver) CreateFromId(identifier string) (Tracker, error) {
 	switch identifier {
 	case "standard":
 		return d.Create()
