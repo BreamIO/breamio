@@ -1,12 +1,25 @@
 package gorgonzola
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
 )
 
 var drivers = make(map[string]Driver)
+
+func GetDriver(typ string) Driver {
+	return drivers[typ]
+}
+
+func RegisterDriver(typ string, driver Driver) error {
+	if drivers[typ] == nil {
+		return errors.New(fmt.Sprintf("%s is already registered", typ))
+	}
+	drivers[typ] = driver
+	return nil
+}
 
 //Drivers specify tracker operations not connected to any specific tracker and constructors
 //
