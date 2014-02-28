@@ -11,12 +11,14 @@ import (
 	"io"
 )
 
+// BasicIOManager implements IOManager.
 type BasicIOManager struct {
 	EEMap map[int]*briee.EventEmitter
 	dataChan chan ExtPkg
 	//publChans map[string]*reflect.Value // TODO
 }
 
+// NewBasicIOManager creates a new BasicIOManager.
 func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
 		EEMap:  make(map[int]*briee.EventEmitter),
@@ -25,6 +27,7 @@ func NewBasicIOManager() *BasicIOManager {
 		}
 }
 
+// Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
 func (biom *BasicIOManager) Listen (r io.Reader){
 	// TODO make private and implement Add/Remove listeners funcionallity
 	var data []byte
@@ -48,8 +51,8 @@ func (biom *BasicIOManager) Listen (r io.Reader){
 	}
 }
 
+// Run listens on the internal channel of ExtPkg data on which all listerners send data on.
 func (biom *BasicIOManager) Run() {
-	// Run listens on the internal channel of ExtPkg data on which all listerners send data on
 	for {
 		select {
 			case recvData := (<-biom.dataChan):
@@ -58,8 +61,8 @@ func (biom *BasicIOManager) Run() {
 	}
 }
 
+// Handle tries to decode and send the provided ExtPkg on one or more event emitters
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
-	// Handle tries to decode and send the provided ExtPkg on one or more event emitters
 
 	// TODO Add broadcast functionality
 	if ee, ok := biom.EEMap[recvData.ID]; ok {
@@ -97,8 +100,8 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	}
 }
 
+// AddEE adds a pointer to an event emitter and an identifier if not already present. Will return a error if unsuccessful.
 func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {
-	// Add an pointer to an event emitter in not already present, then return error
 	if _, ok := biom.EEMap[id]; !ok {
 		biom.EEMap[id] = ee
 		return nil
@@ -107,8 +110,8 @@ func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {
 	}
 }
 
+// RemoveEE removes the registered event emitter if the provided identifier is present. Will return a error if unsuccessful.
 func (biom *BasicIOManager) RemoveEE(id int) error {
-	// Remove the pointer to an event emitter with id if present, if not return error
 	if _, ok := biom.EEMap[id]; ok {
 		delete(biom.EEMap, id)
 		return nil

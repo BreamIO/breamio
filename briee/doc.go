@@ -1,5 +1,5 @@
 /* 
-Package Briee defines and implements the EventEmitter interface.
+Package briee defines and implements the EventEmitter interface.
 
 Example use:
 
