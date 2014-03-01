@@ -132,7 +132,12 @@ func (biom *BasicIOManager) RemoveEE(id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
-	if _, ok := biom.EEMap[id]; ok {
+	if ee, ok := biom.EEMap[id]; ok {
+		err := (*ee).Close()
+		if err != nil {
+			return err
+		}
+
 		delete(biom.EEMap, id)
 		return nil
 	} else {

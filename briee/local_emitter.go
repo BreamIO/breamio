@@ -21,6 +21,7 @@ type Event struct {
 // LocalEventEmitter implements EventEmitter
 type LocalEventEmitter struct {
 	eventMap map[string]*Event
+	closed   bool
 }
 
 // makeSendRecv returns two channels of provided channel element type.
@@ -182,13 +183,17 @@ func (ee *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 
 // NewLocalEventEmitter is the constructor of LocalEventEmitter
 func NewLocalEventEmitter() *LocalEventEmitter {
-	// TODO Call run method here before returning the pointer?
-	return &LocalEventEmitter{make(map[string]*Event)}
+	return &LocalEventEmitter{
+		eventMap: make(map[string]*Event),
+		closed:   false,
+	}
 }
 
 // Run method listens on publishing channels and broadcasts data to subscribers.
 func (ee *LocalEventEmitter) Run() {
-	for { // infinite loop
+	ee.closed = false
+
+	for !ee.IsClosed() {
 
 		// TODO Use a priority queue instead of linear range over the map?
 		for _, event := range ee.eventMap {
@@ -251,4 +256,33 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	} else {
 		return nil, errors.New("No event with that identifier is registred")
 	}
+}
+
+// Close will close all open channels to subscribers.
+func (ee *LocalEventEmitter) Close() error {
+	if ee.IsClosed() {
+		return errors.New("Can not close already closed event emitter")
+	}
+	// Close the subscriber channels
+	for _, event := range ee.eventMap {
+		for i := 0; i < event.Subscribers.Len(); i++ {
+			event.Subscribers.Index(i).Close()
+		}
+		//delete(ee.eventMap, k)
+	}
+
+	// Clear the event map
+	for k := range ee.eventMap {
+		delete(ee.eventMap, k)
+	}
+
+	ee.closed = true
+	return nil
+}
+
+// IsClosed returns true if Close method has been called.
+//
+// Call Run method again to open
+func (ee *LocalEventEmitter) IsClosed() bool {
+	return ee.closed
 }

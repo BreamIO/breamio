@@ -69,17 +69,7 @@ func TestEmitter(t *testing.T) {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
 
-	// Test type of event
-	atype, err := ee.TypeOf("A")
-
-	if err != nil {
-		t.Errorf("Unknown event identifer")
-	}
-
-	if atype != reflect.TypeOf(Adata) {
-		t.Errorf("Unmatched types")
-	}
-
+	ee.Close()
 }
 
 func testNilPublisher(t *testing.T) {
@@ -92,4 +82,45 @@ func testNilPublisher(t *testing.T) {
 		}
 	}()
 	_ = ee.Publish("A", nil).(chan<- A)
+}
+
+func TestCloseEE(t *testing.T) {
+	ee := NewEventEmitter()
+	go ee.Run()
+
+	_ = ee.Publish("A", A{}).(chan<- A)
+	_ = ee.Subscribe("A", A{}).(<-chan A)
+
+	err := ee.Close()
+	if err != nil {
+		t.Errorf("EE already closed")
+	}
+
+	err = ee.Close()
+	if err == nil {
+		t.Errorf("Calling Close on already closed EE shall cause an error")
+	}
+}
+
+func TestTypeOf(t *testing.T) {
+	ee := NewEventEmitter()
+	go ee.Run()
+
+	_ = ee.Publish("A", A{}).(chan<- A)
+	Adata := A{42, "A data"}
+	// Test type of event
+	atype, err := ee.TypeOf("A")
+
+	if err != nil {
+		t.Errorf("Unknown event identifer")
+	}
+
+	if atype != reflect.TypeOf(Adata) {
+		t.Errorf("Unmatched types")
+	}
+
+	_, err = ee.TypeOf("B")
+	if err == nil {
+		t.Errorf("TypeOf an unregistered event shall cause an error")
+	}
 }
