@@ -6,6 +6,7 @@ import (
 
 func Link(ee briee.EventEmitter, t Tracker) error {
 	publisher := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
+	defer close(publisher)
 	dataCh, err = t.Stream()
 	if err != nil {
 		return err
