@@ -16,7 +16,7 @@ type ExtPkg struct {
 type IOManager interface {
 	Listen(r io.Reader)
 	Run()
-	AddEE(ee *briee.EventEmitter, id int) error
+	AddEE(ee briee.EventEmitter, id int) error
 	RemoveEE(id int) error
 }
 

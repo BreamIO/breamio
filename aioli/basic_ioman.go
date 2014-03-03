@@ -13,7 +13,7 @@ import (
 
 // BasicIOManager implements IOManager.
 type BasicIOManager struct {
-	EEMap    map[int]*briee.EventEmitter
+	EEMap    map[int]briee.EventEmitter
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
 }
@@ -21,7 +21,7 @@ type BasicIOManager struct {
 // NewBasicIOManager creates a new BasicIOManager.
 func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
-		EEMap:    make(map[int]*briee.EventEmitter),
+		EEMap:    make(map[int]briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 	}
@@ -74,7 +74,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	if ee, ok := biom.EEMap[recvData.ID]; ok {
 
 		// Look up the type in the event emitter
-		rtype, err := (*ee).TypeOf(recvData.Event) // Note ee ptr
+		rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
 
 		if err != nil {
 			log.Println(err)
@@ -97,7 +97,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 			} else {
 				zeroValInterface := reflect.Zero(rtype).Interface()
 				// publCh is a write only channel of element type of rtype
-				publCh := reflect.ValueOf((*ee).Publish(recvData.Event, zeroValInterface))
+				publCh := reflect.ValueOf(ee.Publish(recvData.Event, zeroValInterface))
 
 				// TODO Save this publisher channel in a map for future use
 				biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}] = &publCh
@@ -113,7 +113,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 // AddEE adds a pointer to an event emitter and an identifier if not already present. Will return a error if unsuccessful.
 //
 // Provided interger identigier must not be zero as this is reverved for broadcasting all event emitters. Doing so will return an error.
-func (biom *BasicIOManager) AddEE(ee *briee.EventEmitter, id int) error {
+func (biom *BasicIOManager) AddEE(ee briee.EventEmitter, id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
@@ -133,7 +133,7 @@ func (biom *BasicIOManager) RemoveEE(id int) error {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
 	if ee, ok := biom.EEMap[id]; ok {
-		err := (*ee).Close()
+		err := ee.Close()
 		if err != nil {
 			return err
 		}

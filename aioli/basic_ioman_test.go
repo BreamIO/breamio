@@ -21,7 +21,7 @@ func TestAddRemoveEmitters(t *testing.T) {
 	ioman := NewIOManager()
 
 	// Add event emitter
-	err := ioman.AddEE(&ee, 1)
+	err := ioman.AddEE(ee, 1)
 	if err != nil {
 		t.Errorf("Unable to add event emitter")
 	}
@@ -38,7 +38,7 @@ func TestAddEEBC(t *testing.T) {
 	ioman := NewIOManager()
 
 	// Add event emitter
-	err := ioman.AddEE(&ee, 0)
+	err := ioman.AddEE(ee, 0)
 	if err == nil {
 		t.Errorf("Should not be able to add broadcast identifier")
 	}
@@ -49,7 +49,7 @@ func TestRemEEBC(t *testing.T) {
 	ioman := NewIOManager()
 
 	// Add event emitter
-	err := ioman.AddEE(&ee, 1)
+	err := ioman.AddEE(ee, 1)
 	if err != nil {
 		t.Errorf("Unable to add event emitter")
 	}
@@ -71,7 +71,7 @@ func TestIOman(t *testing.T) {
 	ioman := NewIOManager()
 
 	// Add event emitter
-	err := ioman.AddEE(&ee, 1)
+	err := ioman.AddEE(ee, 1)
 	if err != nil {
 		t.Errorf("Unable to add event emitter")
 	}
