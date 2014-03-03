@@ -17,12 +17,12 @@ func Link(ee briee.EventEmitter, t Tracker) error {
 			//Recover from a close on the publisher channel.
 			//Do not want to bring down entire application
 		}
-	}
+	}()
 	
 	for data := range dataCh {
 		select {
-			publisher <- data
-			default:
+			case publisher <- data:
+			default: println("[Gorgonzola] Dropped package due to full channel.")
 		}
 	}
 }
