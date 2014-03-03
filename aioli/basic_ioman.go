@@ -13,7 +13,7 @@ import (
 
 // BasicIOManager implements IOManager.
 type BasicIOManager struct {
-	EEMap    map[int]briee.EventEmitter
+	eeMap    map[int]briee.EventEmitter
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
 }
@@ -21,7 +21,7 @@ type BasicIOManager struct {
 // NewBasicIOManager creates a new BasicIOManager.
 func NewBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
-		EEMap:    make(map[int]briee.EventEmitter),
+		eeMap:    make(map[int]briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 	}
@@ -70,8 +70,7 @@ func (biom *BasicIOManager) Run() {
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 	// TODO Add broadcast functionality
-
-	if ee, ok := biom.EEMap[recvData.ID]; ok {
+	if ee, ok := biom.eeMap[recvData.ID]; ok {
 
 		// Look up the type in the event emitter
 		rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
@@ -117,8 +116,8 @@ func (biom *BasicIOManager) AddEE(ee briee.EventEmitter, id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
-	if _, ok := biom.EEMap[id]; !ok {
-		biom.EEMap[id] = ee
+	if _, ok := biom.eeMap[id]; !ok {
+		biom.eeMap[id] = ee
 		return nil
 	} else {
 		return errors.New("Can not add event emitter with existing identifier")
@@ -132,13 +131,13 @@ func (biom *BasicIOManager) RemoveEE(id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
-	if ee, ok := biom.EEMap[id]; ok {
+	if ee, ok := biom.eeMap[id]; ok {
 		err := ee.Close()
 		if err != nil {
 			return err
 		}
 
-		delete(biom.EEMap, id)
+		delete(biom.eeMap, id)
 		return nil
 	} else {
 		return errors.New("Can not remove non-existing event emitter")
