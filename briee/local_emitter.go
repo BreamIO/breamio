@@ -73,7 +73,7 @@ func makeSlice(elemType reflect.Type) (sliceValue reflect.Value) {
 //
 //		sendChan := ee.Publish("event string identifier", MyStruct{}).(chan<- MyStruct)
 // 		sendChan <- MyStruct{...}
-func (ee *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
+func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
 
@@ -85,7 +85,7 @@ func (ee *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 	chvSend, chvRecv := makeSendRecv(vtype)
 	slicev := makeSlice(chvSend.Type())
 
-	event, ok := ee.eventMap[chid]
+	event, ok := ee.eventMap[eventID]
 
 	if ok {
 		if event.ElemType != vtype {
@@ -99,7 +99,7 @@ func (ee *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 		}
 	} else {
 		// Create a new event and store in map
-		ee.eventMap[chid] = &Event{
+		ee.eventMap[eventID] = &Event{
 			ElemType:      vtype,
 			PublSend:      reflect.Value{}, // Not assigned yet
 			PublRecv:      reflect.Value{}, // Not assigned yet
@@ -107,13 +107,13 @@ func (ee *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 			NumPublishers: 0,
 		}
 
-		event = ee.eventMap[chid]
+		event = ee.eventMap[eventID]
 	}
 
 	// The event exists at this point with the publisher channels missing
-	ee.eventMap[chid].PublSend = chvSend
-	ee.eventMap[chid].PublRecv = chvRecv
-	ee.eventMap[chid].NumPublishers += 1
+	ee.eventMap[eventID].PublSend = chvSend
+	ee.eventMap[eventID].PublRecv = chvRecv
+	ee.eventMap[eventID].NumPublishers += 1
 
 	return chvSend.Interface()
 }
@@ -127,7 +127,7 @@ func (ee *LocalEventEmitter) Publish(chid string, v interface{}) interface{} {
 //		var recvData MyStruct
 //		recvChan := ee.Subscribe("event string identifier", MyStruct{}).(<-chan MyStruct)
 //		recvData = (<-recvChan)
-func (ee *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
+func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{} {
 	// Subscribe returns a read-only channel of element type of v
 
 	// get the type of v
@@ -140,7 +140,7 @@ func (ee *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 	// Make directed channels
 	chvSend, chvRecv := makeSendRecv(vtype)
 
-	event, ok := ee.eventMap[chid]
+	event, ok := ee.eventMap[eventID]
 	// Check if element is present
 	if ok {
 		if event.ElemType != vtype {
@@ -152,7 +152,7 @@ func (ee *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 		slicev := makeSlice(chvSend.Type())
 
 		// Create a new event and store in map
-		ee.eventMap[chid] = &Event{
+		ee.eventMap[eventID] = &Event{
 			ElemType:      vtype,
 			PublSend:      reflect.Value{}, // Not assigned yet
 			PublRecv:      reflect.Value{}, // Not assigned yet
@@ -160,7 +160,7 @@ func (ee *LocalEventEmitter) Subscribe(chid string, v interface{}) interface{} {
 			NumPublishers: 0,
 		}
 
-		event = ee.eventMap[chid]
+		event = ee.eventMap[eventID]
 	}
 
 	// Append write only channel
@@ -211,7 +211,7 @@ func isValidType(vtype reflect.Type) bool {
 }
 
 // NewLocalEventEmitter is the constructor of LocalEventEmitter
-func NewLocalEventEmitter() *LocalEventEmitter {
+func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
 		closed:   false,

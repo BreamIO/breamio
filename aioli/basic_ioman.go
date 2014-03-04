@@ -1,14 +1,14 @@
 package aioli
 
 import (
-	"encoding/gob"
+	//"encoding/gob"
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
-	"io"
+	//"io"
 	"log"
 	"reflect"
-	"time"
+	//"time"
 )
 
 // BasicIOManager implements IOManager.
@@ -19,7 +19,7 @@ type BasicIOManager struct {
 }
 
 // NewBasicIOManager creates a new BasicIOManager.
-func NewBasicIOManager() *BasicIOManager {
+func newBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
 		eeMap:    make(map[int]briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
@@ -32,26 +32,38 @@ type publMapEntry struct {
 	ID    int
 }
 
+//func (biom *BasicIOManager) Listen(r io.Reader) {
+//	// TODO make private and implement Add/Remove listeners funcionallity
+//	var data []byte
+//	var ep ExtPkg
+//	dec := gob.NewDecoder(r)
+//
+//	for { // inf loop
+//		err := dec.Decode(&data)
+//		if err != nil {
+//			log.Printf("Decoding failed, sleep ...")
+//			time.Sleep(50 * time.Millisecond)
+//			continue
+//		}
+//
+//		err = json.Unmarshal(data, &ep)
+//		if err != nil {
+//			log.Printf("Unmarshal error, ", err)
+//		}
+//
+//		biom.dataChan <- ep
+//	}
+//}
+
 // Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
-func (biom *BasicIOManager) Listen(r io.Reader) {
+func (biom *BasicIOManager) Listen(dec Decoder) {
 	// TODO make private and implement Add/Remove listeners funcionallity
-	var data []byte
 	var ep ExtPkg
-	dec := gob.NewDecoder(r)
-
-	for { // inf loop
-		err := dec.Decode(&data)
+	for { // inf loop, FIXME
+		err := dec.Decode(&ep)
 		if err != nil {
-			log.Printf("Decoding failed, sleep ...")
-			time.Sleep(50 * time.Millisecond)
-			continue
+			log.Printf("Decoding failure")
 		}
-
-		err = json.Unmarshal(data, &ep)
-		if err != nil {
-			log.Printf("Unmarshal error, ", err)
-		}
-
 		biom.dataChan <- ep
 	}
 }
@@ -98,7 +110,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 				// publCh is a write only channel of element type of rtype
 				publCh := reflect.ValueOf(ee.Publish(recvData.Event, zeroValInterface))
 
-				// TODO Save this publisher channel in a map for future use
+				// Save the publisher channel for future use
 				biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}] = &publCh
 				publCh.Send(ptr.Elem()) // Send decoded element on channel
 			}

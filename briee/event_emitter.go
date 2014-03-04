@@ -15,5 +15,5 @@ type EventEmitter interface {
 
 // NewEventEmitter creates and returns a new LocalEventEmitter
 func NewEventEmitter() EventEmitter {
-	return NewLocalEventEmitter()
+	return newLocalEventEmitter()
 }

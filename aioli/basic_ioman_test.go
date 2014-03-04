@@ -90,7 +90,10 @@ func TestIOman(t *testing.T) {
 	wg.Add(2)
 
 	go ioman.Run()
-	go ioman.Listen(&network)
+	dec := NewDecoder(&network)
+	// Listen fix, TODO Clean up
+	//go ioman.Listen(&network)
+	go ioman.Listen(dec)
 
 	go func() {
 		// Send decodes and sends payload data on network
@@ -196,4 +199,12 @@ func recv(network *bytes.Buffer) Payload {
 	}
 
 	return pl
+}
+
+func TestDecoder (t *testing.T){
+	ioman := NewIOManager()
+	go ioman.Run()
+	var network bytes.Buffer
+	dec := NewJSONDecoder(&network)
+	go ioman.Listen(dec)
 }
