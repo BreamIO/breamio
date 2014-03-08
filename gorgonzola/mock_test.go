@@ -1,9 +1,9 @@
 package gorgonzola_test
 
 import (
-	"testing"
 	. "github.com/smartystreets/goconvey/convey"
-	
+	"testing"
+
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
@@ -34,7 +34,7 @@ func TestMockCreateFromId(t *testing.T) {
 	Convey("And the error should be nil.", t, func() {
 		So(err, ShouldBeNil)
 	})
-	Convey("Creating from non-existing id should give an error", t, func(){
+	Convey("Creating from non-existing id should give an error", t, func() {
 		t2, err := driver.CreateFromId("This ID Should Not Exist")
 		So(t2, ShouldBeNil)
 		So(err, ShouldNotBeNil)
@@ -48,11 +48,11 @@ func TestMockStream(t *testing.T) {
 		So(etdatas, ShouldNotBeNil)
 		So(errors, ShouldNotBeNil)
 	})
-	
+
 	Convey("Should not recieve a error first", t, func() {
 		good := false
 		select {
-		case <-etdatas: 
+		case <-etdatas:
 			good = true
 		case err := <-errors:
 			t.Log(err)
@@ -60,7 +60,7 @@ func TestMockStream(t *testing.T) {
 		}
 		So(good, ShouldEqual, true)
 	})
-	
+
 	Convey("Closing during Stream should result in end of stream", t, func() {
 		tracker.Close()
 		<-etdatas //Value in pipeline
@@ -84,7 +84,7 @@ func TestMockIsCalibrated(t *testing.T) {
 		errs := make(chan error, 1)
 		tracker.Calibrate(nil, errs)
 		So(tracker.IsCalibrated(), ShouldEqual, false)
-		
+
 		tracker.Calibrate(nil, make(chan error, 1))
 		So(tracker.IsCalibrated(), ShouldEqual, false)
 	})

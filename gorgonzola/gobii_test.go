@@ -1,9 +1,9 @@
 package gorgonzola_test
 
 import (
-	"testing"
 	. "github.com/smartystreets/goconvey/convey"
-	
+	"testing"
+
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
@@ -26,8 +26,12 @@ func TestGazeList(t *testing.T) {
 
 func TestGazeCreateFromId(t *testing.T) {
 	driver := gorgonzola.GetDriver("gobii")
-	id := driver.List()[0]
-	tracker, err := driver.CreateFromId(id)
+	ids := driver.List()
+	if len(ids) < 1 {
+		t.Fatal("No trackers connected.")
+		return
+	}
+	tracker, err := driver.CreateFromId(ids[0])
 	Convey("Result should be a tracker", t, func() {
 		So(tracker, ShouldNotBeNil)
 	})
@@ -37,17 +41,20 @@ func TestGazeCreateFromId(t *testing.T) {
 }
 
 func TestGazeStream(t *testing.T) {
-	tracker, _ := gorgonzola.GetDriver("gobii").Create()
+	tracker, err := gorgonzola.GetDriver("gobii").Create()
+	if err != nil {
+		t.Fatal(err)
+	}
 	etdatas, errors := tracker.Stream()
 	Convey("Should not give nil channels", t, func() {
 		So(etdatas, ShouldNotBeNil)
 		So(errors, ShouldNotBeNil)
 	})
-	
+
 	SkipConvey("Should not recieve a error first", t, func() {
 		good := false
 		select {
-		case <-etdatas: 
+		case <-etdatas:
 			good = true
 		case err := <-errors:
 			t.Log(err)
@@ -55,7 +62,7 @@ func TestGazeStream(t *testing.T) {
 		}
 		So(good, ShouldEqual, true)
 	})
-	
+
 	SkipConvey("Closing during Stream should result in end of stream", t, func() {
 		tracker.Close()
 		<-etdatas //Value in pipeline
@@ -73,4 +80,3 @@ func TestGazeIsCalibrated(t *testing.T) {
 	//tracker, _ := gorgonzola.GetDriver("mock").Create()
 	Convey("A GazeTracker should be calibrated after been given ~5 points", t, nil)
 }
-

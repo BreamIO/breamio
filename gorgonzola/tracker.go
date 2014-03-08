@@ -67,7 +67,7 @@ type Tracker interface {
 	//If the channel is buffered, there is no guarantees on when the point is processed by the tracker.
 	//Any errors related to the calibration in sent on the error channel.
 	Calibrate(<-chan Point2D, chan<- error)
-	
+
 	// Returns true if the tracker has been successfully calibrated.
 	// false otherwise
 	IsCalibrated() bool
