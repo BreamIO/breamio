@@ -71,10 +71,6 @@ type ETData struct {
 	Timestamp time.Time
 }
 
-type Point2D struct {
-	X, Y float64
-}
-
 //Lists all trackers reported by all trackers
 func List() []string {
 	res := make([]string, 0, 32)

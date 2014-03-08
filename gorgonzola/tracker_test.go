@@ -22,7 +22,7 @@ func ExampleUsage() {
 	points, errs := tracker.Stream()
 	select {
 	case p := <-points:
-		fmt.Printf("(%0.2f, %0.2f)\n", p.Filtered.X, p.Filtered.Y)
+		fmt.Printf("(%0.2f, %0.2f)\n", p.Filtered.X(), p.Filtered.Y())
 	case err = <-errs:
 		fmt.Println("Error:", err)
 	}

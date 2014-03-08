@@ -7,6 +7,7 @@ import (
 func Link(ee briee.EventEmitter, t Tracker) error {
 	publisher := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	defer close(publisher)
+	
 	dataCh, errs := t.Stream()
 	defer func() {
 		if r := recover(); r != nil {
@@ -32,4 +33,25 @@ func Link(ee briee.EventEmitter, t Tracker) error {
 		}
 	}
 	return nil
+}
+
+type Point2D interface {
+	X() float64 
+	Y() float64
+}
+
+type point2D struct {
+	x, y float64 
+}
+
+func (p point2D) X() float64 {
+	return p.x
+}
+
+func (p point2D) Y() float64 {
+	return p.y
+}
+
+func filter(left, right Point2D) Point2D {
+	return point2D{ (left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
 }
