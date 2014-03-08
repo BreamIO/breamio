@@ -10,7 +10,6 @@ import (
 )
 
 func TestNewTrackerEvent(t *testing.T) {
-	t.Skip("Does not work due to race conditions.")
 	/*
 		Due to the very asynchronous communication method used, we have no clue if or when stuff is done.
 		I can not reliably test if this method does what it is supposed to since that means
@@ -36,7 +35,7 @@ func TestNewTrackerEvent(t *testing.T) {
 		TL;DR Fuck Event emitters and testing.
 	*/
 	bl := New().(*breamLogic)
-	Convey("Given a new:tracker event, a new tracker on a new emitter should be started.", t, func() {
+	SkipConvey("Given a new:tracker event, a new tracker on a new emitter should be started.", t, func() {
 		bl.onNewTrackerEvent(TrackerSpec{"mock", "constant", 1})
 		time.Sleep(1*time.Millisecond)
 		newEE := bl.MainIOManager().(*aioli.BasicIOManager).EEMap[1]
@@ -44,7 +43,8 @@ func TestNewTrackerEvent(t *testing.T) {
 		etEvents := newEE.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
 		select {
 			case data := <-etEvents:
-				So(data, ShouldResemble, &gorgonzola.ETData{gorgonzola.Point2D{0.5, 0.5}, time.Now()})
+				So(data.Filtered.X(), ShouldEqual, 0.5)
+				So(data.Filtered.Y(), ShouldEqual, 0.5)
 				
 			case <- time.After(time.Millisecond):
 				t.Error("Timed out.")
