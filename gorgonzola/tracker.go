@@ -14,8 +14,11 @@ func GetDriver(typ string) Driver {
 }
 
 func RegisterDriver(typ string, driver Driver) error {
-	if drivers[typ] == nil {
+	if drivers[typ] != nil {
 		return errors.New(fmt.Sprintf("%s is already registered", typ))
+	}
+	if driver == nil {
+		return errors.New("Nil implementations is not allowed.")
 	}
 	drivers[typ] = driver
 	return nil
@@ -64,6 +67,10 @@ type Tracker interface {
 	//If the channel is buffered, there is no guarantees on when the point is processed by the tracker.
 	//Any errors related to the calibration in sent on the error channel.
 	Calibrate(<-chan Point2D, chan<- error)
+	
+	// Returns true if the tracker has been successfully calibrated.
+	// false otherwise
+	IsCalibrated() bool
 }
 
 type ETData struct {
@@ -84,5 +91,5 @@ func List() []string {
 type NotImplementedError string
 
 func (e NotImplementedError) Error() string {
-	return fmt.Sprintf("%s is not implemented.", e)
+	return fmt.Sprintf("%s is not implemented.", string(e))
 }

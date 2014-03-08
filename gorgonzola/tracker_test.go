@@ -2,6 +2,9 @@ package gorgonzola_test
 
 import (
 	"fmt"
+	
+	"testing"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
@@ -27,4 +30,28 @@ func ExampleUsage() {
 		fmt.Println("Error:", err)
 	}
 	// Output: (0.50, 0.50)
+}
+
+func TestRegisterDriver(t *testing.T) {
+	Convey("Reregistration is not allowed", t, func() {
+		So(gorgonzola.RegisterDriver("mock", new(gorgonzola.MockDriver)), ShouldNotBeNil)
+	})
+	
+	Convey("But new registrations should be allowed", t, func() {
+		So(gorgonzola.RegisterDriver("mock2", new(gorgonzola.MockDriver)), ShouldBeNil)
+	})
+	
+	Convey("But only if the driver is not nil", t, func() {
+		So(gorgonzola.RegisterDriver("mock3", nil), ShouldNotBeNil)
+	})
+}
+
+func TestList(t *testing.T) {
+	Convey("List should not return nil", t, func() {
+		So(gorgonzola.List(), ShouldNotBeNil)
+	})
+	
+	Convey("List should contain at least two elements", t, func() {
+		So(len(gorgonzola.List()), ShouldBeGreaterThanOrEqualTo, 2)
+	})
 }

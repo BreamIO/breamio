@@ -55,5 +55,22 @@ func TestGazeStream(t *testing.T) {
 		}
 		So(good, ShouldEqual, true)
 	})
+	
+	SkipConvey("Closing during Stream should result in end of stream", t, func() {
+		tracker.Close()
+		<-etdatas //Value in pipeline
+		_, ok := <-etdatas
+		So(ok, ShouldEqual, false)
+	})
+}
+
+func TestGazeCalibration(t *testing.T) {
+	//tracker, _ := gorgonzola.GetDriver("mock").Create()
+	Convey("Calibrating a GazeTracker eat all points on channel", t, nil)
+}
+
+func TestGazeIsCalibrated(t *testing.T) {
+	//tracker, _ := gorgonzola.GetDriver("mock").Create()
+	Convey("A GazeTracker should be calibrated after been given ~5 points", t, nil)
 }
 

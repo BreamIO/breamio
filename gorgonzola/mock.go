@@ -46,6 +46,7 @@ func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
 	go func() {
 		for {
 			if m.f == nil {
+				close(ch)
 				return
 			}
 			x, y := m.f(m.t)

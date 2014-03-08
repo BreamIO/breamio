@@ -6,9 +6,8 @@ import (
 
 func Link(ee briee.EventEmitter, t Tracker) error {
 	publisher := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
-	defer close(publisher)
 	
-	dataCh, errs := t.Stream()
+	dataCh, errCh := t.Stream()
 	defer func() {
 		if r := recover(); r != nil {
 			println("Caught a runtime panic:", r)
@@ -17,22 +16,26 @@ func Link(ee briee.EventEmitter, t Tracker) error {
 		}
 	}()
 
+	return listenAndServe(dataCh, errCh, publisher )
+}
+
+func listenAndServe(dataChannel <-chan *ETData, errorChannel <-chan error, publisher chan<- *ETData) error {
 	for {
 		select {
-		case data, ok := <-dataCh:
+		case data, ok := <-dataChannel:
 			if !ok {
-				break //No more data from tracker. Shutting down.
+				return nil //No more data from tracker. Shutting down. Does not break due to weirdness in testing.
 			}
 			select {
 			case publisher <- data: // Attempt to send
 			default:
 				println("[Gorgonzola] Dropped package due to full channel.")
 			}
-		case err := <-errs:
+		case err := <-errorChannel:
 			return err
 		}
 	}
-	return nil
+	return nil //Dead code, but compiler insists on its existence
 }
 
 type Point2D interface {
