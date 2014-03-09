@@ -2,53 +2,118 @@ package beenleigh
 
 import (
 	"testing"
-	"time"
 	. "github.com/smartystreets/goconvey/convey"
 	
 	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
-func TestNewTrackerEvent(t *testing.T) {
-	/*
-		Due to the very asynchronous communication method used, we have no clue if or when stuff is done.
-		I can not reliably test if this method does what it is supposed to since that means
-			1. Check that a event emitter was created.
-				This can almost be done.
-				Code for it can be found below, but notice also the small sleep.
-				Without it nothing would work. This is not a reliable test.
-				
-			2. Check that a tracker is created
-				Again, almost.
-				given the emitter, I can ask it for a ETData subscription.
-				If the tracker is running, I should get events.
-				Unfortunately, I can't ask it for one message, so it will spam the console with "dropped" messages.
-				
-		Oh, so you say I am doing to much in one method?
-		Well.. Then what should I do.
-		Creating a eye tracker is trivial thanks to code and tests in Gorgonzola.
-		Creating a EventEmitter is trivial thanks to code and tests in Briee.
-		
-		So the real test should be, DOES it create them and what does it do with them.
-		And as argued above, this is f*cking impossible to test.
-		
-		TL;DR Fuck Event emitters and testing.
-	*/
-	bl := New().(*breamLogic)
-	SkipConvey("Given a new:tracker event, a new tracker on a new emitter should be started.", t, func() {
-		bl.onNewTrackerEvent(TrackerSpec{"mock", "constant", 1})
-		time.Sleep(1*time.Millisecond)
-		newEE := bl.MainIOManager().(*aioli.BasicIOManager).EEMap[1]
-		So(newEE, ShouldNotBeNil)
-		etEvents := newEE.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
-		select {
-			case data := <-etEvents:
-				So(data.Filtered.X(), ShouldEqual, 0.5)
-				So(data.Filtered.Y(), ShouldEqual, 0.5)
-				
-			case <- time.After(time.Millisecond):
-				t.Error("Timed out.")
-		}
+func TestClose(t *testing.T) {
+	bl := newBL()
+	Convey("Should close the internal closer channel", t, func() {
+		go bl.Close()
+		_, ok := <-bl.closer
+		So(ok, ShouldNotEqual, true)
 	})
-	bl.Close()
+	Convey("Return value should be nil", t, func() {
+		bl = newBL()
+		So(bl.Close(), ShouldBeNil)
+	})
 }
+
+func TestRootEmitter(t *testing.T) {
+	bl := newBL()
+	Convey("A first root event emitter should be running.", t, func() {
+		So(bl.RootEmitter(), ShouldNotEqual, nil)
+	})
+}
+
+func TestMainIOManager(t *testing.T) {
+	bl := newBL()
+	Convey("And a IOManager should be available.", t, func() {
+		So(bl.MainIOManager(), ShouldNotEqual, nil)
+	})
+}
+
+func TestListenAndServe(t *testing.T) {
+	myEE := newMockEmitter()
+	myIOManager := newMockIOManager()
+	newee = func() briee.EventEmitter {
+		return myEE
+	}
+	newio = func() aioli.IOManager {
+		return myIOManager
+	}
+	
+	done := make(chan struct{})
+	bl := newBL()
+	go func() {
+		bl.ListenAndServe()
+		close(done)
+	}()
+	Convey("Some its events should be subscribed to", t, func(){
+		t.Log(myEE)
+		So(myEE.subscribedTo("new:tracker"), ShouldEqual, true)
+		So(myEE.subscribedTo("shutdown"), ShouldEqual, true)
+	})
+	
+	Convey("The IOManager should be started.", t, func() {
+		So(myIOManager.started, ShouldEqual, true)
+	})
+	
+	Convey("And events recieved handeled", t, func() {
+		Convey("Calls onNewTrackerEvent for \"new:tracker\"", func() {
+			done := make(chan struct{})
+			bl.onNewTrackerEvent = func(ts TrackerSpec) error {
+				close(done)
+				return nil
+			}
+			myEE.pubsubs["new:tracker"] <- TrackerSpec{}
+			_, ok := <-done
+			So(ok, ShouldNotEqual, true)
+			
+		})
+		Convey("Returns when recieving a\"shutdown\" event", func(){
+			myEE.pubsubs["shutdown"] <- TrackerSpec{}
+			_, ok := <-done
+			So(ok, ShouldNotEqual, true)
+		})
+	})
+	
+	Convey("And closes when asked to", t, func() {
+		done := make(chan struct{})
+		go func() {
+			bl.ListenAndServe()
+			close(done)
+		}()
+		close(bl.closer)
+		_, ok := <-done
+		So(ok, ShouldNotEqual, true)
+	})
+}
+
+func TestOnNewTrackerEvent(t *testing.T) {
+	myEE := newMockEmitter()
+	myIOManager := newMockIOManager()
+	newee = func() briee.EventEmitter {
+		return myEE
+	}
+	newio = func() aioli.IOManager {
+		return myIOManager
+	}
+	gorgonzola.RegisterDriver("beenleigh_mock", &BLMockTrackerDriver{&gorgonzola.MockTracker{}, false, ""})
+	bl := newBL()
+	onNewTrackerEvent(bl, TrackerSpec{"beenleigh_mock", "test", 1})
+	Convey("Creates a new EE and adds it to IOManager", t, func() {
+		So(myIOManager.ees[1], ShouldEqual, myEE)
+	})
+	SkipConvey("Creates a Tracker from specification and connects it to EE", t, func(){
+		So(onNewTrackerEvent(bl, TrackerSpec{"beenleigh_mock", "error", 2}), ShouldNotBeNil)
+	})
+}
+
+/*
+func TestNewStatisticsEvent(t *testing.T) {
+	Convey("new:statistics events should spawn a new Stilton (name pending) instance for specified tracker.", t, nil)
+}*/
