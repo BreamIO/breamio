@@ -123,4 +123,18 @@ func TestTypeOf(t *testing.T) {
 	if err == nil {
 		t.Errorf("TypeOf an unregistered event shall cause an error")
 	}
+
+	ee.Close()
+}
+
+func TestTypes(t *testing.T) {
+	ee := NewEventEmitter()
+	go ee.Run()
+
+	_ = ee.Publish("Map", map[string]A{}).(chan<- map[string]A)
+	_ = ee.Subscribe("Map", map[string]A{}).(<-chan map[string]A)
+	_ = ee.Publish("Slice", []A{}).(chan<- []A)
+	_ = ee.Subscribe("Slice", []A{}).(<-chan []A)
+
+	ee.Close()
 }

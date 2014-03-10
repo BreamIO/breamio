@@ -1,27 +1,27 @@
 package aioli
 
 import (
-	"encoding/gob"
+	//"encoding/gob"
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
-	"io"
+	//"io"
 	"log"
 	"reflect"
-	"time"
+	//"time"
 )
 
 // BasicIOManager implements IOManager.
 type BasicIOManager struct {
-	EEMap    map[int]briee.EventEmitter
+	eeMap    map[int]briee.EventEmitter
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
 }
 
 // NewBasicIOManager creates a new BasicIOManager.
-func NewBasicIOManager() *BasicIOManager {
+func newBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
-		EEMap:    make(map[int]briee.EventEmitter),
+		eeMap:    make(map[int]briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 	}
@@ -32,26 +32,38 @@ type publMapEntry struct {
 	ID    int
 }
 
+//func (biom *BasicIOManager) Listen(r io.Reader) {
+//	// TODO make private and implement Add/Remove listeners funcionallity
+//	var data []byte
+//	var ep ExtPkg
+//	dec := gob.NewDecoder(r)
+//
+//	for { // inf loop
+//		err := dec.Decode(&data)
+//		if err != nil {
+//			log.Printf("Decoding failed, sleep ...")
+//			time.Sleep(50 * time.Millisecond)
+//			continue
+//		}
+//
+//		err = json.Unmarshal(data, &ep)
+//		if err != nil {
+//			log.Printf("Unmarshal error, ", err)
+//		}
+//
+//		biom.dataChan <- ep
+//	}
+//}
+
 // Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
-func (biom *BasicIOManager) Listen(r io.Reader) {
+func (biom *BasicIOManager) Listen(dec Decoder) {
 	// TODO make private and implement Add/Remove listeners funcionallity
-	var data []byte
 	var ep ExtPkg
-	dec := gob.NewDecoder(r)
-
-	for { // inf loop
-		err := dec.Decode(&data)
+	for { // inf loop, FIXME
+		err := dec.Decode(&ep)
 		if err != nil {
-			log.Printf("Decoding failed, sleep ...")
-			time.Sleep(50 * time.Millisecond)
-			continue
+			log.Printf("Decoding failure")
 		}
-
-		err = json.Unmarshal(data, &ep)
-		if err != nil {
-			log.Printf("Unmarshal error, ", err)
-		}
-
 		biom.dataChan <- ep
 	}
 }
@@ -70,8 +82,7 @@ func (biom *BasicIOManager) Run() {
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 	// TODO Add broadcast functionality
-
-	if ee, ok := biom.EEMap[recvData.ID]; ok {
+	if ee, ok := biom.eeMap[recvData.ID]; ok {
 
 		// Look up the type in the event emitter
 		rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
@@ -99,7 +110,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 				// publCh is a write only channel of element type of rtype
 				publCh := reflect.ValueOf(ee.Publish(recvData.Event, zeroValInterface))
 
-				// TODO Save this publisher channel in a map for future use
+				// Save the publisher channel for future use
 				biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}] = &publCh
 				publCh.Send(ptr.Elem()) // Send decoded element on channel
 			}
@@ -117,8 +128,8 @@ func (biom *BasicIOManager) AddEE(ee briee.EventEmitter, id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
-	if _, ok := biom.EEMap[id]; !ok {
-		biom.EEMap[id] = ee
+	if _, ok := biom.eeMap[id]; !ok {
+		biom.eeMap[id] = ee
 		return nil
 	} else {
 		return errors.New("Can not add event emitter with existing identifier")
@@ -132,13 +143,13 @@ func (biom *BasicIOManager) RemoveEE(id int) error {
 	if id == 0 {
 		return errors.New("Integer identifier zero is reserved for broadcasting")
 	}
-	if ee, ok := biom.EEMap[id]; ok {
+	if ee, ok := biom.eeMap[id]; ok {
 		err := ee.Close()
 		if err != nil {
 			return err
 		}
 
-		delete(biom.EEMap, id)
+		delete(biom.eeMap, id)
 		return nil
 	} else {
 		return errors.New("Can not remove non-existing event emitter")

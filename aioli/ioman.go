@@ -2,7 +2,6 @@ package aioli
 
 import (
 	"github.com/maxnordlund/breamio/briee"
-	"io"
 )
 
 // ExtPkg is the struct used as the external protocol
@@ -14,13 +13,14 @@ type ExtPkg struct {
 
 // IOManager interface defines an I/O manager with external reader functionality
 type IOManager interface {
-	Listen(r io.Reader)
+	//Listen(r io.Reader)
+	Listen(dec Decoder)
 	Run()
 	AddEE(ee briee.EventEmitter, id int) error
 	RemoveEE(id int) error
 }
 
-// NewIOManager creates a new instance of a IOManager
+// NewIOManager creates a new instance of the default implementation BasicIOManager
 func NewIOManager() IOManager {
-	return NewBasicIOManager()
+	return newBasicIOManager()
 }
