@@ -4,27 +4,40 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/briee"
-	// "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
+type Generator interface {
+	// Adds all regions in a given
+	// RegionDefinitionMap for which
+	// statistics are to be generated.
+	AddRegions(rdm RegionDefinitionMap)
+
+	//Generate generates a RegionStatsMap
+	// for all regions registered in the generator
+	// and outputs them on a channel
+	Generate()
+}
+
 type RegionStatistics struct {
-	coordinateHandler CoordinateHandler
+	coordinateHandler analysis.CoordinateHandler
 	regions           []Region
 	publish           chan<- RegionStatsMap
 }
 
-func NewRegionStatistics(ee briee.EventEmitter, duration time.Duration, hertz int) *RegionStatistics {
-	ch := ee.Subscribe("gorgonzola:gazedata", &ETData{}).(<-chan *ETData)
+func New(ee briee.EventEmitter, duration time.Duration, hertz int) *RegionStatistics {
+	ch := ee.Subscribe("gorgonzola:gazedata", &gr.ETData{}).(<-chan *gr.ETData)
 
 	return &RegionStatistics{
-		coordinateHandler: NewCoordinateHandler(ch, duration, hertz),
+		coordinateHandler: analysis.NewCoordBuffer(ch, duration, hertz),
 		regions:           make([]Region, 0),
 		publish:           ee.Publish("statistics:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
 	}
 }
 
-func (rs RegionStatistics) getCoords() (coords chan *ETData) {
+func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
 	return rs.coordinateHandler.GetCoords()
 }
 
@@ -51,10 +64,10 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	//TODO goroutine here somwhere?
 	for coord := range rs.getCoords() {
 		for i, r := range rs.regions {
-			if currentEnterTime[i] == nil && r.Contains(&coord.Filtered) {
+			if currentEnterTime[i] == nil && r.Contains(coord.Filtered) {
 				stats[i].Looks++
 				currentEnterTime[i] = &coord.Timestamp
-			} else if currentEnterTime[i] != nil && !r.Contains(&coord.Filtered) {
+			} else if currentEnterTime[i] != nil && !r.Contains(coord.Filtered) {
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*currentEnterTime[i]))
 				currentEnterTime = nil
 			}

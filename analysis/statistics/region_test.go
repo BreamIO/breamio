@@ -4,6 +4,18 @@ import (
 	"testing"
 )
 
+type Point2D struct {
+	x, y float64
+}
+
+func (p Point2D) X() float64 {
+	return p.x
+}
+
+func (p Point2D) Y() float64 {
+	return p.y
+}
+
 func TestCircle(t *testing.T) {
 	reg := newRegion("center", RegionDefinition{
 		Type:  "circle",

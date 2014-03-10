@@ -6,7 +6,7 @@ import (
 
 // Region is an interface describing Regions
 type Region interface {
-	Contains(*gr.Point2D) bool
+	Contains(gr.Point2D) bool
 	Name() string
 	SetName(name string)
 }
@@ -53,9 +53,9 @@ func newEllipse(name string, cx, cy, width, height float64) *Ellipse {
 	}
 }
 
-func (e Ellipse) Contains(coord *Point2D) bool {
-	dx := coord.X - e.cx
-	dy := coord.Y - e.cy
+func (e Ellipse) Contains(coord gr.Point2D) bool {
+	dx := coord.X() - e.cx
+	dy := coord.Y() - e.cy
 	return ((dx*dx)/(e.width*e.width) + (dy*dy)/(e.height*e.height)) < 1
 }
 
@@ -87,11 +87,11 @@ func newRectangle(name string, x, y, width, height float64) *Rectangle {
 	}
 }
 
-func (r Rectangle) Contains(coord *Point2D) bool {
-	return r.left < coord.X &&
-		coord.X < r.right &&
-		r.top < coord.Y &&
-		coord.Y < r.bottom
+func (r Rectangle) Contains(coord gr.Point2D) bool {
+	return r.left < coord.X() &&
+		coord.X() < r.right &&
+		r.top < coord.Y() &&
+		coord.Y() < r.bottom
 }
 
 func (r Rectangle) Name() string {
