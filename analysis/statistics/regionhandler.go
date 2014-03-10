@@ -1,7 +1,9 @@
-package main
+package statistics
 
 import (
 	"time"
+
+	"github.com/maxnordlund/breamio/briee"
 )
 
 //RegionHandler is an interface for modules genarating stats based on regions compatible with eriver
@@ -14,6 +16,6 @@ type RegionHandler interface {
 	Generate()
 }
 
-func NewRegionHandler(ee /**EventEmitter*/ int, etID string, duration time.Duration, hertz int) *RegionStatistics {
-	return NewRegionStatistics(ee, etID, duration, hertz)
+func NewRegionHandler(ee briee.EventEmitter, duration time.Duration, hertz int) *RegionStatistics {
+	return NewRegionStatistics(ee, duration, hertz)
 }

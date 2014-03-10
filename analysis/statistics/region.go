@@ -1,12 +1,12 @@
 package statistics
 
 import (
-// 	"github.com/maxnordlund/breamio/gorgonzola"
+ 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
 // Region is an interface describing Regions
 type Region interface {
-	Contains(*Point2D) bool
+	Contains(*gr.Point2D) bool
 	Name() string
 	SetName(name string)
 }

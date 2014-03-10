@@ -1,5 +1,6 @@
-package main
+package statistics
 
+/*
 import (
 	"math/rand"
 	"time"
@@ -35,3 +36,4 @@ func (m MockCoordHandlerOutsideNoise) GetCoords() (coords chan *Coordinate) {
 	}
 	return coords
 }
+*/

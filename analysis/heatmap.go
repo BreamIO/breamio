@@ -1,4 +1,4 @@
-package main
+package statistics
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ type HeatMap struct {
 func NewHeatmap(ee /*EventEmitter*/ int, etID string, duration time.Duration, desiredFreq, resX, resY int) *HeatMap {
 	return &HeatMap{
 		ee:                ee,
-		coordinateHandler: NewCoordinateHandler(make(chan *Coordinate) /*ee.Subscribe(etID, Coordinate{}).(<-chan *Coordinate)*/, duration, desiredFreq),
+		coordinateHandler: NewCoordinateHandler(make(chan *ETData) /*ee.Subscribe(etID, ETData{}).(<-chan *ETData)*/, duration, desiredFreq),
 		width:             resX,
 		height:            resY,
 		publish:           make(chan<- *image.RGBA), /*ee.Publish(etID + ":heatmap", *image.Image)*/
@@ -47,8 +47,8 @@ func (hm HeatMap) Generate(height, width int) {
 
 	for coord := range coords {
 		if valid(coord) {
-			x = int(coord.x * float64(width))
-			y = int(coord.y * float64(height))
+			x = int(coord.Filtered.X * float64(width))
+			y = int(coord.Filtered.Y * float64(height))
 
 			for dx := -limitRadius; dx <= limitRadius; dx++ {
 				px = dx + x
@@ -98,8 +98,8 @@ func (hm HeatMap) Generate(height, width int) {
 	hm.publish <- heatmap
 }
 
-func valid(coord *Coordinate) bool {
-	return coord.x < 1 && coord.x >= 0 && coord.y < 1 && coord.y >= 0
+func valid(coord *ETData) bool {
+	return coord.Filtered.X < 1 && coord.Filtered.X >= 0 && coord.Filtered.Y < 1 && coord.Filtered.Y >= 0
 }
 
 func (hm HeatMap) GetCoordinateHandler() *CoordinateHandler {

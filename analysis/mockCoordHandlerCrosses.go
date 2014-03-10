@@ -1,5 +1,6 @@
-package main
+package statistics
 
+/*
 import (
 	"time"
 )
@@ -47,3 +48,4 @@ func (m MockCoordHandlerCrosses) GetCoords() (coords chan *Coordinate) {
 	}
 	return coords
 }
+*/

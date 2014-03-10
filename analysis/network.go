@@ -1,5 +1,6 @@
-package main
+package statistics
 
+/*
 import (
 	"bytes"
 	"encoding/binary"
@@ -10,7 +11,7 @@ import (
 )
 
 type CoordinateListener interface {
-	Add(coord Coordinate)
+	Add(coord ETData)
 }
 
 type CoordinateManager struct {
@@ -27,7 +28,7 @@ func (cm *CoordinateManager) AddListener(listener CoordinateListener) {
 	cm.listeners = append(cm.listeners, listener)
 }
 
-func (cm CoordinateManager) addCoord(c Coordinate) {
+func (cm CoordinateManager) addCoord(c ETData) {
 	for _, l := range cm.listeners {
 		l.Add(c)
 	}
@@ -65,7 +66,7 @@ func connectTo(ip string) *CoordinateManager {
 }
 
 //Reads a point and drops all other messages
-func getPoint(conn net.Conn) *Coordinate {
+func getPoint(conn net.Conn) *ETData {
 	var caseInt float64
 	buf := make([]byte, 1)
 	_, err := conn.Read(buf)
@@ -105,7 +106,7 @@ func getPoint(conn net.Conn) *Coordinate {
 	}
 
 }
-func dropMessage(conn net.Conn, numOfBytes int) *Coordinate {
+func dropMessage(conn net.Conn, numOfBytes int) *ETData {
 	bufRead := make([]byte, numOfBytes)
 	_, err := conn.Read(bufRead)
 	if err != nil {
@@ -114,7 +115,7 @@ func dropMessage(conn net.Conn, numOfBytes int) *Coordinate {
 	return nil
 }
 
-func getPointHelper(conn net.Conn) *Coordinate {
+func getPointHelper(conn net.Conn) *ETData {
 	var x, y float64
 	time := time.Now()
 	buf := make([]byte, 8)
@@ -141,3 +142,4 @@ func getPointHelper(conn net.Conn) *Coordinate {
 
 	return NewCoordinate(x, y, time)
 }
+*/
