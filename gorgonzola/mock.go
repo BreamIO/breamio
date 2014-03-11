@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math"
 	"time"
+	
+	"github.com/maxnordlund/breamio/briee"
 )
 
 func mockStandard(t float64) (float64, float64) {
@@ -43,18 +45,13 @@ type MockTracker struct {
 func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
 	ch := make(chan *ETData)
 	errs := make(chan error, 1)
-	go func() {
-		for {
-			if m.f == nil {
-				close(ch)
-				return
-			}
-			x, y := m.f(m.t)
-			ch <- &ETData{point2D{x, y}, time.Now()}
-			m.t += 0.1
-		}
-	}()
+	go m.generate(ch)
 	return ch, errs
+}
+
+func (m *MockTracker) Link(ee briee.EventEmitter) {
+	ch := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
+	go m.generate(ch)
 }
 
 func (m *MockTracker) Close() error {
@@ -75,6 +72,18 @@ func (m MockTracker) Calibrate(points <-chan Point2D, errs chan<- error) {
 
 func (m MockTracker) IsCalibrated() bool {
 	return m.calibrated
+}
+
+func (m *MockTracker) generate(ch chan<- *ETData) {
+	for {
+		if m.f == nil {
+			close(ch)
+			return
+		}
+		x, y := m.f(m.t)
+		ch <- &ETData{point2D{x, y}, time.Now()}
+		m.t += 0.1
+	}
 }
 
 func init() {

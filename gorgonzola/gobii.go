@@ -2,6 +2,7 @@ package gorgonzola
 
 import (
 	"github.com/zephyyrr/gobii/gaze"
+	"github.com/maxnordlund/breamio/briee"
 )
 
 // Driver implementation for Gobii
@@ -39,17 +40,18 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 	ch := make(chan *ETData)
 	errs := make(chan error, 1)
 
-	err := g.StartTracking(func(data *gaze.GazeData) {
-		etdata := new(ETData)
-		etdata.Filtered = filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
-		etdata.Timestamp = data.Timestamp()
-		ch <- etdata
-	})
+	err := g.StartTracking(gobiiOnGazeCallback(ch))
 
 	if err != nil {
 		errs <- err
 	}
 	return ch, errs
+}
+
+func (g *GazeTracker) Link(ee briee.EventEmitter) {
+	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
+	err := g.StartTracking(gobiiOnGazeCallback(etdataCh));
+	ee.Dispatch("tracker:error", err);
 }
 
 func (g *GazeTracker) Calibrate(points <-chan Point2D, errors chan<- error) {
@@ -62,6 +64,15 @@ func (g *GazeTracker) Calibrate(points <-chan Point2D, errors chan<- error) {
 
 func (g GazeTracker) IsCalibrated() bool {
 	return g.calibrated
+}
+
+func gobiiOnGazeCallback(ch chan<-*ETData) func(data *gaze.GazeData) {
+	return func(data *gaze.GazeData) {
+		etdata := new(ETData)
+		etdata.Filtered = filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
+		etdata.Timestamp = data.Timestamp()
+		ch <- etdata
+	}
 }
 
 func init() {
