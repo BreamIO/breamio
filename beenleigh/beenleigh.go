@@ -20,7 +20,7 @@ func New() Logic {
 	return newBL()
 }
 
-type handlerFunc func(TrackerSpec) error
+type handlerFunc func(Spec) error
 
 type breamLogic struct {
 	root briee.EventEmitter
@@ -54,8 +54,8 @@ func newBL() *breamLogic {
 	logic.ioman = newio()
 	logic.ioman.AddEE(logic.root, 256)
 	logic.onNewTrackerEvent = func() handlerFunc {
-		return func(ts TrackerSpec) error {
-			return onNewTrackerEvent(logic, ts)
+		return func(spec Spec) error {
+			return onNewTrackerEvent(logic, spec)
 		}
 	}()
 	
@@ -72,17 +72,23 @@ func (bl *breamLogic) MainIOManager() aioli.IOManager {
 
 func (bl *breamLogic) ListenAndServe() {
 	//Subscribe to events
-	newTrackerEvents := bl.root.Subscribe("new:tracker", TrackerSpec{}).(<-chan TrackerSpec)
-	//newStatsEvents := bl.root.Subscribe("new:statistics", StatsSpec{}).(<-chan StatsSpec)
-	shutdownEvents := bl.root.Subscribe("shutdown", TrackerSpec{}).(<-chan TrackerSpec)
+	newEvents := bl.root.Subscribe("new", Spec{}).(<-chan Spec)
+	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 	
 	go bl.ioman.Run()
 	
 	for {
 		select {
-			case event := <- newTrackerEvents:
-				if err := bl.onNewTrackerEvent(event); err != nil {
-					
+			case event := <- newEvents:
+				switch event.Type {
+				case "tracker":
+					if err := bl.onNewTrackerEvent(event); err != nil {
+						bl.root.Dispatch("error:new:tracker", err)
+					}
+				case "statistics":
+					/*if err := bl.onNewStatisticsEvent(event); err != nil {
+						bl.root.Dispatch("error:new:tracker", err)
+					}*/
 				}
 			case <- shutdownEvents:
 				bl.logger.Println("Recieved shutdown event.")
@@ -94,19 +100,18 @@ func (bl *breamLogic) ListenAndServe() {
 	}
 }
 
-func onNewTrackerEvent(bl *breamLogic, event TrackerSpec) error {
+func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.logger.Println("Recieved new:tracker event.")
 	ee :=  newee()
-	bl.ioman.AddEE(ee, event.Number)
-	tracker, err := gorgonzola.GetDriver(event.Type).CreateFromId(event.Id)
+	bl.ioman.AddEE(ee, event.Emitter)
+	tracker, err := gorgonzola.CreateFromURI(event.Data)
 	if err != nil {
-		bl.logger.Printf("Could not create new tracker with type %s and id %s: %s", event.Type, event.Id, err)
+		bl.logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
 		return err
 	}
 	tracker.Connect()
-	go gorgonzola.Link(ee, tracker)
-	bl.logger.Printf("Created a new %s tracker with id %s on EE %d.\n", 
-		event.Type, event.Id, event.Number)
+	go tracker.Link(ee)
+	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
 	return nil
 }
 
@@ -115,8 +120,8 @@ func (bl *breamLogic) Close() error {
 	return nil
 }
 
-type TrackerSpec struct {
+type Spec struct {
 	Type string
-	Id string
-	Number int
+	Data string
+	Emitter int
 }
