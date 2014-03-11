@@ -34,12 +34,14 @@ func makeSendRecv(vtype reflect.Type) (chvSend, chvRecv reflect.Value) {
 	chtypeSend := reflect.ChanOf(reflect.SendDir, vtype)
 	chtypeRecv := reflect.ChanOf(reflect.RecvDir, vtype)
 
+	/*
 	if !chtype.ConvertibleTo(chtypeSend) {
 		log.Panic("Cannot convert bi-directional channel to write-only\n")
 	}
 	if !chtype.ConvertibleTo(chtypeRecv) {
 		log.Panic("Cannot convert bi-directional channel to read-only\n")
 	}
+	*/
 
 	// Make a two-way channel
 	chv := reflect.MakeChan(chtype, 0)
@@ -77,9 +79,11 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
 
+	/*
 	if !isValid(v) {
 		log.Panic("<Publisher> Invalid type")
 	}
+	*/
 
 	// TODO Refactor if performance is an issue. The channels/slice does not need to be constructed in all cases.
 	chvSend, chvRecv := makeSendRecv(vtype)
@@ -133,9 +137,11 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	// get the type of v
 	vtype := reflect.TypeOf(v)
 
+	/*
 	if !isValid(v) {
 		log.Panic("<Subscribe> Invalid type")
 	}
+	*/
 
 	// Make directed channels
 	chvSend, chvRecv := makeSendRecv(vtype)
@@ -254,9 +260,12 @@ func (ee *LocalEventEmitter) Run() {
 					//log.Printf("Field Name: %s,\t Field Value: %v\n", typeField.Name, recvueField.Interface())
 				}
 				*/
+
+				/*
 				if event.Subscribers.Type().Kind() != reflect.Slice {
 					log.Panic("event.Subscribers is not a slice")
 				}
+				*/
 
 				for i := 0; i < event.Subscribers.Len(); i++ {
 					sub := event.Subscribers.Index(i)

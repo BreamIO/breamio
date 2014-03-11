@@ -84,6 +84,29 @@ func testNilPublisher(t *testing.T) {
 	_ = ee.Publish("A", nil).(chan<- A)
 }
 
+func testNotification() {
+	ee := NewEventEmitter()
+	go ee.Run()
+
+	publ := ee.Publish("Notification", struct{}{}).(chan<-struct{})
+	subs := ee.Subscribe("Notification", struct{}{}).(<-chan struct{})
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func(){
+		publ <- struct{}{}
+		wg.Done()
+	}()
+
+	go func(){
+		<-subs
+		wg.Done()
+	}()
+
+	wg.Done()
+	ee.Close()
+}
+
 func TestCloseEE(t *testing.T) {
 	ee := NewEventEmitter()
 	go ee.Run()
