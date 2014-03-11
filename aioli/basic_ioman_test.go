@@ -167,41 +167,7 @@ func recvPkg(network *bytes.Buffer) ExtPkg {
 	return rawPkg
 }
 
-func recv(network *bytes.Buffer) Payload {
-	// Decode Data, IOman reciver that is not currently written, will output data on a ExtPkg channel
-	// This does not know about the Data struct, but does know of the ExtPkg
-	// FIXME Currently unused, see recvPkg instead, kept as documentation atm
-
-	var jsonPkg []byte
-
-	dec := gob.NewDecoder(network)
-	err := dec.Decode(&jsonPkg)
-	if err != nil {
-		log.Panic("Decode error, ", err)
-	}
-
-	var rawPkg ExtPkg
-
-	err = json.Unmarshal(jsonPkg, &rawPkg)
-	if err != nil {
-		log.Panic("Unmarshal error, ", err)
-	}
-
-	// Send jsonPkg on channel
-	// Decode as json according to reflect.Type from emitter
-	// But now we do this manually for step-by-step progress
-
-	var pl Payload // What if this is a reflect.Value? TODO
-
-	err = json.Unmarshal(rawPkg.Data, &pl)
-	if err != nil {
-		log.Panic("Unmarshal error, ", err)
-	}
-
-	return pl
-}
-
-func TestDecoder (t *testing.T){
+func TestDecoder(t *testing.T) {
 	ioman := NewIOManager()
 	go ioman.Run()
 	var network bytes.Buffer

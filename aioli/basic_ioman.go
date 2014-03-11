@@ -62,7 +62,7 @@ func (biom *BasicIOManager) Listen(dec Decoder) {
 	for { // inf loop, FIXME
 		err := dec.Decode(&ep)
 		if err != nil {
-			log.Printf("Decoding failure")
+			//log.Printf("Decoding failure")
 		}
 		biom.dataChan <- ep
 	}
@@ -117,7 +117,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 		}
 	} else {
-		log.Printf("No matching event: %v from event emitter\n", recvData.Event)
+		log.Printf("No match for packet: %v", recvData)
 	}
 }
 
