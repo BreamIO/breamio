@@ -122,6 +122,17 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	return chvSend.Interface()
 }
 
+func (ee *LocalEventEmitter) Dispatch(eventID string, value interface{} ) {
+	event := ee.eventMap[eventID]
+	if event == nil {
+		return
+	}
+	for i := 0; i < event.Subscribers.Len(); i++ {
+		sub := event.Subscribers.Index(i)
+		sub.Send(value)
+	} // end for
+}
+
 // Subscribe returns a write-only channel with element type equal to the underlying type of the provided interface.
 //
 // An explicit type assertion of the returned channel is required if used in a non-reflective context.
