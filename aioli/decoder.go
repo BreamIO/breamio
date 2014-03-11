@@ -1,8 +1,8 @@
 package aioli
 
 import (
-	"io"
 	"encoding/json"
+	"io"
 )
 
 // Decoder interface to be used with I/O manager Listen method.
