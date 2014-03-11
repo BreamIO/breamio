@@ -33,13 +33,13 @@ type breamLogic struct {
 // Constructor function for EventEmitters.
 // Allows Dependency Injection for testing purposes. 
 var newee = func() briee.EventEmitter {
-	return briee.NewLocalEventEmitter()
+	return briee.New()
 }
 
 // Constructor function for IOManagers.
 // Allows Dependency Injection for testing purposes. 
 var newio = func() aioli.IOManager {
-	return aioli.NewBasicIOManager()
+	return aioli.New()
 }
 
 func newBL() *breamLogic {
