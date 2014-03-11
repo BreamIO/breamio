@@ -109,7 +109,6 @@ func TestIOman(t *testing.T) {
 	}()
 
 	wg.Wait()
-
 	if plSend != plRecv {
 		t.Errorf("Got %v, want %v\n", plRecv, plSend)
 	}

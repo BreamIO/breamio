@@ -38,7 +38,7 @@ func (biom *BasicIOManager) Listen(dec Decoder) {
 	for { // inf loop, FIXME
 		err := dec.Decode(&ep)
 		if err != nil {
-			log.Printf("Decoding failure")
+			log.Printf("Decoding failure", err)
 			time.Sleep(time.Millisecond * 500)
 		} else {
 			biom.dataChan <- ep

@@ -129,7 +129,7 @@ func (ee *LocalEventEmitter) Dispatch(eventID string, value interface{} ) {
 	}
 	for i := 0; i < event.Subscribers.Len(); i++ {
 		sub := event.Subscribers.Index(i)
-		sub.Send(value)
+		sub.Send(reflect.ValueOf(value))
 	} // end for
 }
 
