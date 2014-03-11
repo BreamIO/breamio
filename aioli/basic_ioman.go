@@ -8,7 +8,7 @@ import (
 	//"io"
 	"log"
 	"reflect"
-	//"time"
+	"time"
 )
 
 // BasicIOManager implements IOManager.
@@ -32,39 +32,17 @@ type publMapEntry struct {
 	ID    int
 }
 
-//func (biom *BasicIOManager) Listen(r io.Reader) {
-//	// TODO make private and implement Add/Remove listeners funcionallity
-//	var data []byte
-//	var ep ExtPkg
-//	dec := gob.NewDecoder(r)
-//
-//	for { // inf loop
-//		err := dec.Decode(&data)
-//		if err != nil {
-//			log.Printf("Decoding failed, sleep ...")
-//			time.Sleep(50 * time.Millisecond)
-//			continue
-//		}
-//
-//		err = json.Unmarshal(data, &ep)
-//		if err != nil {
-//			log.Printf("Unmarshal error, ", err)
-//		}
-//
-//		biom.dataChan <- ep
-//	}
-//}
-
-// Listen will listen for ExtPkg data on the provided io.Reader and redirect for further handling.
+// Listen will listen on provided decoder and redirect successfully decoded packages.
 func (biom *BasicIOManager) Listen(dec Decoder) {
-	// TODO make private and implement Add/Remove listeners funcionallity
 	var ep ExtPkg
 	for { // inf loop, FIXME
 		err := dec.Decode(&ep)
 		if err != nil {
-			//log.Printf("Decoding failure")
+			log.Printf("Decoding failure")
+			time.Sleep(time.Millisecond * 500)
+		} else {
+			biom.dataChan <- ep
 		}
-		biom.dataChan <- ep
 	}
 }
 
@@ -80,6 +58,11 @@ func (biom *BasicIOManager) Run() {
 
 // Handle tries to decode and send the provided ExtPkg on one or more event emitters
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
+	log.Printf("Incomming pkg: %v\n", recvData)
+
+	for key := range biom.eeMap {
+		log.Printf("Map content[%v] %v\n", key, biom.eeMap[key])
+	}
 
 	// TODO Add broadcast functionality
 	if ee, ok := biom.eeMap[recvData.ID]; ok {
@@ -118,6 +101,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 		}
 	} else {
 		log.Printf("No match for packet: %v", recvData)
+		time.Sleep(time.Millisecond * 500)
 	}
 }
 

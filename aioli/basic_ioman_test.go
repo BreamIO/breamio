@@ -2,13 +2,14 @@ package aioli
 
 import (
 	"bytes"
-	"encoding/gob"
+	//"encoding/gob"
 	"encoding/json"
 	"log"
 	"sync"
 	//"time"
 	"github.com/maxnordlund/breamio/briee"
 	"testing"
+	"io"
 	//"reflect"
 )
 
@@ -17,8 +18,8 @@ type Payload struct {
 }
 
 func TestAddRemoveEmitters(t *testing.T) {
-	ee := briee.NewEventEmitter()
-	ioman := NewIOManager()
+	ee := briee.New()
+	ioman := New()
 
 	// Add event emitter
 	err := ioman.AddEE(ee, 1)
@@ -34,8 +35,8 @@ func TestAddRemoveEmitters(t *testing.T) {
 }
 
 func TestAddEEBC(t *testing.T) {
-	ee := briee.NewEventEmitter()
-	ioman := NewIOManager()
+	ee := briee.New()
+	ioman := New()
 
 	// Add event emitter
 	err := ioman.AddEE(ee, 0)
@@ -45,8 +46,8 @@ func TestAddEEBC(t *testing.T) {
 }
 
 func TestRemEEBC(t *testing.T) {
-	ee := briee.NewEventEmitter()
-	ioman := NewIOManager()
+	ee := briee.New()
+	ioman := New()
 
 	// Add event emitter
 	err := ioman.AddEE(ee, 1)
@@ -63,12 +64,12 @@ func TestRemEEBC(t *testing.T) {
 
 func TestIOman(t *testing.T) {
 	// Set up emitter
-	ee := briee.NewEventEmitter()
+	ee := briee.New()
 	go ee.Run()
 	subscriber := ee.Subscribe("event data", Payload{}).(<-chan Payload)
 
 	// Set up IO manager
-	ioman := NewIOManager()
+	ioman := New()
 
 	// Add event emitter
 	err := ioman.AddEE(ee, 1)
@@ -76,7 +77,8 @@ func TestIOman(t *testing.T) {
 		t.Errorf("Unable to add event emitter")
 	}
 
-	var network bytes.Buffer // Stand-in for the network
+	network := bytes.NewBuffer(make([]byte, 256)) // Stand-in for the network
+	dec := json.NewDecoder(network)
 
 	// Example data from an external source
 	plSend := Payload{
@@ -90,21 +92,18 @@ func TestIOman(t *testing.T) {
 	wg.Add(2)
 
 	go ioman.Run()
-	dec := NewDecoder(&network)
-	// Listen fix, TODO Clean up
-	//go ioman.Listen(&network)
 	go ioman.Listen(dec)
 
 	go func() {
 		// Send decodes and sends payload data on network
-		send(plSend, &network)
-		send(plSend, &network)
+		send(plSend, network)
+		//send(plSend, network)
 		wg.Done()
 	}()
 
 	go func() {
 		// Listen on subscriber channel
-		plRecv = <-subscriber
+		//plRecv = <-subscriber
 		plRecv = <-subscriber
 		wg.Done()
 	}()
@@ -114,12 +113,45 @@ func TestIOman(t *testing.T) {
 	if plSend != plRecv {
 		t.Errorf("Got %v, want %v\n", plRecv, plSend)
 	}
+
+	//ioman.Close()
 }
 
-func send(pl Payload, network *bytes.Buffer) {
+/*
+func TestDecoder(t *testing.T) {
+	ioman := New()
+	go ioman.Run()
+	var network bytes.Buffer
+	dec := NewJSONDecoder(&network)
+	go ioman.Listen(dec)
+}
+*/
+
+func send(pl Payload, network io.Writer) {
 	// Encode Data, representing the other side, e.g. WEB, CLI
 
 	// Encode the payload data of type Payload as json
+	jsonpl, err := json.Marshal(pl)
+	if err != nil {
+		log.Panic("Marshal error, ", err)
+	}
+
+	rawPkg := ExtPkg{
+		Event: "event data",
+		ID:    1,
+		Data:  jsonpl,
+	}
+
+	log.Printf("send ExtPkg: %v", rawPkg)
+
+	enc := json.NewEncoder(network)
+	log.Printf("Network before: %v", network)
+	err = enc.Encode(rawPkg)
+	log.Printf("Network after: %v", network)
+	if err != nil {
+		log.Panic("Encode error, ", err)
+	}
+	/*
 	jsonpl, plerr := json.Marshal(pl)
 
 	if plerr != nil {
@@ -146,9 +178,11 @@ func send(pl Payload, network *bytes.Buffer) {
 	if err != nil {
 		log.Panic("Encode error, ", err)
 	}
+	*/
 }
 
-func recvPkg(network *bytes.Buffer) ExtPkg {
+func recvPkg(network io.Reader) ExtPkg {
+	/*
 	var jsonPkg []byte
 
 	dec := gob.NewDecoder(network)
@@ -163,14 +197,12 @@ func recvPkg(network *bytes.Buffer) ExtPkg {
 	if err != nil {
 		log.Panic("Unmarshal error, ", err)
 	}
+	*/
+
+	var rawPkg ExtPkg
+
+	dec := json.NewDecoder(network)
+	dec.Decode(&rawPkg)
 
 	return rawPkg
-}
-
-func TestDecoder(t *testing.T) {
-	ioman := NewIOManager()
-	go ioman.Run()
-	var network bytes.Buffer
-	dec := NewJSONDecoder(&network)
-	go ioman.Listen(dec)
 }

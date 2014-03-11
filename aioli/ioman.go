@@ -20,7 +20,7 @@ type IOManager interface {
 	RemoveEE(id int) error
 }
 
-// NewIOManager creates a new instance of the default implementation BasicIOManager
-func NewIOManager() IOManager {
+// New creates a new instance of the default implementation BasicIOManager
+func New() IOManager {
 	return newBasicIOManager()
 }
