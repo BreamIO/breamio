@@ -8,8 +8,8 @@ import (
 	"sync"
 	//"time"
 	"github.com/maxnordlund/breamio/briee"
-	"testing"
 	"io"
+	"testing"
 	//"reflect"
 )
 
@@ -152,51 +152,51 @@ func send(pl Payload, network io.Writer) {
 		log.Panic("Encode error, ", err)
 	}
 	/*
-	jsonpl, plerr := json.Marshal(pl)
+		jsonpl, plerr := json.Marshal(pl)
 
-	if plerr != nil {
-		log.Panic("Marshal error, ", plerr)
-	}
+		if plerr != nil {
+			log.Panic("Marshal error, ", plerr)
+		}
 
-	// Construct the external package with the encoded payload
-	rawPkg := ExtPkg{
-		Event: "event data",
-		ID:    1,
-		Data:  jsonpl,
-	}
+		// Construct the external package with the encoded payload
+		rawPkg := ExtPkg{
+			Event: "event data",
+			ID:    1,
+			Data:  jsonpl,
+		}
 
-	// Encode the external package as json
-	jsonPkg, pkgerr := json.Marshal(rawPkg)
+		// Encode the external package as json
+		jsonPkg, pkgerr := json.Marshal(rawPkg)
 
-	if pkgerr != nil {
-		log.Panic("Marshal error, ", pkgerr)
-	}
+		if pkgerr != nil {
+			log.Panic("Marshal error, ", pkgerr)
+		}
 
-	// Create and send on encoder
-	enc := gob.NewEncoder(network)
-	err := enc.Encode(jsonPkg)
-	if err != nil {
-		log.Panic("Encode error, ", err)
-	}
+		// Create and send on encoder
+		enc := gob.NewEncoder(network)
+		err := enc.Encode(jsonPkg)
+		if err != nil {
+			log.Panic("Encode error, ", err)
+		}
 	*/
 }
 
 func recvPkg(network io.Reader) ExtPkg {
 	/*
-	var jsonPkg []byte
+		var jsonPkg []byte
 
-	dec := gob.NewDecoder(network)
-	err := dec.Decode(&jsonPkg)
-	if err != nil {
-		log.Panic("Decode error, ", err)
-	}
+		dec := gob.NewDecoder(network)
+		err := dec.Decode(&jsonPkg)
+		if err != nil {
+			log.Panic("Decode error, ", err)
+		}
 
-	var rawPkg ExtPkg
+		var rawPkg ExtPkg
 
-	err = json.Unmarshal(jsonPkg, &rawPkg)
-	if err != nil {
-		log.Panic("Unmarshal error, ", err)
-	}
+		err = json.Unmarshal(jsonPkg, &rawPkg)
+		if err != nil {
+			log.Panic("Unmarshal error, ", err)
+		}
 	*/
 
 	var rawPkg ExtPkg
