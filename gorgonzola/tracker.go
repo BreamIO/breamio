@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"time"
+	
+	"github.com/maxnordlund/breamio/briee"
 )
 
 var drivers = make(map[string]Driver)
@@ -54,6 +56,12 @@ type Tracker interface {
 	// If the channel is full, the tracker discards the data.
 	// If a error occurs while streaming, it is sent along the error channel.
 	Stream() (<-chan *ETData, <-chan error)
+	
+	// Connects the tracker to the given Event Emitter
+	// This means the tracker publishes its capabilities to the emitter.
+	// That means that gaze data is published to the channel on event "tracker:etdata".
+	// It also means calibration is exposed on "tracker:calibrate" and any settings capabilities on tracker:settings
+	Link(ee briee.EventEmitter)
 
 	//Initiates a connection between the software driver and the hardware.
 	//Should be called before any other use of the tracker except if method specifies it.

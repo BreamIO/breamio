@@ -1,41 +1,17 @@
 package gorgonzola
 
 import (
-	"github.com/maxnordlund/breamio/briee"
+	"strings"
+	"errors"
 )
 
-func Link(ee briee.EventEmitter, t Tracker) error {
-	publisher := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
-
-	dataCh, errCh := t.Stream()
-	defer func() {
-		if r := recover(); r != nil {
-			println("Caught a runtime panic:", r)
-			//Recover from a close on the publisher channel.
-			//Do not want to bring down entire application
-		}
-	}()
-
-	return listenAndServe(dataCh, errCh, publisher)
-}
-
-func listenAndServe(dataChannel <-chan *ETData, errorChannel <-chan error, publisher chan<- *ETData) error {
-	for {
-		select {
-		case data, ok := <-dataChannel:
-			if !ok {
-				return nil //No more data from tracker. Shutting down. Does not break due to weirdness in testing.
-			}
-			select {
-			case publisher <- data: // Attempt to send
-			default:
-				println("[Gorgonzola] Dropped package due to full channel.")
-			}
-		case err := <-errorChannel:
-			return err
-		}
+func CreateFromURI(uri string) (Tracker, error) {
+	split := strings.SplitN(uri, "://", 2)
+	if len(split) < 2 {
+		return nil, errors.New("Malformed URI")
 	}
-	return nil //Dead code, but compiler insists on its existence
+	typ, id := split[0], split[1]
+	return GetDriver(typ).CreateFromId(id)
 }
 
 type Point2D interface {

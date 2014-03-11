@@ -16,13 +16,13 @@ import (
 */
 
 type mockEmitter struct {
-	pubsubs map[string]chan TrackerSpec
+	pubsubs map[string]chan interface{}
 	subs map[string]chan bool
 }
 
 func newMockEmitter() *mockEmitter {
 	return &mockEmitter{
-		make(map[string]chan TrackerSpec),
+		make(map[string]chan interface{}),
 		map[string](chan bool){
 			"new:tracker": make(chan bool, 1),
 			"shutdown": make(chan bool, 1),
@@ -43,6 +43,12 @@ func (m *mockEmitter) Publish(chid string, v interface{}) interface{} {
 			ch := make(chan *gorgonzola.ETData)
 			return (chan<- *gorgonzola.ETData)(ch)
 		default: return nil
+	}
+}
+
+func (m *mockEmitter) Dispatch(eventID string, v interface{}) {
+	if m.pubsubs[eventID] != nil {
+		m.pubsubs[eventID] <- v
 	}
 }
 
