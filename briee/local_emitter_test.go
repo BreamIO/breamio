@@ -18,7 +18,7 @@ type B struct {
 
 func TestEmitter(t *testing.T) {
 	//var ee *EventEmitter
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
 	PublA1 := ee.Publish("A", A{}).(chan<- A)
@@ -73,7 +73,7 @@ func TestEmitter(t *testing.T) {
 }
 
 func testNilPublisher(t *testing.T) {
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
 	defer func() {
@@ -85,20 +85,20 @@ func testNilPublisher(t *testing.T) {
 }
 
 func testNotification() {
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
-	publ := ee.Publish("Notification", struct{}{}).(chan<-struct{})
+	publ := ee.Publish("Notification", struct{}{}).(chan<- struct{})
 	subs := ee.Subscribe("Notification", struct{}{}).(<-chan struct{})
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func(){
+	go func() {
 		publ <- struct{}{}
 		wg.Done()
 	}()
 
-	go func(){
+	go func() {
 		<-subs
 		wg.Done()
 	}()
@@ -108,7 +108,7 @@ func testNotification() {
 }
 
 func TestCloseEE(t *testing.T) {
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
 	_ = ee.Publish("A", A{}).(chan<- A)
@@ -126,7 +126,7 @@ func TestCloseEE(t *testing.T) {
 }
 
 func TestTypeOf(t *testing.T) {
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
 	_ = ee.Publish("A", A{}).(chan<- A)
@@ -151,7 +151,7 @@ func TestTypeOf(t *testing.T) {
 }
 
 func TestTypes(t *testing.T) {
-	ee := NewEventEmitter()
+	ee := New()
 	go ee.Run()
 
 	_ = ee.Publish("Map", map[string]A{}).(chan<- map[string]A)

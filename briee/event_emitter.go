@@ -6,9 +6,10 @@ import (
 
 // EventEmitter interface.
 type EventEmitter interface {
-	Publish(chid string, v interface{}) interface{}
-	Subscribe(chid string, v interface{}) interface{}
+	Publish(eventID string, v interface{}) interface{}
+	Subscribe(eventID string, v interface{}) interface{}
 	TypeOf(eventID string) (reflect.Type, error)
+	Dispatch(eventID string, v interface{})
 	Close() error
 	Run()
 }

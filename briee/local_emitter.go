@@ -35,12 +35,12 @@ func makeSendRecv(vtype reflect.Type) (chvSend, chvRecv reflect.Value) {
 	chtypeRecv := reflect.ChanOf(reflect.RecvDir, vtype)
 
 	/*
-	if !chtype.ConvertibleTo(chtypeSend) {
-		log.Panic("Cannot convert bi-directional channel to write-only\n")
-	}
-	if !chtype.ConvertibleTo(chtypeRecv) {
-		log.Panic("Cannot convert bi-directional channel to read-only\n")
-	}
+		if !chtype.ConvertibleTo(chtypeSend) {
+			log.Panic("Cannot convert bi-directional channel to write-only\n")
+		}
+		if !chtype.ConvertibleTo(chtypeRecv) {
+			log.Panic("Cannot convert bi-directional channel to read-only\n")
+		}
 	*/
 
 	// Make a two-way channel
@@ -80,9 +80,9 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	vtype := reflect.TypeOf(v)
 
 	/*
-	if !isValid(v) {
-		log.Panic("<Publisher> Invalid type")
-	}
+		if !isValid(v) {
+			log.Panic("<Publisher> Invalid type")
+		}
 	*/
 
 	// TODO Refactor if performance is an issue. The channels/slice does not need to be constructed in all cases.
@@ -149,9 +149,9 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	vtype := reflect.TypeOf(v)
 
 	/*
-	if !isValid(v) {
-		log.Panic("<Subscribe> Invalid type")
-	}
+		if !isValid(v) {
+			log.Panic("<Subscribe> Invalid type")
+		}
 	*/
 
 	// Make directed channels
@@ -273,9 +273,9 @@ func (ee *LocalEventEmitter) Run() {
 				*/
 
 				/*
-				if event.Subscribers.Type().Kind() != reflect.Slice {
-					log.Panic("event.Subscribers is not a slice")
-				}
+					if event.Subscribers.Type().Kind() != reflect.Slice {
+						log.Panic("event.Subscribers is not a slice")
+					}
 				*/
 
 				for i := 0; i < event.Subscribers.Len(); i++ {
