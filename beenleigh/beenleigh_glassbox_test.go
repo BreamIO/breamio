@@ -4,57 +4,44 @@ import (
 	"testing"
 	. "github.com/smartystreets/goconvey/convey"
 	
-	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
 func TestClose(t *testing.T) {
-	bl := newBL()
+	bl := newBL(briee.New, nil)
 	Convey("Should close the internal closer channel", t, func() {
 		go bl.Close()
 		_, ok := <-bl.closer
 		So(ok, ShouldNotEqual, true)
 	})
 	Convey("Return value should be nil", t, func() {
-		bl = newBL()
+		bl = newBL(briee.New, nil)
 		So(bl.Close(), ShouldBeNil)
 	})
 }
 
 func TestRootEmitter(t *testing.T) {
-	bl := newBL()
+	bl := newBL(briee.New, nil)
 	Convey("A first root event emitter should be running.", t, func() {
 		So(bl.RootEmitter(), ShouldNotEqual, nil)
-	})
-}
-
-func TestMainIOManager(t *testing.T) {
-	bl := newBL()
-	Convey("And a IOManager should be available.", t, func() {
-		So(bl.MainIOManager(), ShouldNotEqual, nil)
 	})
 }
 
 func TestListenAndServe(t *testing.T) {
 	myEE := newMockEmitter()
 	myIOManager := newMockIOManager()
-	newee = func() briee.EventEmitter {
-		return myEE
-	}
-	newio = func() aioli.IOManager {
-		return myIOManager
-	}
-	
 	done := make(chan struct{})
-	bl := newBL()
+	bl := newBL(func() briee.EventEmitter {return myEE}, myIOManager)
+	
 	go func() {
 		bl.ListenAndServe()
 		close(done)
 	}()
+	
 	Convey("Some its events should be subscribed to", t, func(){
 		t.Log(myEE)
-		So(myEE.subscribedTo("new:tracker"), ShouldEqual, true)
+		So(myEE.subscribedTo("new"), ShouldEqual, true)
 		So(myEE.subscribedTo("shutdown"), ShouldEqual, true)
 	})
 	
@@ -63,19 +50,19 @@ func TestListenAndServe(t *testing.T) {
 	})
 	
 	Convey("And events recieved handeled", t, func() {
-		Convey("Calls onNewTrackerEvent for \"new:tracker\"", func() {
+		Convey("Calls onNewTrackerEvent for \"new\" with type \"tracker\"", func() {
 			done := make(chan struct{})
-			bl.onNewTrackerEvent = func(ts TrackerSpec) error {
+			bl.onNewTrackerEvent = func(spec Spec) error {
 				close(done)
 				return nil
 			}
-			myEE.pubsubs["new:tracker"] <- TrackerSpec{}
+			myEE.pubsubs["new"].(chan Spec) <- Spec{"tracker", "", 0}
 			_, ok := <-done
 			So(ok, ShouldNotEqual, true)
 			
 		})
 		Convey("Returns when recieving a\"shutdown\" event", func(){
-			myEE.pubsubs["shutdown"] <- TrackerSpec{}
+			myEE.pubsubs["shutdown"].(chan struct{}) <- struct{}{}
 			_, ok := <-done
 			So(ok, ShouldNotEqual, true)
 		})
@@ -96,20 +83,14 @@ func TestListenAndServe(t *testing.T) {
 func TestOnNewTrackerEvent(t *testing.T) {
 	myEE := newMockEmitter()
 	myIOManager := newMockIOManager()
-	newee = func() briee.EventEmitter {
-		return myEE
-	}
-	newio = func() aioli.IOManager {
-		return myIOManager
-	}
 	gorgonzola.RegisterDriver("beenleigh_mock", &BLMockTrackerDriver{&gorgonzola.MockTracker{}, false, ""})
-	bl := newBL()
-	onNewTrackerEvent(bl, TrackerSpec{"beenleigh_mock", "test", 1})
+	bl := newBL(func() briee.EventEmitter {return myEE}, myIOManager)
+	onNewTrackerEvent(bl, Spec{"tracker", "beenleigh_mock://test", 1})
 	Convey("Creates a new EE and adds it to IOManager", t, func() {
 		So(myIOManager.ees[1], ShouldEqual, myEE)
 	})
 	SkipConvey("Creates a Tracker from specification and connects it to EE", t, func(){
-		So(onNewTrackerEvent(bl, TrackerSpec{"beenleigh_mock", "error", 2}), ShouldNotBeNil)
+		So(onNewTrackerEvent(bl, Spec{"tracker", "beenleigh_mock://error", 2}), ShouldNotBeNil)
 	})
 }
 

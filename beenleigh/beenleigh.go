@@ -11,13 +11,12 @@ import (
 
 type Logic interface {
 	RootEmitter() briee.EventEmitter
-	MainIOManager() aioli.IOManager
 	ListenAndServe()
 	io.Closer
 }
 
-func New() Logic {
-	return newBL()
+func New(eef func() briee.EventEmitter, io aioli.IOManager) Logic {
+	return newBL(eef, io)
 }
 
 type handlerFunc func(Spec) error
@@ -28,31 +27,24 @@ type breamLogic struct {
 	logger *log.Logger
 	closer chan struct{}
 	onNewTrackerEvent handlerFunc
+	eventEmitterConstructor func() briee.EventEmitter
 }
 
-// Constructor function for EventEmitters.
-// Allows Dependency Injection for testing purposes. 
-var newee = func() briee.EventEmitter {
-	return briee.New()
-}
-
-// Constructor function for IOManagers.
-// Allows Dependency Injection for testing purposes. 
-var newio = func() aioli.IOManager {
-	return aioli.New()
-}
-
-func newBL() *breamLogic {
+func newBL(eef func() briee.EventEmitter, io aioli.IOManager) *breamLogic {
 	logic := new(breamLogic)
 	logic.logger = log.New(os.Stdout, "[Beenleigh]", log.Ldate)
 	logic.closer = make(chan struct{})
+	logic.eventEmitterConstructor = eef
 	
 	//Create the first event emitter
-	logic.root = newee()
+	logic.root = eef()
 	
-	//Hook it up to the io manager
-	logic.ioman = newio()
-	logic.ioman.AddEE(logic.root, 256)
+	if io != nil {
+		//Hook it up to the io manager
+		logic.ioman = io
+		logic.ioman.AddEE(logic.root, 256)
+	}
+	
 	logic.onNewTrackerEvent = func() handlerFunc {
 		return func(spec Spec) error {
 			return onNewTrackerEvent(logic, spec)
@@ -64,10 +56,6 @@ func newBL() *breamLogic {
 
 func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 	return bl.root
-}
-
-func (bl *breamLogic) MainIOManager() aioli.IOManager {
-	return bl.ioman
 }
 
 func (bl *breamLogic) ListenAndServe() {
@@ -102,7 +90,7 @@ func (bl *breamLogic) ListenAndServe() {
 
 func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.logger.Println("Recieved new:tracker event.")
-	ee :=  newee()
+	ee := bl.eventEmitterConstructor()
 	bl.ioman.AddEE(ee, event.Emitter)
 	tracker, err := gorgonzola.CreateFromURI(event.Data)
 	if err != nil {
