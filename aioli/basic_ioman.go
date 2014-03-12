@@ -39,6 +39,7 @@ func (biom *BasicIOManager) Listen(dec Decoder) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := dec.Decode(&ep)
+		log.Printf("Listen: %v\n", ep)
 		if err != nil {
 			log.Printf("Decoding failure")
 			time.Sleep(time.Millisecond * 500)
