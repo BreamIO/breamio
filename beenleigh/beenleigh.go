@@ -14,6 +14,11 @@ import (
 	"log"
 	"os"
 	"io"
+	"net"
+)
+
+const (
+	tcpJSONaddr = ":3031"
 )
 
 // The interface of a BreamIO logic.
@@ -78,6 +83,36 @@ func (bl *breamLogic) ListenAndServe() {
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 	
 	go bl.ioman.Run()
+	
+	go func() {
+		addr, err := net.ResolveTCPAddr("tcp", ":3031")
+		if err != nil{
+			bl.logger.Printf("Failed to resolve TCP address %s: %s\n", tcpJSONaddr, err)
+			return
+		}
+		
+		ln, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			bl.logger.Printf("Failed to listen on TCP address %s: %s\n", tcpJSONaddr, err)
+			return
+		}
+		defer ln.Close()
+		
+		for {
+			select {
+				case <-bl.closer:
+					return
+				default:
+			}
+			in, err := ln.Accept()
+			if err != nil {
+				bl.logger.Printf("Failed to accept connection on TCP address %s: %s\n", tcpJSONaddr,  err)
+				return
+			}
+			dec := aioli.NewDecoder(in)
+			go bl.ioman.Listen(dec)
+		}
+	}()
 	
 	for {
 		select {
