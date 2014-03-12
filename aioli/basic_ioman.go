@@ -33,12 +33,20 @@ type publMapEntry struct {
 }
 
 // Listen will listen on provided decoder and redirect successfully decoded packages.
+// FIXME, not currenlty working
 func (biom *BasicIOManager) Listen(dec Decoder) {
-	var ep ExtPkg
 	for { // inf loop, FIXME
+		//var v map[string]interface{}
+		var ep ExtPkg
 		err := dec.Decode(&ep)
+		//ep := ExtPkg{
+		//	ID: v["ID"].(int),
+		//	Event: v["Event"].(string),
+		//	Data: v["Data"].([]byte),
+		//	}
+
 		if err != nil {
-			log.Printf("Decoding failure", err)
+			log.Printf("Decoding failure")
 			time.Sleep(time.Millisecond * 500)
 		} else {
 			biom.dataChan <- ep
@@ -58,12 +66,6 @@ func (biom *BasicIOManager) Run() {
 
 // Handle tries to decode and send the provided ExtPkg on one or more event emitters
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
-	log.Printf("Incomming pkg: %v\n", recvData)
-
-	for key := range biom.eeMap {
-		log.Printf("Map content[%v] %v\n", key, biom.eeMap[key])
-	}
-
 	// TODO Add broadcast functionality
 	if ee, ok := biom.eeMap[recvData.ID]; ok {
 

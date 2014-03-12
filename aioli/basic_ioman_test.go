@@ -77,8 +77,8 @@ func TestIOman(t *testing.T) {
 		t.Errorf("Unable to add event emitter")
 	}
 
-	network := bytes.NewBuffer(make([]byte, 256)) // Stand-in for the network
-	dec := json.NewDecoder(network)
+	var network bytes.Buffer // Stand-in for the network
+	dec := json.NewDecoder(&network)
 
 	// Example data from an external source
 	plSend := Payload{
@@ -91,12 +91,9 @@ func TestIOman(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go ioman.Run()
-	go ioman.Listen(dec)
-
 	go func() {
 		// Send decodes and sends payload data on network
-		send(plSend, network)
+		send(plSend, &network)
 		//send(plSend, network)
 		wg.Done()
 	}()
@@ -108,6 +105,9 @@ func TestIOman(t *testing.T) {
 		wg.Done()
 	}()
 
+	go ioman.Run()
+	go ioman.Listen(dec)
+
 	wg.Wait()
 	if plSend != plRecv {
 		t.Errorf("Got %v, want %v\n", plRecv, plSend)
@@ -116,7 +116,6 @@ func TestIOman(t *testing.T) {
 	//ioman.Close()
 }
 
-/*
 func TestDecoder(t *testing.T) {
 	ioman := New()
 	go ioman.Run()
@@ -124,7 +123,6 @@ func TestDecoder(t *testing.T) {
 	dec := NewJSONDecoder(&network)
 	go ioman.Listen(dec)
 }
-*/
 
 func send(pl Payload, network io.Writer) {
 	// Encode Data, representing the other side, e.g. WEB, CLI
@@ -141,15 +139,13 @@ func send(pl Payload, network io.Writer) {
 		Data:  jsonpl,
 	}
 
-	log.Printf("send ExtPkg: %v", rawPkg)
-
 	enc := json.NewEncoder(network)
-	log.Printf("Network before: %v", network)
 	err = enc.Encode(rawPkg)
-	log.Printf("Network after: %v", network)
 	if err != nil {
 		log.Panic("Encode error, ", err)
 	}
+
+
 	/*
 		jsonpl, plerr := json.Marshal(pl)
 
