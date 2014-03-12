@@ -145,7 +145,6 @@ func send(pl Payload, network io.Writer) {
 		log.Panic("Encode error, ", err)
 	}
 
-
 	/*
 		jsonpl, plerr := json.Marshal(pl)
 

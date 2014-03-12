@@ -1,11 +1,9 @@
 package aioli
 
 import (
-	//"encoding/gob"
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
-	//"io"
 	"log"
 	"reflect"
 	"time"
@@ -16,6 +14,7 @@ type BasicIOManager struct {
 	eeMap    map[int]briee.EventEmitter
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
+	closed   bool
 }
 
 // NewBasicIOManager creates a new BasicIOManager.
@@ -24,6 +23,7 @@ func newBasicIOManager() *BasicIOManager {
 		eeMap:    make(map[int]briee.EventEmitter),
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
+		closed:   true,
 	}
 }
 
@@ -32,19 +32,13 @@ type publMapEntry struct {
 	ID    int
 }
 
-// Listen will listen on provided decoder and redirect successfully decoded packages.
-// FIXME, not currenlty working
+// Listen will try to decode ExtPkg structs from the underlying data stream of the provided decoder and handle the structs accordingly.
+//
+// Requires that the IOManager Run method is running.
 func (biom *BasicIOManager) Listen(dec Decoder) {
-	for { // inf loop, FIXME
-		//var v map[string]interface{}
+	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := dec.Decode(&ep)
-		//ep := ExtPkg{
-		//	ID: v["ID"].(int),
-		//	Event: v["Event"].(string),
-		//	Data: v["Data"].([]byte),
-		//	}
-
 		if err != nil {
 			log.Printf("Decoding failure")
 			time.Sleep(time.Millisecond * 500)
@@ -56,7 +50,8 @@ func (biom *BasicIOManager) Listen(dec Decoder) {
 
 // Run listens on the internal channel of ExtPkg data on which all listerners send data on.
 func (biom *BasicIOManager) Run() {
-	for {
+	biom.closed = false
+	for !biom.IsClosed() {
 		select {
 		case recvData := (<-biom.dataChan):
 			biom.handle(recvData)
@@ -140,4 +135,23 @@ func (biom *BasicIOManager) RemoveEE(id int) error {
 	} else {
 		return errors.New("Can not remove non-existing event emitter")
 	}
+}
+
+// Close will cause the Run method and all running listeners to terminate.
+//
+// Will return an error if the IOManager is not running and cannot be closed.
+// Will also return an error if already closed.
+func (biom *BasicIOManager) Close() error {
+	if biom.IsClosed() {
+		return errors.New("Can not close already closed IOManager")
+	}
+	biom.closed = true
+	return nil
+}
+
+// IsClosed returns true if IOManager is currently closed.
+//
+// Call Run method to open.
+func (biom *BasicIOManager) IsClosed() bool {
+	return biom.closed
 }
