@@ -17,6 +17,36 @@ type Payload struct {
 	X, Y float64
 }
 
+func send(pl Payload, network io.Writer) {
+	// Encode Data, representing the other side, e.g. WEB, CLI
+	// Encode the payload data of type Payload as json
+	jsonpl, err := json.Marshal(pl)
+	if err != nil {
+		log.Panic("Marshal error, ", err)
+	}
+
+	rawPkg := ExtPkg{
+		Event: "event data",
+		ID:    1,
+		Data:  jsonpl,
+	}
+
+	enc := json.NewEncoder(network)
+	err = enc.Encode(rawPkg)
+	if err != nil {
+		log.Panic("Encode error, ", err)
+	}
+}
+
+func recvPkg(network io.Reader) ExtPkg {
+	var rawPkg ExtPkg
+
+	dec := json.NewDecoder(network)
+	dec.Decode(&rawPkg)
+
+	return rawPkg
+}
+
 func TestIOman(t *testing.T) {
 	// Set up emitter
 	ee := briee.New()
@@ -46,7 +76,6 @@ func TestIOman(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-
 
 	go func() {
 		// Send decodes and sends payload data on network
@@ -79,7 +108,7 @@ func TestIOman(t *testing.T) {
 		t.Errorf("Got %v, want %v\n", plRecv, plSend)
 	}
 
-	//ioman.Close()
+	ioman.Close()
 }
 
 func TestAddRemoveEmitters(t *testing.T) {
@@ -136,32 +165,3 @@ func TestDecoder(t *testing.T) {
 	go ioman.Listen(dec)
 }
 
-func send(pl Payload, network io.Writer) {
-	// Encode Data, representing the other side, e.g. WEB, CLI
-	// Encode the payload data of type Payload as json
-	jsonpl, err := json.Marshal(pl)
-	if err != nil {
-		log.Panic("Marshal error, ", err)
-	}
-
-	rawPkg := ExtPkg{
-		Event: "event data",
-		ID:    1,
-		Data:  jsonpl,
-	}
-
-	enc := json.NewEncoder(network)
-	err = enc.Encode(rawPkg)
-	if err != nil {
-		log.Panic("Encode error, ", err)
-	}
-}
-
-func recvPkg(network io.Reader) ExtPkg {
-	var rawPkg ExtPkg
-
-	dec := json.NewDecoder(network)
-	dec.Decode(&rawPkg)
-
-	return rawPkg
-}

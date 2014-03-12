@@ -7,6 +7,7 @@ import (
 	"log"
 	"reflect"
 	"time"
+	"io"
 )
 
 // BasicIOManager implements IOManager.
@@ -39,9 +40,14 @@ func (biom *BasicIOManager) Listen(dec Decoder) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := dec.Decode(&ep)
-		log.Printf("Listen: %v\n", ep)
 		if err != nil {
-			log.Printf("Decoding failure")
+			if err == io.EOF {
+				log.Printf("EOF!")
+				return
+			} else {
+				log.Printf("Decoding error, %v", err)
+				return
+			}
 			time.Sleep(time.Millisecond * 500)
 		} else {
 			biom.dataChan <- ep
