@@ -2,23 +2,21 @@ package main
 
 import (
 	"fmt"
-	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/gorgonzola"
 	
+	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/briee"
+	bl "github.com/maxnordlund/breamio/beenleigh"
+)
+
+const (
+	Company = "Bream IO"
+	Product = "Eriver"
+	Version = "v2.0"
 )
 
 func main() {
-	logic := bl.New()
-	go etPrinter(logic.RootEmitter())
-	newtrackerEvents := logic.RootEmitter().Publish("new:tracker", bl.TrackerSpec{}).(chan<- bl.TrackerSpec)
-	newtrackerEvents <- bl.TrackerSpec{"mock", "constant", 256}
+	fmt.Println("Welcome to", Company, Product, Version)
+	logic := bl.New(briee.New, aioli.New())
 	logic.ListenAndServe()
-}
-
-func etPrinter(ee briee.EventEmitter) {
-	etEvents := ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
-	for event := range etEvents {
-		fmt.Println(event)
-	}
+	fmt.Println("Thank you for using our product.")
 }

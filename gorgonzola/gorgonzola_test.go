@@ -16,12 +16,7 @@ func TestFilter(t *testing.T) {
 	})
 }
 
-func TestLink(t *testing.T) {
-	SkipConvey("Link should connect a tracker to a event emitter", t, func() {
-		SkipConvey("Tracker should publish ETData on \"tracker:etdata\" event", nil)
-	})
-}
-
+/*
 func TestListenAndServe(t *testing.T) {
 	dataCh, errCh, pubCh := make(chan *ETData, 1), make(chan error, 1), make(chan *ETData, 1)
 	Convey("A error on error channel should make it return that error", t, func() {
@@ -66,5 +61,5 @@ func TestListenAndServe(t *testing.T) {
 		<-done
 		So(storageArea, ShouldBeNil)
 	})
-
 }
+*/

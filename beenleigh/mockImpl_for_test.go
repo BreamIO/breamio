@@ -16,15 +16,15 @@ import (
 */
 
 type mockEmitter struct {
-	pubsubs map[string]chan interface{}
+	pubsubs map[string]interface{}
 	subs map[string]chan bool
 }
 
 func newMockEmitter() *mockEmitter {
 	return &mockEmitter{
-		make(map[string]chan interface{}),
+		make(map[string]interface{}),
 		map[string](chan bool){
-			"new:tracker": make(chan bool, 1),
+			"new": make(chan bool, 1),
 			"shutdown": make(chan bool, 1),
 		},
 	}
@@ -32,13 +32,13 @@ func newMockEmitter() *mockEmitter {
 
 func (m *mockEmitter) Publish(chid string, v interface{}) interface{} {
 	if m.pubsubs[chid] != nil {
-		return (chan<- TrackerSpec)(m.pubsubs[chid])
+		return (chan<- interface{})(m.pubsubs[chid].(chan interface{}))
 	}
 	switch v.(type) {
-		case TrackerSpec:
-			ch := make(chan TrackerSpec)
+		case Spec:
+			ch := make(chan Spec)
 			m.pubsubs[chid] = ch
-			return (chan<- TrackerSpec)(ch)
+			return (chan<- Spec)(ch)
 		case *gorgonzola.ETData:
 			ch := make(chan *gorgonzola.ETData)
 			return (chan<- *gorgonzola.ETData)(ch)
@@ -48,7 +48,7 @@ func (m *mockEmitter) Publish(chid string, v interface{}) interface{} {
 
 func (m *mockEmitter) Dispatch(eventID string, v interface{}) {
 	if m.pubsubs[eventID] != nil {
-		m.pubsubs[eventID] <- v
+		m.pubsubs[eventID].(chan interface{}) <- v
 	}
 }
 
@@ -56,14 +56,15 @@ func (m *mockEmitter) Subscribe(chid string, v interface{}) interface{} {
 	if m.subs[chid] != nil {
 		m.subs[chid] <- true
 	}
-	if m.pubsubs[chid] != nil {
-		return (<-chan TrackerSpec)(m.pubsubs[chid])
-	}
 	switch v.(type) {
-		case TrackerSpec:
-			ch := make(chan TrackerSpec)
+		case Spec:
+			ch := make(chan Spec)
 			m.pubsubs[chid] = ch
-			return (<-chan TrackerSpec)(ch)
+			return (<-chan Spec)(ch)
+		case struct{}:
+			ch := make(chan struct{})
+			m.pubsubs[chid] = ch
+			return (<-chan struct{})(ch)
 		default: return nil
 	}
 }
@@ -76,7 +77,7 @@ func (m *mockEmitter) Run() {
 }
 
 func (m *mockEmitter) TypeOf(chid string) (reflect.Type, error) {
-	return reflect.TypeOf(TrackerSpec{}), nil
+	return reflect.TypeOf(Spec{}), nil
 }
 
 func (m *mockEmitter) subscribedTo(chid string) bool {
@@ -98,7 +99,7 @@ type mockIOManager struct {
 
 func newMockIOManager() *mockIOManager {
 	return &mockIOManager{
-		aioli.NewBasicIOManager(),
+		aioli.New(),
 		make(map[int]briee.EventEmitter),
 		false,
 	}

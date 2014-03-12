@@ -1,3 +1,10 @@
+/*
+Business Logic module
+
+Beenleigh handles all business logic of BreamIO Eriver
+It exposes a interface for interacting with this logic 
+but not the actual implementation.
+*/
 package beenleigh
 
 import (
@@ -9,50 +16,49 @@ import (
 	"io"
 )
 
+// The interface of a BreamIO logic.
+// It allows you get access to the primary EventEmitter it listens to.
+// In order for it to listen to anything, the ListenAndServe method must first be called
 type Logic interface {
 	RootEmitter() briee.EventEmitter
-	MainIOManager() aioli.IOManager
 	ListenAndServe()
 	io.Closer
 }
 
-func New() Logic {
-	return newBL()
+// Creates a instance of the current Logic implementation.
+func New(eef func() briee.EventEmitter, io aioli.IOManager) Logic {
+	return newBL(eef, io)
 }
 
 type handlerFunc func(Spec) error
 
+
+// First actual implementation
+// Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root briee.EventEmitter
 	ioman aioli.IOManager
 	logger *log.Logger
 	closer chan struct{}
 	onNewTrackerEvent handlerFunc
+	eventEmitterConstructor func() briee.EventEmitter
 }
 
-// Constructor function for EventEmitters.
-// Allows Dependency Injection for testing purposes. 
-var newee = func() briee.EventEmitter {
-	return briee.New()
-}
-
-// Constructor function for IOManagers.
-// Allows Dependency Injection for testing purposes. 
-var newio = func() aioli.IOManager {
-	return aioli.New()
-}
-
-func newBL() *breamLogic {
+func newBL(eef func() briee.EventEmitter, io aioli.IOManager) *breamLogic {
 	logic := new(breamLogic)
 	logic.logger = log.New(os.Stdout, "[Beenleigh]", log.Ldate)
 	logic.closer = make(chan struct{})
+	logic.eventEmitterConstructor = eef
 	
 	//Create the first event emitter
-	logic.root = newee()
+	logic.root = eef()
 	
-	//Hook it up to the io manager
-	logic.ioman = newio()
-	logic.ioman.AddEE(logic.root, 256)
+	if io != nil {
+		//Hook it up to the io manager
+		logic.ioman = io
+		logic.ioman.AddEE(logic.root, 256)
+	}
+	
 	logic.onNewTrackerEvent = func() handlerFunc {
 		return func(spec Spec) error {
 			return onNewTrackerEvent(logic, spec)
@@ -64,10 +70,6 @@ func newBL() *breamLogic {
 
 func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 	return bl.root
-}
-
-func (bl *breamLogic) MainIOManager() aioli.IOManager {
-	return bl.ioman
 }
 
 func (bl *breamLogic) ListenAndServe() {
@@ -102,7 +104,7 @@ func (bl *breamLogic) ListenAndServe() {
 
 func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.logger.Println("Recieved new:tracker event.")
-	ee :=  newee()
+	ee := bl.eventEmitterConstructor()
 	bl.ioman.AddEE(ee, event.Emitter)
 	tracker, err := gorgonzola.CreateFromURI(event.Data)
 	if err != nil {
@@ -120,6 +122,10 @@ func (bl *breamLogic) Close() error {
 	return nil
 }
 
+// A specification for creation of new objects.
+// Type should be a type available for creation by the logic implementation.
+// Data is a context sensitive string, which syntax depends on the type.
+// Emitter is a integer, identifying the emitter number to link the new object to. 
 type Spec struct {
 	Type string
 	Data string
