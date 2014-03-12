@@ -1,3 +1,10 @@
+/*
+Business Logic module
+
+Beenleigh handles all business logic of BreamIO Eriver
+It exposes a interface for interacting with this logic 
+but not the actual implementation.
+*/
 package beenleigh
 
 import (
@@ -9,18 +16,25 @@ import (
 	"io"
 )
 
+// The interface of a BreamIO logic.
+// It allows you get access to the primary EventEmitter it listens to.
+// In order for it to listen to anything, the ListenAndServe method must first be called
 type Logic interface {
 	RootEmitter() briee.EventEmitter
 	ListenAndServe()
 	io.Closer
 }
 
+// Creates a instance of the current Logic implementation.
 func New(eef func() briee.EventEmitter, io aioli.IOManager) Logic {
 	return newBL(eef, io)
 }
 
 type handlerFunc func(Spec) error
 
+
+// First actual implementation
+// Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root briee.EventEmitter
 	ioman aioli.IOManager
@@ -108,6 +122,10 @@ func (bl *breamLogic) Close() error {
 	return nil
 }
 
+// A specification for creation of new objects.
+// Type should be a type available for creation by the logic implementation.
+// Data is a context sensitive string, which syntax depends on the type.
+// Emitter is a integer, identifying the emitter number to link the new object to. 
 type Spec struct {
 	Type string
 	Data string
