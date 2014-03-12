@@ -14,7 +14,7 @@ type EventEmitter interface {
 	Run()
 }
 
-// NewEventEmitter creates and returns a new LocalEventEmitter
+// New creates a new instance of the default implementation LocalEventEmitter
 func New() EventEmitter {
 	return newLocalEventEmitter()
 }

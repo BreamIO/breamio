@@ -18,6 +18,7 @@ type IOManager interface {
 	Run()
 	AddEE(ee briee.EventEmitter, id int) error
 	RemoveEE(id int) error
+	Close() error
 }
 
 // New creates a new instance of the default implementation BasicIOManager

@@ -331,7 +331,7 @@ func (ee *LocalEventEmitter) Close() error {
 
 // IsClosed returns true if Close method has been called.
 //
-// Call Run method again to open
+// Call Run method to open.
 func (ee *LocalEventEmitter) IsClosed() bool {
 	return ee.closed
 }
