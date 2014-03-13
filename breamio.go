@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	
+	"os"
+	"os/signal"
+
 	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/briee"
 	bl "github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/briee"
 )
 
 const (
@@ -15,8 +17,17 @@ const (
 )
 
 func main() {
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt)
+
 	fmt.Println("Welcome to", Company, Product, Version)
 	logic := bl.New(briee.New, aioli.New())
+
+	go func() {
+		<-done
+		logic.Close()
+	}()
+
 	logic.ListenAndServe()
 	fmt.Println("Thank you for using our product.")
 }
