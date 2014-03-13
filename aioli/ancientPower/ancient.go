@@ -6,7 +6,9 @@ import (
 	"net"
 	"os"
 	"io"
+	"math"
 	"github.com/maxnordlund/breamio/briee"
+	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
 var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
@@ -17,6 +19,7 @@ func ListenAndServe(ee briee.EventEmitter, id byte, addr string) {
 		logger.Println("Error attempting to listen to %s: %s", addr, err)
 		return
 	}
+	logger.Println("Listening on behalf of Event Emitter %d on %s.", id, addr)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -47,17 +50,24 @@ func giveBack(buffer []byte) {
 }
 
 func (c *client) handle() {
-	defer c.Close()
+	defer c.Close() //Make sure connection is closed before leaving.
+	
 	go func() {
-		for {
-			data := <-etCh
+		etCh := c.ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
+		for data := range etCh {
 			if c.subscribing {
 				buffer := take()
 				buffer[0] = 1
-				binary.BigEndian.PutUint64(buffer[17:25], data.Timestamp.Unix())
+				binary.BigEndian.PutUint64(buffer[1:9], math.Float64bits(data.Filtered.X()))
+				binary.BigEndian.PutUint64(buffer[9:17], math.Float64bits(data.Filtered.Y()))
+				binary.BigEndian.PutUint64(buffer[17:25], uint64(data.Timestamp.Unix()))
+				if _, err := c.Write(buffer); err != nil {
+					return;
+				}
 			}
 		}
-	}
+		c.Close(); // Basically signal client that it is done.
+	}()
 	for {
 		buffer := take()
 		defer giveBack(buffer)
