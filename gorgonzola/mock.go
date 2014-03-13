@@ -55,7 +55,6 @@ func (m *MockTracker) Link(ee briee.EventEmitter) {
 }
 
 func (m *MockTracker) Close() error {
-	m.f = nil
 	m.connected = false
 	return nil
 }
@@ -75,11 +74,7 @@ func (m MockTracker) IsCalibrated() bool {
 }
 
 func (m *MockTracker) generate(ch chan<- *ETData) {
-	for {
-		if m.f == nil {
-			close(ch)
-			return
-		}
+	for m.connected {
 		x, y := m.f(m.t)
 		ch <- &ETData{point2D{x, y}, time.Now()}
 		m.t += 0.1
