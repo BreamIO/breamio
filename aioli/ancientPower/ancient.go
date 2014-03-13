@@ -16,17 +16,17 @@ var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
 func ListenAndServe(ee briee.EventEmitter, id byte, addr string) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.Println("Error attempting to listen to %s: %s", addr, err)
+		logger.Printf("Error attempting to listen to %s: %s", addr, err)
 		return
 	}
-	logger.Println("Listening on behalf of Event Emitter %d on %s.", id, addr)
+	logger.Printf("Listening on behalf of Event Emitter %d on %s.", id, addr)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			logger.Println("Error accepting client: %s", err)
 			return
 		}
-		logger.Println("Received connection from %s.", conn.RemoteAddr())
+		logger.Printf("Received connection from %s.", conn.RemoteAddr())
 		go (&client{conn, ee, false, id}).handle()
 	}
 }
@@ -55,13 +55,14 @@ func (c *client) handle() {
 	go func() {
 		etCh := c.ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
 		for data := range etCh {
+			//logger.Println("Recieved on tracker:etdata :", data)
 			if c.subscribing {
 				buffer := take()
 				buffer[0] = 1
 				binary.BigEndian.PutUint64(buffer[1:9], math.Float64bits(data.Filtered.X()))
 				binary.BigEndian.PutUint64(buffer[9:17], math.Float64bits(data.Filtered.Y()))
 				binary.BigEndian.PutUint64(buffer[17:25], uint64(data.Timestamp.Unix()))
-				if _, err := c.Write(buffer); err != nil {
+				if _, err := c.Write(buffer[:25]); err != nil {
 					return;
 				}
 			}
@@ -89,17 +90,16 @@ func (c *client) handle() {
 
 // 1
 func (c *client) getPoints() {
+	logger.Println("1")
+	c.subscribing = !c.subscribing
 	buffer := take()[:25]
 	defer giveBack(buffer)
 	c.Read(buffer[1:25])
-	// Does not care about what they have to say
-	c.subscribing = !c.subscribing
-	buffer[0] = 1
-	c.Write(buffer)
 }
 
 // 7
 func (c *client) name() {
+	logger.Println("7")
 	buffer := take()[:1]
 	defer giveBack(buffer)
 	c.Read(buffer)
@@ -108,6 +108,7 @@ func (c *client) name() {
 
 // 8
 func (c *client) fps() {
+	logger.Println("8")
 	buffer := take()[:1]
 	defer giveBack(buffer)
 	c.Read(buffer)
@@ -116,6 +117,7 @@ func (c *client) fps() {
 
 // 9
 func (c *client) keepalive() {
+	logger.Println("9")
 	c.Write([]byte{9})
 }
 
