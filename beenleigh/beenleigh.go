@@ -9,16 +9,13 @@ package beenleigh
 
 import (
 	"github.com/maxnordlund/breamio/aioli"
+	ancient "github.com/maxnordlund/breamio/aioli/ancientPower"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 	"log"
 	"os"
 	"io"
-	"net"
-)
-
-const (
-	tcpJSONaddr = ":3031"
+	"strconv"
 )
 
 // The interface of a BreamIO logic.
@@ -51,12 +48,13 @@ type breamLogic struct {
 
 func newBL(eef func() briee.EventEmitter, io aioli.IOManager) *breamLogic {
 	logic := new(breamLogic)
-	logic.logger = log.New(os.Stdout, "[Beenleigh]", log.Ldate)
+	logic.logger = log.New(os.Stdout, "[Beenleigh] ", log.LstdFlags)
 	logic.closer = make(chan struct{})
 	logic.eventEmitterConstructor = eef
 	
 	//Create the first event emitter
 	logic.root = eef()
+	go logic.root.Run()
 	
 	if io != nil {
 		//Hook it up to the io manager
@@ -84,35 +82,11 @@ func (bl *breamLogic) ListenAndServe() {
 	
 	go bl.ioman.Run()
 	
-	go func() {
-		addr, err := net.ResolveTCPAddr("tcp", ":3031")
-		if err != nil{
-			bl.logger.Printf("Failed to resolve TCP address %s: %s\n", tcpJSONaddr, err)
-			return
-		}
-		
-		ln, err := net.ListenTCP("tcp", addr)
-		if err != nil {
-			bl.logger.Printf("Failed to listen on TCP address %s: %s\n", tcpJSONaddr, err)
-			return
-		}
-		defer ln.Close()
-		
-		for {
-			select {
-				case <-bl.closer:
-					return
-				default:
-			}
-			in, err := ln.Accept()
-			if err != nil {
-				bl.logger.Printf("Failed to accept connection on TCP address %s: %s\n", tcpJSONaddr,  err)
-				return
-			}
-			dec := aioli.NewDecoder(in)
-			go bl.ioman.Listen(dec)
-		}
-	}()
+	//Set up servers.
+	ts := aioli.NewTCPServer(bl.ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
+	ws := aioli.NewWSServer(bl.ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
+	go ts.Listen()
+	go ws.Listen()
 	
 	for {
 		select {
@@ -140,7 +114,9 @@ func (bl *breamLogic) ListenAndServe() {
 func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.logger.Println("Recieved new:tracker event.")
 	ee := bl.eventEmitterConstructor()
+	go ee.Run()
 	bl.ioman.AddEE(ee, event.Emitter)
+	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	tracker, err := gorgonzola.CreateFromURI(event.Data)
 	if err != nil {
 		bl.logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
