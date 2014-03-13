@@ -50,6 +50,7 @@ func (biom *BasicIOManager) Listen(dec Decoder, logger *log.Logger) {
 			}
 			time.Sleep(time.Millisecond * 500)
 		} else {
+			logger.Println("Recieved:", ep)
 			biom.dataChan <- ep
 		}
 	}
@@ -85,22 +86,12 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 			// TODO Replace json.Unmarshal with provided decoder
 			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
+			//log.Println(reflect.Indirect(ptr).Interface())
 			if err != nil {
 				log.Println(err)
 			}
 
-			if pChanPtr, ok := biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}]; ok {
-				(*pChanPtr).Send(ptr.Elem())
-
-			} else {
-				zeroValInterface := reflect.Zero(rtype).Interface()
-				// publCh is a write only channel of element type of rtype
-				publCh := reflect.ValueOf(ee.Publish(recvData.Event, zeroValInterface))
-
-				// Save the publisher channel for future use
-				biom.publMap[publMapEntry{Event: recvData.Event, ID: recvData.ID}] = &publCh
-				publCh.Send(ptr.Elem()) // Send decoded element on channel
-			}
+			ee.Dispatch(recvData.Event, ptr.Elem().Interface())
 
 		}
 	} else {
