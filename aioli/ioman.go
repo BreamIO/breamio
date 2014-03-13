@@ -2,6 +2,7 @@ package aioli
 
 import (
 	"github.com/maxnordlund/breamio/briee"
+	"log"
 )
 
 // ExtPkg is the struct used as the external protocol
@@ -14,7 +15,7 @@ type ExtPkg struct {
 // IOManager interface defines an I/O manager with external reader functionality
 type IOManager interface {
 	//Listen(r io.Reader)
-	Listen(dec Decoder)
+	Listen(dec Decoder, l *log.Logger)
 	Run()
 	AddEE(ee briee.EventEmitter, id int) error
 	RemoveEE(id int) error

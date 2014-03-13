@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/maxnordlund/breamio/briee"
+	"io"
 	"log"
 	"reflect"
 	"time"
-	"io"
 )
 
 // BasicIOManager implements IOManager.
@@ -36,16 +36,16 @@ type publMapEntry struct {
 // Listen will try to decode ExtPkg structs from the underlying data stream of the provided decoder and handle the structs accordingly.
 //
 // Requires that the IOManager Run method is running.
-func (biom *BasicIOManager) Listen(dec Decoder) {
+func (biom *BasicIOManager) Listen(dec Decoder, logger *log.Logger) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := dec.Decode(&ep)
 		if err != nil {
 			if err == io.EOF {
-				log.Printf("EOF!")
+				logger.Printf("Connection closed.")
 				return
 			} else {
-				log.Printf("Decoding error, %v", err)
+				logger.Printf("Decoding error, %v", err)
 				return
 			}
 			time.Sleep(time.Millisecond * 500)
