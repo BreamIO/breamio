@@ -18,7 +18,7 @@ type BasicIOManager struct {
 	closed   bool
 }
 
-// NewBasicIOManager creates a new BasicIOManager.
+// newBasicIOManager creates a new BasicIOManager.
 func newBasicIOManager() *BasicIOManager {
 	return &BasicIOManager{
 		eeMap:    make(map[int]briee.EventEmitter),

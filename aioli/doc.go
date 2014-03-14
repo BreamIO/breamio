@@ -22,6 +22,7 @@ Example use:
 		dec := NewDecoder(&network)
 
 		// Listen on decoder
-		go ioman.Listen(dec)
+		logger := log.New(os.Stdout, "", os.LstdFlags)
+		go ioman.Listen(dec, logger)
 */
 package aioli
