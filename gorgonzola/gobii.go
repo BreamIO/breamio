@@ -1,6 +1,8 @@
 package gorgonzola
 
 import (
+	"fmt"
+	"log"
 	"github.com/zephyyrr/gobii/gaze"
 	"github.com/maxnordlund/breamio/briee"
 )
@@ -13,9 +15,9 @@ func (GazeDriver) Create() (Tracker, error) {
 	return &GazeTracker{tracker, false}, err
 }
 
-func (GazeDriver) CreateFromId(id string) (Tracker, error) {
-	//TODO fix this to use the real function
-	tracker, err := gaze.EyeTrackerFromURL("tet-usb://" + id)
+func (g GazeDriver) CreateFromId(id string) (Tracker, error) {
+	url := "tet-usb://" + id
+	tracker, err := gaze.EyeTrackerFromURL(url)
 	return &GazeTracker{tracker, false}, err
 }
 
@@ -66,11 +68,20 @@ func (g GazeTracker) IsCalibrated() bool {
 	return g.calibrated
 }
 
+func (g GazeTracker) String() string {
+	return fmt.Sprintf("<GobiiTracker %v>", g.EyeTracker)
+}
+
 func gobiiOnGazeCallback(ch chan<-*ETData) func(data *gaze.GazeData) {
 	return func(data *gaze.GazeData) {
+		ts := data.TrackingStatus()
+		if ts < gaze.BothEyesTracked || ts == gaze.OneEyeTrackedUnknownWhich {
+			return //Bad data
+		}
 		etdata := new(ETData)
 		etdata.Filtered = filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
 		etdata.Timestamp = data.Timestamp()
+		//log.Println(etdata)
 		ch <- etdata
 	}
 }
