@@ -173,7 +173,7 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
-		closed:   false,
+		closed:   true,
 	}
 }
 

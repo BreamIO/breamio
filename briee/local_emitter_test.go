@@ -17,7 +17,6 @@ type B struct {
 }
 
 func TestEmitter(t *testing.T) {
-	//var ee *EventEmitter
 	ee := New()
 	go ee.Run()
 
@@ -69,7 +68,9 @@ func TestEmitter(t *testing.T) {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
 
-	ee.Close()
+	if err := ee.Close(); err != nil {
+		t.Errorf("Error closing emitter, %v", err)
+	}
 }
 
 func testNilPublisher(t *testing.T) {
@@ -82,9 +83,13 @@ func testNilPublisher(t *testing.T) {
 		}
 	}()
 	_ = ee.Publish("A", nil).(chan<- A)
+
+	if err := ee.Close(); err != nil {
+		t.Errorf("Error closing emitter, %v", err)
+	}
 }
 
-func testNotification() {
+func testNotification(t *testing.T) {
 	ee := New()
 	go ee.Run()
 
@@ -104,12 +109,19 @@ func testNotification() {
 	}()
 
 	wg.Done()
-	ee.Close()
+	if err := ee.Close(); err != nil {
+		t.Errorf("Error closing emitter, %v", err)
+	}
 }
 
 func TestCloseEE(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	done := make(chan struct{})
+	go func(){
+		done <- struct{}{}
+		ee.Run()
+	}()
+	<-done
 
 	_ = ee.Publish("A", A{}).(chan<- A)
 	_ = ee.Subscribe("A", A{}).(<-chan A)
@@ -147,7 +159,9 @@ func TestTypeOf(t *testing.T) {
 		t.Errorf("TypeOf an unregistered event shall cause an error")
 	}
 
-	ee.Close()
+	if err := ee.Close(); err != nil {
+		t.Errorf("Error closing emitter, %v", err)
+	}
 }
 
 func TestTypes(t *testing.T) {
@@ -159,5 +173,7 @@ func TestTypes(t *testing.T) {
 	_ = ee.Publish("Slice", []A{}).(chan<- []A)
 	_ = ee.Subscribe("Slice", []A{}).(<-chan []A)
 
-	ee.Close()
+	if err := ee.Close(); err != nil {
+		t.Errorf("error closing emitter, %v", err)
+	}
 }
