@@ -16,6 +16,7 @@ import (
 	"os"
 	"io"
 	"strconv"
+	"sync"
 )
 
 // The interface of a BreamIO logic.
@@ -42,6 +43,7 @@ type breamLogic struct {
 	ioman aioli.IOManager
 	logger *log.Logger
 	closer chan struct{}
+	wg sync.WaitGroup
 	onNewTrackerEvent handlerFunc
 	eventEmitterConstructor func() briee.EventEmitter
 }
@@ -76,6 +78,7 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 }
 
 func (bl *breamLogic) ListenAndServe() {
+	defer bl.root.Close()
 	//Subscribe to events
 	newEvents := bl.root.Subscribe("new", Spec{}).(<-chan Spec)
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
@@ -113,23 +116,36 @@ func (bl *breamLogic) ListenAndServe() {
 
 func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.logger.Println("Recieved new:tracker event.")
-	ee := bl.eventEmitterConstructor()
-	go ee.Run()
-	bl.ioman.AddEE(ee, event.Emitter)
-	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
+	
 	tracker, err := gorgonzola.CreateFromURI(event.Data)
 	if err != nil {
 		bl.logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
 		return err
 	}
-	tracker.Connect()
+	err = tracker.Connect()
+	if err != nil {
+		bl.logger.Println("Unable to connect to tracker:", err)
+		return err
+	}
+	
+	ee := bl.eventEmitterConstructor()
+	bl.wg.Add(1)
+	go func() {
+		ee.Run()
+		bl.wg.Done()
+	}()
+	
+	bl.ioman.AddEE(ee, event.Emitter)
 	go tracker.Link(ee)
+	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
+	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
 	return nil
 }
 
 func (bl *breamLogic) Close() error {
 	close(bl.closer)
+	bl.wg.Wait()
 	return nil
 }
 
