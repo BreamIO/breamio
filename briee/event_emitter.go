@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-// EventEmitter interface.
+// EventEmitter interface contains methods for publishing, subscribring and managing events.
 type EventEmitter interface {
 	Publish(eventID string, v interface{}) interface{}
 	Subscribe(eventID string, v interface{}) interface{}
