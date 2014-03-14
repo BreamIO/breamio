@@ -9,7 +9,7 @@ import (
 )
 
 func mockStandard(t float64) (float64, float64) {
-	return math.Cos(t), math.Sin(t)
+	return 0.5+0.5*math.Cos(t), 0.5+0.5*math.Sin(t)
 }
 
 func mockConstant(t float64) (float64, float64) {
@@ -74,10 +74,15 @@ func (m MockTracker) IsCalibrated() bool {
 }
 
 func (m *MockTracker) generate(ch chan<- *ETData) {
-	for m.connected {
+	ticker := time.NewTicker(25*time.Millisecond)
+	defer ticker.Stop()
+	for t := range ticker.C {
+		if !m.connected {
+			return
+		}
 		x, y := m.f(m.t)
-		ch <- &ETData{point2D{x, y}, time.Now()}
-		m.t += 0.1
+		ch <- &ETData{point2D{x, y}, t}
+		m.t += 0.01
 	}
 }
 
