@@ -8,9 +8,13 @@ import (
 func CreateFromURI(uri string) (Tracker, error) {
 	split := strings.SplitN(uri, "://", 2)
 	if len(split) < 2 {
-		return nil, errors.New("Malformed URI")
+		return nil, errors.New("Malformed URI.")
 	}
 	typ, id := split[0], split[1]
+	driver := GetDriver(typ)
+	if driver == nil {
+		return nil, errors.New("No such driver.")
+	}
 	return GetDriver(typ).CreateFromId(id)
 }
 
