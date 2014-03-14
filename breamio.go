@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 
 	"github.com/maxnordlund/breamio/aioli"
 	bl "github.com/maxnordlund/breamio/beenleigh"
@@ -30,4 +31,8 @@ func main() {
 
 	logic.ListenAndServe()
 	fmt.Println("Thank you for using our product.")
+}
+
+func init() {
+	runtime.GOMAXPROCS(2)
 }
