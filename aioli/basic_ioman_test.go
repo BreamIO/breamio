@@ -2,7 +2,6 @@ package aioli
 
 import (
 	"bytes"
-	//"encoding/gob"
 	"encoding/json"
 	"log"
 	"sync"
@@ -10,6 +9,7 @@ import (
 	"github.com/maxnordlund/breamio/briee"
 	"io"
 	"testing"
+	"os"
 	//"reflect"
 )
 
@@ -100,7 +100,8 @@ func TestIOman(t *testing.T) {
 
 	go func(){
 		//log.Println("[Manager Listen]")
-		ioman.Listen(dec)
+		logger := log.New(os.Stdout, "[AIOLI Test]", log.LstdFlags)
+		ioman.Listen(dec, logger)
 	}()
 
 	wg.Wait()
@@ -162,6 +163,7 @@ func TestDecoder(t *testing.T) {
 	go ioman.Run()
 	var network bytes.Buffer
 	dec := NewJSONDecoder(&network)
-	go ioman.Listen(dec)
+	logger := log.New(os.Stdout, "[AIOLI Test]", log.LstdFlags)
+	go ioman.Listen(dec, logger)
 }
 
