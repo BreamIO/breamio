@@ -12,9 +12,8 @@ type ExtPkg struct {
 	Data  []byte // Encoded data of the underlying struct for the event.
 }
 
-// IOManager interface defines an I/O manager with external reader functionality
+// IOManager interface defines an I/O manager with external reader functionality.
 type IOManager interface {
-	//Listen(r io.Reader)
 	Listen(dec Decoder, l *log.Logger)
 	Run()
 	AddEE(ee briee.EventEmitter, id int) error

@@ -3,7 +3,7 @@ Package briee defines and implements the EventEmitter interface.
 
 Example use:
 
-		ee := NewEventEmitter()
+		ee := New()
 		go ee.Run()
 
 		dataSend := MyStruct{...}
@@ -20,5 +20,8 @@ Example use:
 		dataRecv = (<-recvChan)
 
 		// dataSend == dataRecv
+
+		ee.Close() // Will terminate ee.Run() goroutine
+
 */
 package briee

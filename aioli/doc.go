@@ -5,10 +5,10 @@ Uses the event emitter package briee:
 		import "github.com/maxnordlund/breamio/briee"
 
 Example use:
-		ee := briee.NewEventEmitter()
+		ee := briee.New()
 		go ee.Run()
 
-		ioman := NewIOManager()
+		ioman := New()
 		go ioman.Run()
 
 		// Add event emitter
@@ -17,8 +17,12 @@ Example use:
 			fmt.Printf("Unable to add event emitter")
 		}
 
-		// Listen on io.Reader network
+		// Create decoder of io.Reader
 		var network bytes.Buffer
-		go ioman.Listen(&network)
+		dec := NewDecoder(&network)
+
+		// Listen on decoder
+		logger := log.New(os.Stdout, "", os.LstdFlags)
+		go ioman.Listen(dec, logger)
 */
 package aioli

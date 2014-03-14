@@ -34,15 +34,6 @@ func makeSendRecv(vtype reflect.Type) (chvSend, chvRecv reflect.Value) {
 	chtypeSend := reflect.ChanOf(reflect.SendDir, vtype)
 	chtypeRecv := reflect.ChanOf(reflect.RecvDir, vtype)
 
-	/*
-		if !chtype.ConvertibleTo(chtypeSend) {
-			log.Panic("Cannot convert bi-directional channel to write-only\n")
-		}
-		if !chtype.ConvertibleTo(chtypeRecv) {
-			log.Panic("Cannot convert bi-directional channel to read-only\n")
-		}
-	*/
-
 	// Make a two-way channel
 	chv := reflect.MakeChan(chtype, 0)
 
@@ -78,12 +69,6 @@ func makeSlice(elemType reflect.Type) (sliceValue reflect.Value) {
 func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
 	// Get the type of v
 	vtype := reflect.TypeOf(v)
-
-	/*
-		if !isValid(v) {
-			log.Panic("<Publisher> Invalid type")
-		}
-	*/
 
 	// TODO Refactor if performance is an issue. The channels/slice does not need to be constructed in all cases.
 	chvSend, chvRecv := makeSendRecv(vtype)
@@ -122,7 +107,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	return chvSend.Interface()
 }
 
-func (ee *LocalEventEmitter) Dispatch(eventID string, value interface{} ) {
+func (ee *LocalEventEmitter) Dispatch(eventID string, value interface{}) {
 	event := ee.eventMap[eventID]
 	if event == nil {
 		return
@@ -147,12 +132,6 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 	// get the type of v
 	vtype := reflect.TypeOf(v)
-
-	/*
-		if !isValid(v) {
-			log.Panic("<Subscribe> Invalid type")
-		}
-	*/
 
 	// Make directed channels
 	chvSend, chvRecv := makeSendRecv(vtype)
@@ -188,54 +167,19 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 }
 
-// isValid returns true if the underlying type of the provided interface is valid for use on the event emitter.
-func isValid(v interface{}) bool {
-	// get the type of v
-	vtype := reflect.TypeOf(v)
-
-	if vtype.Kind() == reflect.Ptr {
-		if !isValidType(reflect.ValueOf(v).Elem().Type()) {
-			log.Panic("<Subscriber> Pointer must point to struct, map or slice type")
-			return false
-		} else {
-			return true
-		}
-	} else {
-		if !isValidType(vtype) {
-			log.Panic("<Subscriber> Element type must be struct, map or slice")
-			return false
-		} else {
-			return true
-		}
-	}
-}
-
-// isValidType returns true if provided reflect.Type is valid to use on the event emitter.
-func isValidType(vtype reflect.Type) bool {
-	switch vtype.Kind() {
-	case reflect.Struct:
-		return true
-
-	case reflect.Map:
-		return true
-
-	case reflect.Slice:
-		return true
-
-	default:
-		return false
-	}
-}
-
 // NewLocalEventEmitter is the constructor of LocalEventEmitter
+//
+// The emitter is open once constructed, IsClosed method call will return false.
 func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
-		closed:   false,
+		closed:   true,
 	}
 }
 
 // Run method listens on publishing channels and broadcasts data to subscribers.
+//
+// This method is blocking until Close method is called.
 func (ee *LocalEventEmitter) Run() {
 	ee.closed = false
 
@@ -262,22 +206,6 @@ func (ee *LocalEventEmitter) Run() {
 			chosen, recv, _ := reflect.Select(cases)
 			switch chosen {
 			case 0:
-
-				/* // FIXME This following code can be used for inspecting data
-				for i := 0; i < recv.NumField(); i++ {
-					recvueField := recv.Field(i)
-					typeField := recv.Type().Field(i)
-
-					//log.Printf("Field Name: %s,\t Field Value: %v\n", typeField.Name, recvueField.Interface())
-				}
-				*/
-
-				/*
-					if event.Subscribers.Type().Kind() != reflect.Slice {
-						log.Panic("event.Subscribers is not a slice")
-					}
-				*/
-
 				for i := 0; i < event.Subscribers.Len(); i++ {
 					sub := event.Subscribers.Index(i)
 					sub.Send(recv)
@@ -307,7 +235,9 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	}
 }
 
-// Close will close all open channels to subscribers.
+// Close will close all open channels to subscribers and terminate the Run method.
+//
+// Returns an error if emitter is already closed.
 func (ee *LocalEventEmitter) Close() error {
 	if ee.IsClosed() {
 		return errors.New("Can not close already closed event emitter")
@@ -317,7 +247,6 @@ func (ee *LocalEventEmitter) Close() error {
 		for i := 0; i < event.Subscribers.Len(); i++ {
 			event.Subscribers.Index(i).Close()
 		}
-		//delete(ee.eventMap, k)
 	}
 
 	// Clear the event map
@@ -329,7 +258,7 @@ func (ee *LocalEventEmitter) Close() error {
 	return nil
 }
 
-// IsClosed returns true if Close method has been called.
+// IsClosed returns true if emitter is currently closed.
 //
 // Call Run method to open.
 func (ee *LocalEventEmitter) IsClosed() bool {
