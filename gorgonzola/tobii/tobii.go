@@ -1,4 +1,4 @@
-package gorgonzola
+package tobii
 
 import (
 	"fmt"

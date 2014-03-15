@@ -1,4 +1,4 @@
-package gorgonzola
+package mock
 
 import (
 	"errors"
