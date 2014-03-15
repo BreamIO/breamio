@@ -181,3 +181,75 @@ func TestTypes(t *testing.T) {
 	}
 	ee.Wait()
 }
+
+func TestUnsubscribe(t *testing.T) {
+	ee := New()
+	sub := ee.Subscribe("event", A{}).(<-chan A)
+	err := ee.Unsubscribe("event", sub)
+	if err != nil {
+		t.Errorf("error unsubscribing, %v", err)
+	}
+	if err := ee.Close(); err != nil {
+		t.Errorf("error closing emitter, %v", err)
+	}
+	ee.Wait()
+}
+
+func TestDispatch(t *testing.T) {
+	ee := New()
+	sub := ee.Subscribe("event", struct{}{}).(<-chan struct{})
+	go ee.Dispatch("event", struct{}{})
+	go ee.Dispatch("another event", struct{}{})
+	(<-sub)
+
+	if err := ee.Close(); err != nil {
+		t.Errorf("error closing emitter, %v", err)
+	}
+	ee.Wait()
+}
+
+func TestPanicPublisher(t *testing.T) {
+	ee := New()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Publishing on an existing event with wrong types should cause a panic")
+		}
+	}()
+
+	_ = ee.Subscribe("event", A{}).(<-chan A)
+	_ = ee.Publish("event", struct{}{}).(chan<- struct{})
+}
+
+func TestPanicSubscriber(t *testing.T) {
+	ee := New()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Subscribing on an existing event with wrong types should cause a panic")
+		}
+	}()
+
+	_ = ee.Publish("event", struct{}{}).(chan<- struct{})
+	_ = ee.Subscribe("event", A{}).(<-chan A)
+}
+
+func TestUnsubscribeWrongEE(t *testing.T) {
+	ee1 := New()
+	ee2 := New()
+	sub := ee1.Subscribe("event", struct{}{}).(<-chan struct{})
+	_ = ee2.Subscribe("event", struct{}{}).(<-chan struct{})
+	err := ee2.Unsubscribe("event", sub)
+	if err == nil {
+		t.Errorf(err.Error())
+	}
+}
+
+func TestUnsubscribeNoEvent(t *testing.T) {
+	ee := New()
+	sub := ee.Subscribe("event", struct{}{}).(<-chan struct{})
+	err := ee.Unsubscribe("another event", sub)
+	if err == nil {
+		t.Errorf(err.Error())
+	}
+}
