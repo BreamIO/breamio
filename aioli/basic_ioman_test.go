@@ -8,8 +8,8 @@ import (
 	//"time"
 	"github.com/maxnordlund/breamio/briee"
 	"io"
-	"testing"
 	"os"
+	"testing"
 	//"reflect"
 )
 
@@ -51,7 +51,7 @@ func TestIOman(t *testing.T) {
 	// Set up emitter
 	ee := briee.New()
 	//log.Println("[EE Run]")
-	go ee.Run()
+	//go ee.Run()
 	subscriber := ee.Subscribe("event data", Payload{}).(<-chan Payload)
 
 	// Set up IO manager
@@ -93,12 +93,12 @@ func TestIOman(t *testing.T) {
 		wg.Done()
 	}()
 
-	go func(){
+	go func() {
 		//log.Println("[Manager Run]")
 		ioman.Run()
 	}()
 
-	go func(){
+	go func() {
 		//log.Println("[Manager Listen]")
 		logger := log.New(os.Stdout, "[AIOLI Test]", log.LstdFlags)
 		ioman.Listen(dec, logger)
@@ -157,13 +157,11 @@ func TestRemEEBC(t *testing.T) {
 	}
 }
 
-
 func TestDecoder(t *testing.T) {
 	ioman := New()
 	go ioman.Run()
 	var network bytes.Buffer
-	dec := NewJSONDecoder(&network)
+	dec := json.NewDecoder(&network)
 	logger := log.New(os.Stdout, "[AIOLI Test]", log.LstdFlags)
 	go ioman.Listen(dec, logger)
 }
-
