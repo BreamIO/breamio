@@ -2,9 +2,10 @@ package tobii
 
 import (
 	"fmt"
-	"log"
-	"github.com/zephyyrr/gobii/gaze"
+	//"log"
 	"github.com/maxnordlund/breamio/briee"
+	. "github.com/maxnordlund/breamio/gorgonzola"
+	"github.com/zephyyrr/gobii/gaze"
 )
 
 // Driver implementation for Gobii
@@ -52,8 +53,8 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 
 func (g *GazeTracker) Link(ee briee.EventEmitter) {
 	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
-	err := g.StartTracking(gobiiOnGazeCallback(etdataCh));
-	ee.Dispatch("tracker:error", err);
+	err := g.StartTracking(gobiiOnGazeCallback(etdataCh))
+	ee.Dispatch("tracker:error", err)
 }
 
 func (g *GazeTracker) Calibrate(points <-chan Point2D, errors chan<- error) {
@@ -72,14 +73,14 @@ func (g GazeTracker) String() string {
 	return fmt.Sprintf("<GobiiTracker %v>", g.EyeTracker)
 }
 
-func gobiiOnGazeCallback(ch chan<-*ETData) func(data *gaze.GazeData) {
+func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 	return func(data *gaze.GazeData) {
 		ts := data.TrackingStatus()
 		if ts < gaze.BothEyesTracked || ts == gaze.OneEyeTrackedUnknownWhich {
 			return //Bad data
 		}
 		etdata := new(ETData)
-		etdata.Filtered = filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
+		etdata.Filtered = Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
 		etdata.Timestamp = data.Timestamp()
 		//log.Println(etdata)
 		ch <- etdata
@@ -87,5 +88,5 @@ func gobiiOnGazeCallback(ch chan<-*ETData) func(data *gaze.GazeData) {
 }
 
 func init() {
-	drivers["gobii"] = new(GazeDriver)
+	RegisterDriver("gobii", new(GazeDriver))
 }

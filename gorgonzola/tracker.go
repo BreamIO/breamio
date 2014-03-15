@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"time"
-	
+
 	"github.com/maxnordlund/breamio/briee"
 )
 
@@ -56,7 +56,7 @@ type Tracker interface {
 	// If the channel is full, the tracker discards the data.
 	// If a error occurs while streaming, it is sent along the error channel.
 	Stream() (<-chan *ETData, <-chan error)
-	
+
 	// Connects the tracker to the given Event Emitter
 	// This means the tracker publishes its capabilities to the emitter.
 	// That means that gaze data is published to the channel on event "tracker:etdata".

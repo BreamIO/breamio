@@ -4,12 +4,13 @@ import (
 	"errors"
 	"math"
 	"time"
-	
+
 	"github.com/maxnordlund/breamio/briee"
+	. "github.com/maxnordlund/breamio/gorgonzola"
 )
 
 func mockStandard(t float64) (float64, float64) {
-	return 0.5+0.5*math.Cos(t), 0.5+0.5*math.Sin(t)
+	return 0.5 + 0.5*math.Cos(t), 0.5 + 0.5*math.Sin(t)
 }
 
 func mockConstant(t float64) (float64, float64) {
@@ -74,18 +75,18 @@ func (m MockTracker) IsCalibrated() bool {
 }
 
 func (m *MockTracker) generate(ch chan<- *ETData) {
-	ticker := time.NewTicker(25*time.Millisecond)
+	ticker := time.NewTicker(25 * time.Millisecond)
 	defer ticker.Stop()
 	for t := range ticker.C {
 		if !m.connected {
 			return
 		}
 		x, y := m.f(m.t)
-		ch <- &ETData{point2D{x, y}, t}
+		ch <- &ETData{XYPoint{x, y}, t}
 		m.t += 0.01
 	}
 }
 
 func init() {
-	drivers["mock"] = new(MockDriver)
+	RegisterDriver("mock", new(MockDriver))
 }
