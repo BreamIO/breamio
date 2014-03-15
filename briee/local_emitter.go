@@ -209,30 +209,15 @@ func (ee *LocalEventEmitter) run() {
 
 			chv := event.PublRecv
 
-			// TODO Try chv.TryRecv(x value, ok bool) instead
-
-			cases := []reflect.SelectCase{
-				reflect.SelectCase{
-					reflect.SelectRecv,
-					chv,
-					reflect.ValueOf(nil),
-				},
-				reflect.SelectCase{
-					reflect.SelectDefault,
-					reflect.ValueOf(nil),
-					reflect.ValueOf(nil),
-				},
+			if !chv.IsValid() { // Checks that the channels isn't the zero value
+				continue
 			}
 
-			chosen, recv, _ := reflect.Select(cases)
-			switch chosen {
-			case 0:
+			recv, ok := chv.TryRecv()
+			if ok {
 				for _, sendCh := range event.Subscribers {
 					sendCh.Send(recv)
 				}
-			case 1:
-				// Nothing received
-				break
 			}
 		} // end for
 	} // end if
@@ -289,6 +274,7 @@ func (ee *LocalEventEmitter) IsClosed() bool {
 	return ee.closed
 }
 
+// Wait will block until the emitter has been successfully closed
 func (ee *LocalEventEmitter) Wait() {
 	<-ee.done
 }

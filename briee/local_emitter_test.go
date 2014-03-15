@@ -18,7 +18,6 @@ type B struct {
 
 func TestEmitter(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	PublA1 := ee.Publish("A", A{}).(chan<- A)
 	PublA2 := ee.Publish("A", A{}).(chan<- A)
@@ -77,7 +76,6 @@ func TestEmitter(t *testing.T) {
 
 func testNilPublisher(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -95,7 +93,6 @@ func testNilPublisher(t *testing.T) {
 
 func testNotification(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	publ := ee.Publish("Notification", struct{}{}).(chan<- struct{})
 	subs := ee.Subscribe("Notification", struct{}{}).(<-chan struct{})
@@ -140,7 +137,6 @@ func TestCloseEE(t *testing.T) {
 
 func TestTypeOf(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	_ = ee.Publish("A", A{}).(chan<- A)
 	Adata := A{42, "A data"}
@@ -169,7 +165,6 @@ func TestTypeOf(t *testing.T) {
 
 func TestTypes(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	_ = ee.Publish("Map", map[string]A{}).(chan<- map[string]A)
 	_ = ee.Subscribe("Map", map[string]A{}).(<-chan map[string]A)
