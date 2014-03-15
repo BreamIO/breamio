@@ -22,6 +22,8 @@ type Event struct {
 type LocalEventEmitter struct {
 	eventMap map[string]*Event
 	closed   bool
+	done     chan bool
+	running  chan bool
 }
 
 // makeSendRecv returns two channels of provided channel element type.
@@ -171,17 +173,23 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 //
 // The emitter is open once constructed, IsClosed method call will return false.
 func newLocalEventEmitter() *LocalEventEmitter {
-	return &LocalEventEmitter{
+	ee := &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
 		closed:   true,
+		done:     make(chan bool),
+		running:  make(chan bool),
 	}
+	go ee.run()
+	<-ee.running // Make sure the emitter is running before returning
+	return ee
 }
 
 // Run method listens on publishing channels and broadcasts data to subscribers.
 //
 // This method is blocking until Close method is called.
-func (ee *LocalEventEmitter) Run() {
+func (ee *LocalEventEmitter) run() {
 	ee.closed = false
+	ee.running <- true
 
 	for !ee.IsClosed() {
 
@@ -216,6 +224,7 @@ func (ee *LocalEventEmitter) Run() {
 			}
 		} // end for
 	} // end if
+	ee.done <- true
 }
 
 // TypeOf returns the reflect.Type registered for the requested event string
@@ -263,4 +272,8 @@ func (ee *LocalEventEmitter) Close() error {
 // Call Run method to open.
 func (ee *LocalEventEmitter) IsClosed() bool {
 	return ee.closed
+}
+
+func (ee *LocalEventEmitter) Wait() {
+	<-ee.done
 }

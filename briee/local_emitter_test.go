@@ -18,7 +18,7 @@ type B struct {
 
 func TestEmitter(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	//go ee.Run()
 
 	PublA1 := ee.Publish("A", A{}).(chan<- A)
 	PublA2 := ee.Publish("A", A{}).(chan<- A)
@@ -71,11 +71,13 @@ func TestEmitter(t *testing.T) {
 	if err := ee.Close(); err != nil {
 		t.Errorf("Error closing emitter, %v", err)
 	}
+
+	ee.Wait()
 }
 
 func testNilPublisher(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	//go ee.Run()
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -87,11 +89,13 @@ func testNilPublisher(t *testing.T) {
 	if err := ee.Close(); err != nil {
 		t.Errorf("Error closing emitter, %v", err)
 	}
+
+	ee.Wait()
 }
 
 func testNotification(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	//go ee.Run()
 
 	publ := ee.Publish("Notification", struct{}{}).(chan<- struct{})
 	subs := ee.Subscribe("Notification", struct{}{}).(<-chan struct{})
@@ -112,34 +116,31 @@ func testNotification(t *testing.T) {
 	if err := ee.Close(); err != nil {
 		t.Errorf("Error closing emitter, %v", err)
 	}
+
+	ee.Wait()
 }
 
 func TestCloseEE(t *testing.T) {
 	ee := New()
-	done := make(chan struct{})
-	go func(){
-		done <- struct{}{}
-		ee.Run()
-	}()
-	<-done
 
 	_ = ee.Publish("A", A{}).(chan<- A)
 	_ = ee.Subscribe("A", A{}).(<-chan A)
 
 	err := ee.Close()
 	if err != nil {
-		t.Errorf("EE already closed")
+		t.Fatalf("EE already closed")
 	}
 
+	ee.Wait()
 	err = ee.Close()
 	if err == nil {
-		t.Errorf("Calling Close on already closed EE shall cause an error")
+		t.Fatalf("Calling Close on already closed EE shall cause an error")
 	}
 }
 
 func TestTypeOf(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	//go ee.Run()
 
 	_ = ee.Publish("A", A{}).(chan<- A)
 	Adata := A{42, "A data"}
@@ -162,11 +163,13 @@ func TestTypeOf(t *testing.T) {
 	if err := ee.Close(); err != nil {
 		t.Errorf("Error closing emitter, %v", err)
 	}
+
+	ee.Wait()
 }
 
 func TestTypes(t *testing.T) {
 	ee := New()
-	go ee.Run()
+	//go ee.Run()
 
 	_ = ee.Publish("Map", map[string]A{}).(chan<- map[string]A)
 	_ = ee.Subscribe("Map", map[string]A{}).(<-chan map[string]A)
@@ -176,4 +179,5 @@ func TestTypes(t *testing.T) {
 	if err := ee.Close(); err != nil {
 		t.Errorf("error closing emitter, %v", err)
 	}
+	ee.Wait()
 }
