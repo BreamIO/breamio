@@ -8,11 +8,11 @@ import (
 type EventEmitter interface {
 	Publish(eventID string, v interface{}) interface{}
 	Subscribe(eventID string, v interface{}) interface{}
+	Unsubscribe(eventID string, ch interface{}) error
 	TypeOf(eventID string) (reflect.Type, error)
 	Dispatch(eventID string, v interface{})
 	Close() error
 	Wait()
-	//Run()
 }
 
 // New creates a new instance of the default implementation LocalEventEmitter

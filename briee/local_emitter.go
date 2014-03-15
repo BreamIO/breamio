@@ -2,7 +2,6 @@ package briee
 
 import (
 	"errors"
-	"log"
 	"reflect"
 )
 
@@ -11,11 +10,11 @@ import (
 // It contains information about the publishing and subscribing
 // channels, the channel element type and the number of publishers.
 type Event struct {
-	ElemType      reflect.Type  // Element type
-	PublSend      reflect.Value // Write only channel
-	PublRecv      reflect.Value // Read only channel
-	Subscribers   reflect.Value // Slice of write only channels
-	NumPublishers int           // Number of publishers
+	ElemType      reflect.Type                    // Element type
+	PublSend      reflect.Value                   // Write only channel
+	PublRecv      reflect.Value                   // Read only channel
+	Subscribers   map[reflect.Value]reflect.Value // Map of mappings of SendCh to RecvCh
+	NumPublishers int                             // Number of publishers
 }
 
 // LocalEventEmitter implements EventEmitter
@@ -48,16 +47,6 @@ func makeSendRecv(vtype reflect.Type) (chvSend, chvRecv reflect.Value) {
 	return
 }
 
-// makeSlice returns a slice of element type elemType.
-func makeSlice(elemType reflect.Type) (sliceValue reflect.Value) {
-	// Get the slice type
-	sliceType := reflect.SliceOf(elemType)
-
-	// Make the slice
-	sliceValue = reflect.MakeSlice(sliceType, 0, 0)
-	return
-}
-
 // Publish returns a write-only channel with element type equal to the underlying type of the provided interface.
 //
 // Data sent on the returned channel will be broadcasted to all subscribers of this event.
@@ -74,13 +63,13 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 
 	// TODO Refactor if performance is an issue. The channels/slice does not need to be constructed in all cases.
 	chvSend, chvRecv := makeSendRecv(vtype)
-	slicev := makeSlice(chvSend.Type())
+	mapv := make(map[reflect.Value]reflect.Value)
 
 	event, ok := ee.eventMap[eventID]
 
 	if ok {
 		if event.ElemType != vtype {
-			log.Panic("<Publish> Tried to publish on a existing event with different element types")
+			panic("<Publish> Tried to publish on a existing event with different element types")
 		}
 
 		// Check if the event was created by a publisher
@@ -91,10 +80,11 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	} else {
 		// Create a new event and store in map
 		ee.eventMap[eventID] = &Event{
-			ElemType:      vtype,
-			PublSend:      reflect.Value{}, // Not assigned yet
-			PublRecv:      reflect.Value{}, // Not assigned yet
-			Subscribers:   slicev,
+			ElemType: vtype,
+			PublSend: reflect.Value{}, // Not assigned yet
+			PublRecv: reflect.Value{}, // Not assigned yet
+			//Subscribers:   slicev,
+			Subscribers:   mapv,
 			NumPublishers: 0,
 		}
 
@@ -114,10 +104,10 @@ func (ee *LocalEventEmitter) Dispatch(eventID string, value interface{}) {
 	if event == nil {
 		return
 	}
-	for i := 0; i < event.Subscribers.Len(); i++ {
-		sub := event.Subscribers.Index(i)
-		sub.Send(reflect.ValueOf(value))
-	} // end for
+
+	for _, sendCh := range event.Subscribers {
+		sendCh.Send(reflect.ValueOf(value))
+	}
 }
 
 // Subscribe returns a write-only channel with element type equal to the underlying type of the provided interface.
@@ -142,31 +132,52 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	// Check if element is present
 	if ok {
 		if event.ElemType != vtype {
-			log.Panic("<Subscribe> Tried to subscribe on a existing event with different element type")
+			panic("<Subscribe> Tried to subscribe on a existing event with different element type")
 		}
 
 	} else {
 		// There are no events with this identifier, creates one
-		slicev := makeSlice(chvSend.Type())
+		//slicev := makeSlice(chvSend.Type())
+		//mapv := makeMap(chvRecv.Type(), chvSend.Type())
+		mapv := make(map[reflect.Value]reflect.Value)
 
 		// Create a new event and store in map
 		ee.eventMap[eventID] = &Event{
-			ElemType:      vtype,
-			PublSend:      reflect.Value{}, // Not assigned yet
-			PublRecv:      reflect.Value{}, // Not assigned yet
-			Subscribers:   slicev,
+			ElemType: vtype,
+			PublSend: reflect.Value{}, // Not assigned yet
+			PublRecv: reflect.Value{}, // Not assigned yet
+			//Subscribers:   slicev,
+			Subscribers:   mapv,
 			NumPublishers: 0,
 		}
 
 		event = ee.eventMap[eventID]
 	}
 
-	// Append write only channel
-	event.Subscribers = reflect.Append(event.Subscribers, chvSend)
+	event.Subscribers[chvRecv] = chvSend
 
 	// Return read only channel
 	return chvRecv.Interface()
 
+}
+
+// Unsubscribe
+func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
+	if event, ok := ee.eventMap[eventID]; ok {
+
+		for recvCh, sendCh := range event.Subscribers {
+			if recvCh == reflect.ValueOf(ch) {
+				sendCh.Close()
+				delete(event.Subscribers, recvCh)
+				return nil
+			}
+		}
+
+		return errors.New("Can not find subscriber")
+	} else {
+		// event not in event map
+		return errors.New("Can not unsubscribe event which is not registered")
+	}
 }
 
 // NewLocalEventEmitter is the constructor of LocalEventEmitter
@@ -198,6 +209,8 @@ func (ee *LocalEventEmitter) run() {
 
 			chv := event.PublRecv
 
+			// TODO Try chv.TryRecv(x value, ok bool) instead
+
 			cases := []reflect.SelectCase{
 				reflect.SelectCase{
 					reflect.SelectRecv,
@@ -214,10 +227,9 @@ func (ee *LocalEventEmitter) run() {
 			chosen, recv, _ := reflect.Select(cases)
 			switch chosen {
 			case 0:
-				for i := 0; i < event.Subscribers.Len(); i++ {
-					sub := event.Subscribers.Index(i)
-					sub.Send(recv)
-				} // end for
+				for _, sendCh := range event.Subscribers {
+					sendCh.Send(recv)
+				}
 			case 1:
 				// Nothing received
 				break
@@ -253,9 +265,12 @@ func (ee *LocalEventEmitter) Close() error {
 	}
 	// Close the subscriber channels
 	for _, event := range ee.eventMap {
-		for i := 0; i < event.Subscribers.Len(); i++ {
-			event.Subscribers.Index(i).Close()
+
+		for recvCh, sendCh := range event.Subscribers {
+			sendCh.Close()
+			delete(event.Subscribers, recvCh)
 		}
+
 	}
 
 	// Clear the event map
