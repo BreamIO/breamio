@@ -1,8 +1,8 @@
 package gorgonzola
 
 import (
-	"strings"
 	"errors"
+	"strings"
 )
 
 func CreateFromURI(uri string) (Tracker, error) {
@@ -23,18 +23,18 @@ type Point2D interface {
 	Y() float64
 }
 
-type point2D struct {
-	x, y float64
+type XYPoint struct {
+	Xf, Yf float64
 }
 
-func (p point2D) X() float64 {
-	return p.x
+func (p XYPoint) X() float64 {
+	return p.Xf
 }
 
-func (p point2D) Y() float64 {
-	return p.y
+func (p XYPoint) Y() float64 {
+	return p.Yf
 }
 
-func filter(left, right Point2D) Point2D {
-	return point2D{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
+func Filter(left, right Point2D) Point2D {
+	return XYPoint{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
 }

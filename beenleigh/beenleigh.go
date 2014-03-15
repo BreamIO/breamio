@@ -56,7 +56,6 @@ func newBL(eef func() briee.EventEmitter, io aioli.IOManager) *breamLogic {
 	
 	//Create the first event emitter
 	logic.root = eef()
-	go logic.root.Run()
 	
 	if io != nil {
 		//Hook it up to the io manager
@@ -128,15 +127,17 @@ func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 		return err
 	}
 	
-	ee := bl.eventEmitterConstructor()
 	bl.wg.Add(1)
+	ee := bl.eventEmitterConstructor()
 	go func() {
-		ee.Run()
+		ee.Wait()
 		bl.wg.Done()
 	}()
 	
 	bl.ioman.AddEE(ee, event.Emitter)
 	go tracker.Link(ee)
+	
+	//Should be moved to separate type handler
 	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)

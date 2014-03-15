@@ -1,4 +1,4 @@
-package gorgonzola_test
+package tobii_test
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
