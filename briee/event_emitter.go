@@ -6,9 +6,9 @@ import (
 
 // EventEmitter interface contains methods for publishing, subscribring and managing events.
 type EventEmitter interface {
-	Publish(eventID string, v interface{}) interface{}
-	Subscribe(eventID string, v interface{}) interface{}
-	Unsubscribe(eventID string, ch interface{}) error
+	Publish(eventID string, v interface{}) chan<- interface{}
+	Subscribe(eventID string, v interface{}) <-chan interface{}
+	Unsubscribe(eventID string, <-chan ch interface{}) error
 	TypeOf(eventID string) (reflect.Type, error)
 	Dispatch(eventID string, v interface{})
 	Close() error
