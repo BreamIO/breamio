@@ -66,7 +66,7 @@ func (m *MockTracker) Connect() error {
 	return nil
 }
 
-func (m MockTracker) Calibrate(points <-chan Point2D, errs chan<- error) {
+func (m MockTracker) Calibrate(points <-chan XYer, errs chan<- error) {
 	errs <- NotImplementedError("Calibrate of MockTracker")
 }
 
@@ -82,7 +82,7 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 			return
 		}
 		x, y := m.f(m.t)
-		ch <- &ETData{XYPoint{x, y}, t}
+		ch <- &ETData{Point2D{x, y}, t}
 		m.t += 0.01
 	}
 }

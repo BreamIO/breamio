@@ -74,7 +74,7 @@ type Tracker interface {
 	//Calibrates the tracker using the points sent on the channel.
 	//If the channel is buffered, there is no guarantees on when the point is processed by the tracker.
 	//Any errors related to the calibration in sent on the error channel.
-	Calibrate(<-chan Point2D, chan<- error)
+	Calibrate(<-chan XYer, chan<- error)
 
 	// Returns true if the tracker has been successfully calibrated.
 	// false otherwise
@@ -82,7 +82,7 @@ type Tracker interface {
 }
 
 type ETData struct {
-	Filtered  Point2D
+	Filtered  XYer
 	Timestamp time.Time
 }
 

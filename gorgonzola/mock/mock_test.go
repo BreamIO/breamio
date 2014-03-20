@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/maxnordlund/breamio/gorgonzola"
+	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
 )
 
 func TestMockCreate(t *testing.T) {

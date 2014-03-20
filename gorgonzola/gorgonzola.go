@@ -18,23 +18,23 @@ func CreateFromURI(uri string) (Tracker, error) {
 	return GetDriver(typ).CreateFromId(id)
 }
 
-type Point2D interface {
+type XYer interface {
 	X() float64
 	Y() float64
 }
 
-type XYPoint struct {
+type Point2D struct {
 	Xf, Yf float64
 }
 
-func (p XYPoint) X() float64 {
+func (p Point2D) X() float64 {
 	return p.Xf
 }
 
-func (p XYPoint) Y() float64 {
+func (p Point2D) Y() float64 {
 	return p.Yf
 }
 
-func Filter(left, right Point2D) Point2D {
-	return XYPoint{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
+func Filter(left, right XYer) XYer {
+	return Point2D{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
 }

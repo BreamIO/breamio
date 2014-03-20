@@ -2,13 +2,14 @@ package tobii_test
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
-
+	"testing"	
 	"github.com/maxnordlund/breamio/gorgonzola"
+	
+	_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
 )
 
 func TestGazeCreate(t *testing.T) {
-	tracker, err := gorgonzola.GetDriver("gobii").Create()
+	tracker, err := gorgonzola.GetDriver("tobii").Create()
 	Convey("Result should be a tracker", t, func() {
 		So(tracker, ShouldNotBeNil)
 	})
@@ -18,14 +19,14 @@ func TestGazeCreate(t *testing.T) {
 }
 
 func TestGazeList(t *testing.T) {
-	driver := gorgonzola.GetDriver("gobii")
+	driver := gorgonzola.GetDriver("tobii")
 	Convey("Should always return a list", t, func() {
 		So(driver.List(), ShouldNotBeNil)
 	})
 }
 
 func TestGazeCreateFromId(t *testing.T) {
-	driver := gorgonzola.GetDriver("gobii")
+	driver := gorgonzola.GetDriver("tobii")
 	ids := driver.List()
 	if len(ids) < 1 {
 		t.Fatal("No trackers connected.")
@@ -41,7 +42,7 @@ func TestGazeCreateFromId(t *testing.T) {
 }
 
 func TestGazeStream(t *testing.T) {
-	tracker, err := gorgonzola.GetDriver("gobii").Create()
+	tracker, err := gorgonzola.GetDriver("tobii").Create()
 	if err != nil {
 		t.Fatal(err)
 	}
