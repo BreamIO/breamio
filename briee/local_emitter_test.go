@@ -1,8 +1,9 @@
 package briee
 
 import (
-	"reflect"
-	"sync"
+	//"reflect"
+	//"sync"
+	"log"
 	"testing"
 )
 
@@ -16,6 +17,43 @@ type B struct {
 	Int   int
 }
 
+func TestNewEmitter(t *testing.T) {
+	log.Printf("Creating new event emitter")
+	ee := New()
+
+	log.Printf("Publishing")
+	PublA1 := ee.Publish("A", A{})
+
+	log.Printf("Subscribing")
+	SubsA1 := ee.Subscribe("A", A{})
+
+	log.Printf("Publ: %v\tSubs: %v", PublA1, SubsA1)
+	/*
+		Adata := A{42, "A data"}
+
+		var recvA1 A
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			recvA1 = <-SubsA1
+			wg.Done()
+		}()
+
+		go func() {
+			PublA1 <- Adata
+			wg.Done()
+		}()
+
+		wg.Wait()
+
+		if Adata != recvA1 {
+			t.Errorf("Got data %v, want %v", recvA1, Adata)
+		}*/
+}
+
+/*
 func TestEmitter(t *testing.T) {
 	ee := New()
 
@@ -248,3 +286,4 @@ func TestUnsubscribeNoEvent(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 }
+*/
