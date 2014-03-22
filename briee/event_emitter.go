@@ -2,16 +2,33 @@ package briee
 
 import (
 	"reflect"
+	"io"
 )
+
+type Subscriber interface {
+	Subscribe(eventID string, v interface{}) interface{}
+	Unsubscribe(eventID string, ch interface{}) error
+}
+
+type Publisher interface {
+	Publish(eventID string, v interface{}) interface{}
+}
+
+type PublishSubscriber interface {
+	Publisher
+	Subscriber
+}
+
+type Dispatcher interface {
+	Dispatch(eventID string, v interface{})
+}
 
 // EventEmitter interface contains methods for publishing, subscribring and managing events.
 type EventEmitter interface {
-	Publish(eventID string, v interface{}) interface{}
-	Subscribe(eventID string, v interface{}) interface{}
-	Unsubscribe(eventID string, ch interface{}) error
+	PublishSubscriber
+	Dispatcher
 	TypeOf(eventID string) (reflect.Type, error)
-	Dispatch(eventID string, v interface{})
-	Close() error
+	io.Closer
 	Wait()
 }
 
