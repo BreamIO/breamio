@@ -61,7 +61,7 @@ type Tracker interface {
 	// This means the tracker publishes its capabilities to the emitter.
 	// That means that gaze data is published to the channel on event "tracker:etdata".
 	// It also means calibration is exposed on "tracker:calibrate" and any settings capabilities on tracker:settings
-	Link(ee briee.EventEmitter)
+	Link(ee briee.PublishSubscriber)
 
 	//Initiates a connection between the software driver and the hardware.
 	//Should be called before any other use of the tracker except if method specifies it.
