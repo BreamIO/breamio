@@ -61,7 +61,7 @@ type Tracker interface {
 	// This means the tracker publishes its capabilities to the emitter.
 	// That means that gaze data is published to the channel on event "tracker:etdata".
 	// It also means calibration is exposed on "tracker:calibrate" and any settings capabilities on tracker:settings
-	Link(ee briee.EventEmitter)
+	Link(ee briee.PublishSubscriber)
 
 	//Initiates a connection between the software driver and the hardware.
 	//Should be called before any other use of the tracker except if method specifies it.
@@ -69,20 +69,10 @@ type Tracker interface {
 
 	//Closes the tracker connection and performs any other clean up necessary in the driver.
 	io.Closer
-
-	//Optional operation
-	//Calibrates the tracker using the points sent on the channel.
-	//If the channel is buffered, there is no guarantees on when the point is processed by the tracker.
-	//Any errors related to the calibration in sent on the error channel.
-	Calibrate(<-chan Point2D, chan<- error)
-
-	// Returns true if the tracker has been successfully calibrated.
-	// false otherwise
-	IsCalibrated() bool
 }
 
 type ETData struct {
-	Filtered  Point2D
+	Filtered  XYer
 	Timestamp time.Time
 }
 

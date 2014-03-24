@@ -4,17 +4,18 @@ import (
 	"fmt"
 
 	"github.com/maxnordlund/breamio/gorgonzola"
+	"github.com/maxnordlund/breamio/gorgonzola/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
 func ExampleUsage() {
-	mock := gorgonzola.GetDriver("mock")
-	if mock == nil {
+	mocker := gorgonzola.GetDriver("mock")
+	if mocker == nil {
 		fmt.Println("No Mock driver installed! :(")
 		return
 	}
-	tracker, err := mock.CreateFromId("constant")
+	tracker, err := mocker.CreateFromId("constant")
 	if err != nil {
 		fmt.Println("No constant \"mocktracker\" implementated! :(")
 		return
@@ -34,11 +35,11 @@ func ExampleUsage() {
 
 func TestRegisterDriver(t *testing.T) {
 	Convey("Reregistration is not allowed", t, func() {
-		So(gorgonzola.RegisterDriver("mock", new(gorgonzola.MockDriver)), ShouldNotBeNil)
+		So(gorgonzola.RegisterDriver("mock", new(mock.MockDriver)), ShouldNotBeNil)
 	})
 
 	Convey("But new registrations should be allowed", t, func() {
-		So(gorgonzola.RegisterDriver("mock2", new(gorgonzola.MockDriver)), ShouldBeNil)
+		So(gorgonzola.RegisterDriver("mock2", new(mock.MockDriver)), ShouldBeNil)
 	})
 
 	Convey("But only if the driver is not nil", t, func() {

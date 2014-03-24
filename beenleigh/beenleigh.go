@@ -9,13 +9,13 @@ package beenleigh
 
 import (
 	"github.com/maxnordlund/breamio/aioli"
-	ancient "github.com/maxnordlund/breamio/aioli/ancientPower"
+	//ancient "github.com/maxnordlund/breamio/aioli/ancientPower"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 	"log"
 	"os"
 	"io"
-	"strconv"
+	//"strconv"
 	"sync"
 )
 
@@ -79,7 +79,7 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 	//Subscribe to events
-	newEvents := bl.root.Subscribe("new", Spec{}).(<-chan Spec)
+	
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 	
 	go bl.ioman.Run()
@@ -90,25 +90,32 @@ func (bl *breamLogic) ListenAndServe() {
 	go ts.Listen()
 	go ws.Listen()
 	
+	go bl.handle("new:tracker", bl.onNewTrackerEvent)
+	
 	for {
 		select {
-			case event := <- newEvents:
-				switch event.Type {
-				case "tracker":
-					if err := bl.onNewTrackerEvent(event); err != nil {
-						bl.root.Dispatch("error:new:tracker", err)
-					}
-				case "statistics":
-					/*if err := bl.onNewStatisticsEvent(event); err != nil {
-						bl.root.Dispatch("error:new:tracker", err)
-					}*/
-				}
 			case <- shutdownEvents:
 				bl.logger.Println("Recieved shutdown event.")
 				return
 			case <- bl.closer:
 				//bl.logger.Println("Time to close the shop!")
 				return
+		}
+	}
+}
+
+func (bl *breamLogic) handle(eventId string, f handlerFunc) {
+	bl.wg.Add(1)
+	defer bl.wg.Done()
+	
+	events := bl.root.Subscribe(eventId, Spec{}).(<-chan Spec)
+	for {
+		select {
+			case <- bl.closer: return
+			case spec := <- events: 
+				if err := f(spec); err != nil {
+					bl.root.Dispatch("beenleigh:error", err)
+				}
 		}
 	}
 }
@@ -137,10 +144,13 @@ func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 	bl.ioman.AddEE(ee, event.Emitter)
 	go tracker.Link(ee)
 	
-	//Should be moved to separate type handler
-	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
-	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
+	return nil
+}
+
+func onNewAncientEvent(bl *breamLogic, event Spec) error {
+	//Should be moved to separate type handler
+	//go ancient.ListenAndServe(bl.ioman.ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	return nil
 }
 
@@ -155,7 +165,6 @@ func (bl *breamLogic) Close() error {
 // Data is a context sensitive string, which syntax depends on the type.
 // Emitter is a integer, identifying the emitter number to link the new object to. 
 type Spec struct {
-	Type string
-	Data string
 	Emitter int
+	Data string
 }
