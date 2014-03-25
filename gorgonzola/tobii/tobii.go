@@ -57,7 +57,7 @@ func (g *GazeTracker) Link(ee briee.EventEmitter) {
 	ee.Dispatch("tracker:error", err)
 }
 
-func (g *GazeTracker) Calibrate(points <-chan Point2D, errors chan<- error) {
+func (g *GazeTracker) Calibrate(points <-chan XYer, errors chan<- error) {
 	for _ = range points {
 		//Mock implementation until Calibration implemented in gobii
 		errors <- NotImplementedError("Calibrate")
@@ -88,5 +88,5 @@ func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 }
 
 func init() {
-	RegisterDriver("gobii", new(GazeDriver))
+	RegisterDriver("tobii", new(GazeDriver))
 }
