@@ -1,13 +1,13 @@
 package main
 
 import (
-	"net"
 	"encoding/json"
-	"log"
-	"io"
-	"sync"
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/beenleigh"
+	"io"
+	"log"
+	"net"
+	"sync"
 )
 
 /*
@@ -24,7 +24,7 @@ func main() {
 	c.Wait()
 }*/
 
-type Client struct{
+type Client struct {
 	ch chan aioli.ExtPkg
 	wg sync.WaitGroup
 	io.WriteCloser

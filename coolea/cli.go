@@ -43,7 +43,6 @@ func parseLine(line string) {
 	}
 }
 
-
 //Commands
 //List * -- lists * (currently echo *)
 //start
@@ -61,17 +60,17 @@ func startParse(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 1 {
 		switch tokens[0] {
 		case "list":
-				return "", parseList, tokens[1:]
-			}
+			return "", parseList, tokens[1:]
 		case "set":
-				return "", parseSet, tokens[1:]
+			return "", parseSet, tokens[1:]
+		}
 	}
 	//default
 	return parseError(tokens[0])
 }
 
-func parseError(token string) {
-	fmt.Println("Error parsing \"" + token +"\".")
+func parseError(token string) (string, handlerFunc, []string) {
+	fmt.Println("Error parsing \"" + token + "\".")
 	return "", startParse, nil
 }
 
@@ -84,9 +83,9 @@ func parseSet(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 1 {
 		switch tokens[0] {
 		case "heatmap":
-				return "", parseHeatMap, tokens[1:]
+			return "", parseHeatMap, tokens[1:]
 		case "region":
-				return "", parseRegion, tokens[1:]
+			return "", parseRegion, tokens[1:]
 		}
 	}
 	//default
@@ -94,7 +93,7 @@ func parseSet(tokens []string) (string, handlerFunc, []string) {
 }
 
 func parseHeatMap(tokens []string) (string, handlerFunc, []string) {
-		return parseError(tokens[0])
+	return parseError(tokens[0])
 	//TODO make update message and go through tokens and update every field in the message
 	// if comma is found more settings follow. else end and continue from start parsing.
 	//Also send the message.
@@ -104,4 +103,3 @@ func parseRegion(tokens []string) (string, handlerFunc, []string) {
 	return parseError(tokens[0])
 	//TODO make update message, send it, then start from beginning.
 }
-
