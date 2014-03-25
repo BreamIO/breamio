@@ -1,9 +1,9 @@
 package briee
 
 import (
-	//"reflect"
-	//"sync"
-	"log"
+	"reflect"
+	"sync"
+	//"log"
 	"testing"
 )
 
@@ -18,42 +18,36 @@ type B struct {
 }
 
 func TestNewEmitter(t *testing.T) {
-	log.Printf("Creating new event emitter")
 	ee := New()
 
-	log.Printf("Publishing")
-	PublA1 := ee.Publish("A", A{})
+	PublA1 := ee.Publish("A", A{}).(chan<- A)
 
-	log.Printf("Subscribing")
-	SubsA1 := ee.Subscribe("A", A{})
+	SubsA1 := ee.Subscribe("A", A{}).(<-chan A)
 
-	log.Printf("Publ: %v\tSubs: %v", PublA1, SubsA1)
-	/*
-		Adata := A{42, "A data"}
+	Adata := A{42, "A data"}
+	var recvA1 A
 
-		var recvA1 A
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-		var wg sync.WaitGroup
-		wg.Add(2)
+	go func() {
+		recvA1 = <-SubsA1
+		wg.Done()
+	}()
 
-		go func() {
-			recvA1 = <-SubsA1
-			wg.Done()
-		}()
+	go func() {
+		PublA1 <- Adata
+		wg.Done()
+		close(PublA1)
+	}()
 
-		go func() {
-			PublA1 <- Adata
-			wg.Done()
-		}()
+	wg.Wait()
 
-		wg.Wait()
-
-		if Adata != recvA1 {
-			t.Errorf("Got data %v, want %v", recvA1, Adata)
-		}*/
+	if Adata != recvA1 {
+		t.Errorf("Got data %v, want %v", recvA1, Adata)
+	}
 }
 
-/*
 func TestEmitter(t *testing.T) {
 	ee := New()
 
@@ -93,6 +87,10 @@ func TestEmitter(t *testing.T) {
 
 	wg.Wait()
 
+	close(PublA1)
+	close(PublA2)
+	close(PublB1)
+
 	if Adata != recvA1 {
 		t.Errorf("Got data %v, want %v", recvA1, Adata)
 	}
@@ -104,12 +102,6 @@ func TestEmitter(t *testing.T) {
 	if Bdata != recvB1 {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
-
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func testNilPublisher(t *testing.T) {
@@ -121,12 +113,6 @@ func testNilPublisher(t *testing.T) {
 		}
 	}()
 	_ = ee.Publish("A", nil).(chan<- A)
-
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func testNotification(t *testing.T) {
@@ -148,29 +134,6 @@ func testNotification(t *testing.T) {
 	}()
 
 	wg.Done()
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
-}
-
-func TestCloseEE(t *testing.T) {
-	ee := New()
-
-	_ = ee.Publish("A", A{}).(chan<- A)
-	_ = ee.Subscribe("A", A{}).(<-chan A)
-
-	err := ee.Close()
-	if err != nil {
-		t.Fatalf("EE already closed")
-	}
-
-	ee.Wait()
-	err = ee.Close()
-	if err == nil {
-		t.Fatalf("Calling Close on already closed EE shall cause an error")
-	}
 }
 
 func TestTypeOf(t *testing.T) {
@@ -194,11 +157,6 @@ func TestTypeOf(t *testing.T) {
 		t.Errorf("TypeOf an unregistered event shall cause an error")
 	}
 
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func TestTypes(t *testing.T) {
@@ -209,12 +167,9 @@ func TestTypes(t *testing.T) {
 	_ = ee.Publish("Slice", []A{}).(chan<- []A)
 	_ = ee.Subscribe("Slice", []A{}).(<-chan []A)
 
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
 
+/*
 func TestUnsubscribe(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", A{}).(<-chan A)
@@ -222,25 +177,18 @@ func TestUnsubscribe(t *testing.T) {
 	if err != nil {
 		t.Errorf("error unsubscribing, %v", err)
 	}
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
-
+*/
+/*
 func TestDispatch(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", struct{}{}).(<-chan struct{})
-	go ee.Dispatch("event", struct{}{})
-	go ee.Dispatch("another event", struct{}{})
+	ee.Dispatch("event", struct{}{})
+	ee.Dispatch("another event", struct{}{})
 	(<-sub)
 
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
-
+*/
 func TestPanicPublisher(t *testing.T) {
 	ee := New()
 
@@ -267,6 +215,7 @@ func TestPanicSubscriber(t *testing.T) {
 	_ = ee.Subscribe("event", A{}).(<-chan A)
 }
 
+/*
 func TestUnsubscribeWrongEE(t *testing.T) {
 	ee1 := New()
 	ee2 := New()

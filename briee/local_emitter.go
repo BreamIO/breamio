@@ -2,7 +2,7 @@ package briee
 
 import (
 	"errors"
-	"log"
+	//"log"
 	"reflect"
 	"sync"
 )
@@ -10,8 +10,8 @@ import (
 type Event struct {
 	ElemType     reflect.Type   // Underlying element type
 	PublisherWG  sync.WaitGroup // Number of publishers active
-	DataChan     interface{}    // Internal data channel
-	Subscribers  interface{}    // List of write-only channels to subscribers
+	DataChan     reflect.Value  // Internal data channel
+	Subscribers  reflect.Value  // List of write-only channels to subscribers
 	CanPublish   bool
 	CanSubscribe bool
 	ChannelReady chan bool
@@ -22,8 +22,8 @@ func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
 		ElemType: elemtype,
 		//PublisherWG:
-		DataChan:     nil,
-		Subscribers:  nil,
+		DataChan:     reflect.Value{},
+		Subscribers:  reflect.Value{},
 		CanPublish:   false,
 		CanSubscribe: false,
 		ChannelReady: make(chan bool, 1), // Buffered with one, important
@@ -41,7 +41,6 @@ func newLocalEventEmitter() *LocalEventEmitter {
 }
 
 func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
-
 	vtype := reflect.TypeOf(v)
 
 	// Check if event is existing
@@ -49,14 +48,15 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	if ok {
 		// Event exisits, check that element types are consistent
 		if event.ElemType != vtype {
-			panic("Cannot not publish on an existing event with different element types")
+			panic("Cannot publish on an existing event with different element types")
 		}
 	} else {
-		// No existing event, create one
+		// No existing event, create one and store in map
 		event = newEvent(vtype)
+		ee.eventMap[eventID] = event
 	}
 	// Create the write and read channels
-	sendChan, recvChan := makeDirChannels(v)
+	sendChan, recvChan := makeDirChannels(v, 0)
 
 	// Need to add 1 to the waitgroup to get the overhead function to work
 	event.PublisherWG.Add(1)
@@ -65,28 +65,31 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	if !event.CanPublish {
 		// Create the internal data channel
 		event.DataChan = makeChan(v)
-
 		event.ChannelReady <- true
 		event.CanPublish = true
 
 		go func() {
 			event.PublisherWG.Wait()
-			close(event.DataChan.(chan interface{}))
+			event.DataChan.Close()
 			event.CanPublish = false
 		}()
 	}
 
 	go func() {
-		for data := range recvChan.(chan interface{}) {
-			event.DataChan.(chan interface{}) <- data
+		for {
+			if data, okRecv := recvChan.Recv(); okRecv {
+				event.DataChan.TrySend(data)
+			} else {
+				break
+			}
 		}
+		event.PublisherWG.Done()
 	}()
 
-	return sendChan
+	return sendChan.Interface()
 }
 
 func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{} {
-	// TODO REFACTOR BEGIN, move to other method, because of code-copy
 	// Check if event is existing
 	vtype := reflect.TypeOf(v)
 
@@ -95,45 +98,58 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	if ok {
 		// Event exisits, check that element types are consistent
 		if event.ElemType != vtype {
-			panic("Cannot not subscribe on an existing event with different element types")
+			panic("Cannot subscribe on an existing event with different element types")
 		}
 	} else {
-		// No existing event, create one
+		// No existing event, create one and store in map
 		event = newEvent(vtype)
+		ee.eventMap[eventID] = event
 	}
-	// TODO REFACTOR END
 
 	// Create the write and read channels
-	sendChan, recvChan := makeDirChannels(v)
+	sendChan, recvChan := makeDirChannels(v, 256)
 
 	if !event.CanSubscribe {
-		// FIXME slice initilization
+
 		event.Subscribers = makeSlice(v)
+		event.CanSubscribe = true
 		go func() {
 			<-event.ChannelReady
-			for data := range event.DataChan.(chan interface{}) {
-				for ch := range event.Subscribers.([]chan<- interface{}) {
-					log.Printf("Data: %v\tCh: %v", reflect.ValueOf(data), reflect.ValueOf(ch))
-					/*
-						select {
-						case ch <- data:
-							// Done
-							log.Printf("Successfully sent data")
-						default:
-							log.Printf("Unable to send data")
-						}
-					*/
+
+			for {
+				//if data, chanOpen := event.DataChan.TryRecv(); data.IsValid() {
+				if data, ok := event.DataChan.Recv(); ok {
+					for i := 0; i < event.Subscribers.Len(); i++ {
+						ch := event.Subscribers.Index(i)
+						ch.TrySend(data)
+					}
+				} else {
+					// Clean up
+					for i := 0; i < event.Subscribers.Len(); i++ {
+						ch := event.Subscribers.Index(i)
+						ch.Close()
+					}
+					break
 				}
 			}
 		}()
 	}
 
-	//event.Subscribers = append(event.Subscribers.([]chan<- interface{}), sendChan)
-	reflect.Append(reflect.ValueOf(event.Subscribers), reflect.ValueOf(sendChan))
-
-	return recvChan
+	event.Subscribers = reflect.Append(event.Subscribers, sendChan)
+	return recvChan.Interface()
 }
 
+/*
+func (ee *LocalEventEmitter) Dispatch (eventID string, v interface{}) {
+	if event, ok := ee.eventMap[eventID]; ok {
+		data := reflect.ValueOf(v)
+		if data.Type() != event.ElemType {
+			panic("Cannot dispatch value different from the registered type")
+		}
+		event.DataChan.TrySend(data)
+	}
+}
+*/
 func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
@@ -142,7 +158,7 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	}
 }
 
-func makeDirChannels(v interface{}) (interface{}, interface{}) {
+func makeDirChannels(v interface{}, buffer int) (reflect.Value, reflect.Value) {
 
 	vtype := reflect.TypeOf(v)
 
@@ -154,7 +170,7 @@ func makeDirChannels(v interface{}) (interface{}, interface{}) {
 	chtypeRecv := reflect.ChanOf(reflect.RecvDir, vtype)
 
 	// Make a two-way channel
-	chv := reflect.MakeChan(chtype, 0)
+	chv := reflect.MakeChan(chtype, buffer)
 
 	// Make a write-only channel
 	chvSend := chv.Convert(chtypeSend)
@@ -162,28 +178,23 @@ func makeDirChannels(v interface{}) (interface{}, interface{}) {
 	// Make a read-only channel
 	chvRecv := chv.Convert(chtypeRecv)
 
-	return chvSend.Interface(), chvRecv.Interface()
+	return chvSend, chvRecv
 
 }
 
-func makeChan(v interface{}) interface{} {
+func makeChan(v interface{}) reflect.Value {
 	vtype := reflect.TypeOf(v)
 	chtype := reflect.ChanOf(reflect.BothDir, vtype)
-	chv := reflect.MakeChan(chtype, 0)
-	return chv.Interface()
-	//return (chan interface{})(chv)
-	//return chv.Interface().(chan interface{})
-	//return chv.Interface().(chan reflect.TypeOf(v))
-	//return chv.Interface()
-	//return chv
+	chv := reflect.MakeChan(chtype, 256)
+	return chv
 }
 
-func makeSlice(v interface{}) interface{} {
+func makeSlice(v interface{}) reflect.Value {
 	vtype := reflect.TypeOf(v)
 	chtype := reflect.ChanOf(reflect.SendDir, vtype) // Note SendDir
 	slicetype := reflect.SliceOf(chtype)
 
 	slicev := reflect.MakeSlice(slicetype, 0, 0)
 
-	return slicev.Interface()
+	return slicev
 }
