@@ -51,10 +51,12 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 	return ch, errs
 }
 
-func (g *GazeTracker) Link(ee briee.EventEmitter) {
+func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	err := g.StartTracking(gobiiOnGazeCallback(etdataCh))
-	ee.Dispatch("tracker:error", err)
+	errorCh := ee.Publish("tracker:error", err.(error)).(chan<- error)
+	//defer close(errorCh)
+	errorCh <- err
 }
 
 func (g *GazeTracker) Calibrate(points <-chan XYer, errors chan<- error) {
