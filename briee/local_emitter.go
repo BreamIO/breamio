@@ -122,6 +122,7 @@ func (event *Event) RunPublisherOverhead(v interface{}) {
 	if !event.CanPublish {
 		event.DataChan = makeChan(v)
 		//event.ChannelReady <- true
+		event.ChannelReady = make(chan struct{})
 		close(event.ChannelReady)
 		event.CanPublish = true
 
