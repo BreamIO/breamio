@@ -2,16 +2,16 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
+	"log"
+	"net"
 	"os"
 	"strconv"
 	"strings"
-	"net"
-	"log"
-	"encoding/json"
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
 )
 
 type handlerFunc func([]string) (string, handlerFunc, []string)
@@ -106,19 +106,33 @@ func parseStart(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 1 {
 		switch tokens[0] {
 		case "et":
-			id, err := strconv.Atoi(tokens[1])
-			if err != nil {
-				fmt.Println(err)
-				parseError(tokens[1])
-			}
-			payload, err := json.Marshal(beenleigh.Spec{id, tokens[2]})
-			client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
-			return "sent id " + string(id) + " message " + tokens[2], startParse, tokens[3:]
+			return startET(tokens[1:])
 		}
 	}
 	return parseError(tokens[0])
 }
 
-//Parse the subtree of stop
-//func parseStop
+//Sends a start et message
+func startET(tokens []string) (string, handlerFunc, []string) {
+			id, err := strconv.Atoi(tokens[0])
+			if err != nil {
+				fmt.Println(err)
+				return parseError(tokens[0])
+			}
+			payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
+			client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
+			return "sent id " + string(id) + " message " + tokens[1, startParse, tokens[2:]
+}
 
+//Parse the subtree of stop
+func parseStop(tokens []string) (string, handlerFunc, []string) {
+
+	if len(tokens) > 1 {
+		switch tokens[0] {
+		case "et":
+			
+		}
+	}
+
+	return parseError(tokens[0])
+}
