@@ -1,8 +1,8 @@
 package briee
 
 import (
-	"reflect"
 	"io"
+	"reflect"
 )
 
 type Subscriber interface {

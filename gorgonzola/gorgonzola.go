@@ -38,3 +38,15 @@ func (p Point2D) Y() float64 {
 func Filter(left, right XYer) XYer {
 	return Point2D{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
 }
+
+type Error struct {
+	err string
+}
+
+func NewError(description string) Error {
+	return Error{description}
+}
+
+func (err Error) Error() string {
+	return err.err
+}
