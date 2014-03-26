@@ -96,6 +96,8 @@ func startParse(tokens []string) (string, handlerFunc, []string) {
 			return "", parseList, tokens[1:]
 		case "start":
 			return "", parseStart, tokens[1:]
+		case "stop":
+			return "", parseStop, tokens[1:]
 		}
 	}
 	//default
@@ -159,6 +161,6 @@ func stopET(tokens []string) (string, handlerFunc, []string) {
 		return parseError(tokens[0])
 	}
 	payload, err := json.Marshal(struct{}{})
-	client.Send(aioli.ExtPkg{"tracker:shutdown", 256, payload})
-	return "Sent request to stop new ET", startParse, tokens[1:]
+	client.Send(aioli.ExtPkg{"tracker:shutdown", id, payload})
+	return "Sent request to stop ET " + tokens[0], startParse, tokens[1:]
 }
