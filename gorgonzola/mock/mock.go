@@ -112,7 +112,6 @@ func (m *MockTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 				m.calibrationPoints = 0
 				outCh <- struct{}{}
 			case <-m.closer: return
-			default:
 		}
 	}
 }
@@ -141,7 +140,6 @@ func (m *MockTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 					nextCh <- struct{}{}
 				}
 			case <-m.closer: return
-			default:
 		}
 	}
 }
@@ -159,7 +157,6 @@ func (m *MockTracker) validateStartHandler(ee briee.PublishSubscriber) {
 				m.validationPoints = 0
 				nextCh <- struct{}{}
 			case <-m.closer: return
-			default:
 		}
 	}
 }
@@ -184,7 +181,6 @@ func (m *MockTracker) validateAddHandler(ee briee.PublishSubscriber) {
 					nextCh <- struct{}{}
 				}
 			case <-m.closer: return
-			default:
 		}
 	}
 }
