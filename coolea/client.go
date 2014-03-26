@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
+//	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
 	"log"
-	"net"
 	"sync"
+//	"net"
 )
 
 /*
@@ -18,9 +18,9 @@ func main() {
 		log.Println("Could not connnect to server:", err)
 		return
 	}
-	c := New(conn)
-	payload, err := json.Marshal(beenleigh.Spec{"tracker", "mock://standard", 1})
-	c.Send(aioli.ExtPkg{"new", 256, payload})
+	c := NewClient(conn)
+	payload, err := json.Marshal(beenleigh.Spec{1, "mock://standard"})
+	c.Send(aioli.ExtPkg{"new:tracker", 256, payload})
 	c.Wait()
 }*/
 
@@ -30,7 +30,7 @@ type Client struct {
 	io.WriteCloser
 }
 
-func New(conn io.WriteCloser) *Client {
+func NewClient(conn io.WriteCloser) *Client {
 	ch := make(chan aioli.ExtPkg)
 	c := &Client{ch, sync.WaitGroup{}, conn}
 	go c.run()
