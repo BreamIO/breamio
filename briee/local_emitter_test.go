@@ -169,7 +169,6 @@ func TestTypes(t *testing.T) {
 
 }
 
-
 func TestUnsubscribe(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", A{}).(<-chan A)
@@ -213,7 +212,6 @@ func TestPanicSubscriber(t *testing.T) {
 	_ = ee.Subscribe("event", A{}).(<-chan A)
 }
 
-
 func TestUnsubscribeWrongEE(t *testing.T) {
 	ee1 := New()
 	ee2 := New()
@@ -234,3 +232,20 @@ func TestUnsubscribeNoEvent(t *testing.T) {
 	}
 }
 
+func TestCloseEE(t *testing.T) {
+	ee := New()
+
+	_ = ee.Publish("A", A{}).(chan<- A)
+	_ = ee.Subscribe("A", A{}).(<-chan A)
+
+	err := ee.Close()
+	if err != nil {
+		t.Fatalf("EE already closed")
+	}
+
+	ee.Wait()
+	err = ee.Close()
+	if err == nil {
+		t.Fatalf("Calling Close on already closed EE shall cause an error")
+	}
+}

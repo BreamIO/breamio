@@ -8,39 +8,39 @@ import (
 )
 
 type Event struct {
-	ElemType     reflect.Type   // Underlying element type
-	PublisherWG  sync.WaitGroup // Number of publishers active
-	DataChan     reflect.Value  // Internal data channel
-	Subscribers  reflect.Value  // List of write-only channels to subscribers
-	CanPublish   bool
-	CanSubscribe bool
-	ChannelReady chan struct{}
-	SubscriberMap map[reflect.Value] reflect.Value
+	ElemType      reflect.Type   // Underlying element type
+	PublisherWG   sync.WaitGroup // Number of publishers active
+	DataChan      reflect.Value  // Internal data channel
+	Subscribers   reflect.Value  // List of write-only channels to subscribers
+	CanPublish    bool
+	CanSubscribe  bool
+	ChannelReady  chan struct{}
+	SubscriberMap map[reflect.Value]reflect.Value
 }
 
 func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
-		ElemType: elemtype,
-		DataChan:     reflect.Value{},
-		Subscribers:  reflect.Value{},
-		CanPublish:   false,
-		CanSubscribe: false,
-		ChannelReady: make(chan struct{}), // FIXME, might need to be buffered
-		SubscriberMap: make(map[reflect.Value] reflect.Value),
+		ElemType:      elemtype,
+		DataChan:      reflect.Value{},
+		Subscribers:   reflect.Value{},
+		CanPublish:    false,
+		CanSubscribe:  false,
+		ChannelReady:  make(chan struct{}), // FIXME, might need to be buffered
+		SubscriberMap: make(map[reflect.Value]reflect.Value),
 	}
 }
 
 type LocalEventEmitter struct {
 	eventMap map[string]*Event
-	open bool
-	done chan struct{}
+	open     bool
+	done     chan struct{}
 }
 
 func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
-		open: true,
-		done: make(chan struct{}),
+		open:     true,
+		done:     make(chan struct{}),
 	}
 }
 
@@ -153,7 +153,7 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 		}
 
 		// Find the write channel and close it
-		for i := 0; i<event.Subscribers.Len(); i++ {
+		for i := 0; i < event.Subscribers.Len(); i++ {
 			if event.Subscribers.Index(i).Interface() == sendChan.Interface() {
 				sendChan.Close()
 				delete(event.SubscriberMap, recvChan)
@@ -169,10 +169,10 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 func (ee *LocalEventEmitter) Close() error {
 	//ee.open = false
 	select {
-		case <-ee.done:
-			return errors.New("Emitter already closed")
-		default:
-			close(ee.done)
+	case <-ee.done:
+		return errors.New("Emitter already closed")
+	default:
+		close(ee.done)
 	}
 
 	return nil
