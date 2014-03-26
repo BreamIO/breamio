@@ -8,25 +8,19 @@ import (
 )
 
 type Event struct {
-	ElemType     reflect.Type   // Underlying element type
-	//PublisherWG  sync.WaitGroup // Number of publishers active
-	DataChan     reflect.Value  // Internal data channel
-	Subscribers  reflect.Value  // List of write-only channels to subscribers
-	//CanPublish   bool
+	ElemType reflect.Type // Underlying element type
+	DataChan    reflect.Value // Internal data channel
+	Subscribers reflect.Value // List of write-only channels to subscribers
 	CanSubscribe bool
-	//ChannelReady  chan struct{}
 	SubscriberMap map[reflect.Value]reflect.Value
 }
 
 func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
 		ElemType: elemtype,
-		//DataChan:      reflect.Value{},
-		DataChan:     makeChan(elemtype),
-		Subscribers:  reflect.Value{},
-		//CanPublish:   false,
+		DataChan:    makeChan(elemtype),
+		Subscribers: reflect.Value{},
 		CanSubscribe: false,
-		//ChannelReady:  make(chan struct{}), // FIXME, might need to be buffered
 		SubscriberMap: make(map[reflect.Value]reflect.Value),
 	}
 }
@@ -54,7 +48,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	go func() {
 		for {
 			if data, okRecv := recvChan.Recv(); okRecv && ee.IsOpen() { // Recv is blocking
-					event.DataChan.TrySend(data)
+				event.DataChan.TrySend(data)
 			} else {
 				break
 			}
