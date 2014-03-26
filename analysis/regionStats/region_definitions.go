@@ -1,4 +1,4 @@
-package statistics
+package regionStats
 
 type AspectMap map[string]RegionDefinitionMap
 

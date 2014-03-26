@@ -1,4 +1,4 @@
-package statistics
+package regionStats
 
 import (
 	"strconv"
@@ -27,7 +27,7 @@ type RegionStatistics struct {
 	publish           chan<- RegionStatsMap
 }
 
-func New(ee briee.EventEmitter, duration time.Duration, hertz int) *RegionStatistics {
+func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionStatistics {
 	ch := ee.Subscribe("gorgonzola:gazedata", &gr.ETData{}).(<-chan *gr.ETData)
 
 	return &RegionStatistics{
@@ -55,13 +55,11 @@ func (rs *RegionStatistics) AddRegion(name string, def RegionDefinition) error {
 
 func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 	for name, def := range defs {
-		region, err := newRegion(name, def)
+		err := rs.AddRegion(name, def)
 
 		if err != nil {
 			return err
 		}
-
-		rs.regions = append(rs.regions, region)
 	}
 
 	return nil

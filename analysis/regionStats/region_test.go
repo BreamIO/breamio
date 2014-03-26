@@ -1,4 +1,4 @@
-package statistics
+package regionStats
 
 import (
 	"testing"

@@ -1,40 +1,44 @@
-package statistics
+package regionStats
 
 import (
 	"testing"
 	"time"
 
-	"github.com/maxnordlund/breamio/analysis"
+	//"github.com/maxnordlund/breamio/analysis"
+	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
 func TestStatisticsGeneration(t *testing.T) {
-	ich := make(chan *gr.ETData)
-	och := make(chan RegionStatsMap)
+	ee := briee.New()
 
-	rs := RegionStatistics{
-		coordinateHandler: analysis.NewCoordBuffer(ich, 3*time.Second, 1),
-		regions:           make([]Region, 0),
-		publish:           och,
-	}
+	rs := New(ee, 3*time.Second, 1)
 
-	rs.AddRegions(RegionDefinitionMap{
+	err := rs.AddRegions(RegionDefinitionMap{
 		"middle": RegionDefinition{
 			Type:  "square",
 			X:     0,
 			Y:     0,
 			Width: 0.2,
 		},
+		"error": RegionDefinition{
+			Type:  "error",
+		},
 	})
 
+	if err == nil {
+		t.Fatal("AddRegions with an invalid region definition should" +
+			"terminate and return an error")
+	}
+
 	for i := 0; i < 3; i++ {
-		ich <- &gr.ETData{
+		ee.Dispatch("gorgonzola:gazedata", &gr.ETData{
 			Filtered: Point2D{
 				x: 0.1,
 				y: 0.1,
 			},
 			Timestamp: time.Now(),
-		}
+		})
 	}
 
 	m := rs.generate()
