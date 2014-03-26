@@ -2,15 +2,16 @@ package briee
 
 import (
 	"errors"
-	//"log"
 	"reflect"
-	//"sync"
 )
 
+// Event is the internal representation of an event on the event emitter.
+//
+// 
 type Event struct {
 	ElemType reflect.Type // Underlying element type
-	DataChan    reflect.Value // Internal data channel
-	Subscribers reflect.Value // List of write-only channels to subscribers
+	DataChan    reflect.Value // Channel used for the internal data
+	Subscribers reflect.Value // Slice of write-only channels to subscribers
 	CanSubscribe bool
 	SubscriberMap map[reflect.Value]reflect.Value
 }
@@ -71,23 +72,30 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 		event.Subscribers = makeSlice(v)
 		event.CanSubscribe = true
+
+
 		go func() {
 			//<-event.ChannelReady
-			for ee.IsOpen() {
-				if data, ok := event.DataChan.Recv(); ok {
+			defer func(){
+				for i := 0; i < event.Subscribers.Len(); i++ {
+					ch := event.Subscribers.Index(i)
+					ch.Close()
+				}
+			}()
+
+			for {
+				if data, ok := event.DataChan.Recv(); ok && ee.IsOpen(){
 					for i := 0; i < event.Subscribers.Len(); i++ {
-						ch := event.Subscribers.Index(i)
-						ch.TrySend(data)
+						if ee.IsOpen() {
+							ch := event.Subscribers.Index(i)
+							ch.TrySend(data)
+						} else {
+							return
+						}
 					}
 				} else {
-					break
+					return
 				}
-			}
-
-			// Clean up
-			for i := 0; i < event.Subscribers.Len(); i++ {
-				ch := event.Subscribers.Index(i)
-				ch.Close()
 			}
 		}()
 	}
