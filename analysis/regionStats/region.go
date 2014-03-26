@@ -10,7 +10,6 @@ import (
 type Region interface {
 	Contains(gr.XYer) bool
 	Name() string
-	SetName(name string)
 }
 
 // Create a new Region.
@@ -64,10 +63,6 @@ func (e Ellipse) Name() string {
 	return e.name
 }
 
-func (e *Ellipse) SetName(name string) {
-	e.name = name
-}
-
 // Alias for an Ellipse with the same width and height
 func newCircle(name string, cx, cy, radius float64) *Ellipse {
 	return newEllipse(name, cx, cy, radius, radius)
@@ -97,10 +92,6 @@ func (r Rectangle) Contains(coord gr.XYer) bool {
 
 func (r Rectangle) Name() string {
 	return r.name
-}
-
-func (r *Rectangle) SetName(name string) {
-	r.name = name
 }
 
 // Alias for a rectangle with equal width and height

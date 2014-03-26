@@ -53,6 +53,20 @@ func TestEllipse(t *testing.T) {
 	if reg.Name() != "upper-left" {
 		t.Fatal("Name getter should work!")
 	}
+
+	reg, _ = newRegion("miniscule", RegionDefinition{
+		Type: "ellipse",
+		X: 0.5,
+		Y: 0.5,
+	})
+
+	if !reg.Contains(&Point2D{0.5, 0.5}) {
+		t.Fatal("Ellipse should contain it's center.")
+	}
+
+	if reg.Contains(&Point2D{0.501, 0.501}) {
+		t.Fatal("Ellipse shouldn't contain points on the edge.")
+	}
 }
 
 func TestSquare(t *testing.T) {
@@ -104,4 +118,18 @@ func TestRectangle(t *testing.T) {
 	if reg.Name() != "center" {
 		t.Fatal("Name getter should work!")
 	}
+}
+
+func TestErronous(t *testing.T) {
+	reg, err := newRegion("error", RegionDefinition{
+		Type: "error",
+	})
+
+	if err == nil {
+		t.Fatal("'error' shouldn't be a valid region type!")
+	}
+
+	if reg != nil {
+		t.Fatal("newRegion shouldn't return a region if an error occurs.")
+	}	
 }

@@ -33,7 +33,7 @@ func New(ee briee.EventEmitter, duration time.Duration, hertz int) *RegionStatis
 	return &RegionStatistics{
 		coordinateHandler: analysis.NewCoordBuffer(ch, duration, hertz),
 		regions:           make([]Region, 0),
-		publish:           ee.Publish("statistics:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
+		publish:           ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
 	}
 }
 
