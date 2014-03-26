@@ -3,6 +3,7 @@ package briee
 import (
 	"reflect"
 	"sync"
+	//"log"
 	"testing"
 )
 
@@ -16,9 +17,39 @@ type B struct {
 	Int   int
 }
 
+func TestNewEmitter(t *testing.T) {
+	ee := New()
+
+	PublA1 := ee.Publish("A", A{}).(chan<- A)
+
+	SubsA1 := ee.Subscribe("A", A{}).(<-chan A)
+
+	Adata := A{42, "A data"}
+	var recvA1 A
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		recvA1 = <-SubsA1
+		wg.Done()
+	}()
+
+	go func() {
+		PublA1 <- Adata
+		wg.Done()
+		close(PublA1)
+	}()
+
+	wg.Wait()
+
+	if Adata != recvA1 {
+		t.Errorf("Got data %v, want %v", recvA1, Adata)
+	}
+}
+
 func TestEmitter(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	PublA1 := ee.Publish("A", A{}).(chan<- A)
 	PublA2 := ee.Publish("A", A{}).(chan<- A)
@@ -56,6 +87,10 @@ func TestEmitter(t *testing.T) {
 
 	wg.Wait()
 
+	close(PublA1)
+	close(PublA2)
+	close(PublB1)
+
 	if Adata != recvA1 {
 		t.Errorf("Got data %v, want %v", recvA1, Adata)
 	}
@@ -67,17 +102,10 @@ func TestEmitter(t *testing.T) {
 	if Bdata != recvB1 {
 		t.Errorf("Got data %v, want %v", recvB1, Bdata)
 	}
-
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func testNilPublisher(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -85,17 +113,10 @@ func testNilPublisher(t *testing.T) {
 		}
 	}()
 	_ = ee.Publish("A", nil).(chan<- A)
-
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func testNotification(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	publ := ee.Publish("Notification", struct{}{}).(chan<- struct{})
 	subs := ee.Subscribe("Notification", struct{}{}).(<-chan struct{})
@@ -113,34 +134,10 @@ func testNotification(t *testing.T) {
 	}()
 
 	wg.Done()
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
-}
-
-func TestCloseEE(t *testing.T) {
-	ee := New()
-
-	_ = ee.Publish("A", A{}).(chan<- A)
-	_ = ee.Subscribe("A", A{}).(<-chan A)
-
-	err := ee.Close()
-	if err != nil {
-		t.Fatalf("EE already closed")
-	}
-
-	ee.Wait()
-	err = ee.Close()
-	if err == nil {
-		t.Fatalf("Calling Close on already closed EE shall cause an error")
-	}
 }
 
 func TestTypeOf(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	_ = ee.Publish("A", A{}).(chan<- A)
 	Adata := A{42, "A data"}
@@ -160,26 +157,16 @@ func TestTypeOf(t *testing.T) {
 		t.Errorf("TypeOf an unregistered event shall cause an error")
 	}
 
-	if err := ee.Close(); err != nil {
-		t.Errorf("Error closing emitter, %v", err)
-	}
-
-	ee.Wait()
 }
 
 func TestTypes(t *testing.T) {
 	ee := New()
-	//go ee.Run()
 
 	_ = ee.Publish("Map", map[string]A{}).(chan<- map[string]A)
 	_ = ee.Subscribe("Map", map[string]A{}).(<-chan map[string]A)
 	_ = ee.Publish("Slice", []A{}).(chan<- []A)
 	_ = ee.Subscribe("Slice", []A{}).(<-chan []A)
 
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
 
 func TestUnsubscribe(t *testing.T) {
@@ -189,23 +176,14 @@ func TestUnsubscribe(t *testing.T) {
 	if err != nil {
 		t.Errorf("error unsubscribing, %v", err)
 	}
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
 
 func TestDispatch(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", struct{}{}).(<-chan struct{})
-	go ee.Dispatch("event", struct{}{})
-	go ee.Dispatch("another event", struct{}{})
+	ee.Dispatch("event", struct{}{})
+	ee.Dispatch("another event", struct{}{})
 	(<-sub)
-
-	if err := ee.Close(); err != nil {
-		t.Errorf("error closing emitter, %v", err)
-	}
-	ee.Wait()
 }
 
 func TestPanicPublisher(t *testing.T) {
@@ -251,5 +229,23 @@ func TestUnsubscribeNoEvent(t *testing.T) {
 	err := ee.Unsubscribe("another event", sub)
 	if err == nil {
 		t.Errorf(err.Error())
+	}
+}
+
+func TestCloseEE(t *testing.T) {
+	ee := New()
+
+	_ = ee.Publish("A", A{}).(chan<- A)
+	_ = ee.Subscribe("A", A{}).(<-chan A)
+
+	err := ee.Close()
+	if err != nil {
+		t.Fatalf("EE already closed")
+	}
+
+	ee.Wait()
+	err = ee.Close()
+	if err == nil {
+		t.Fatalf("Calling Close on already closed EE shall cause an error")
 	}
 }
