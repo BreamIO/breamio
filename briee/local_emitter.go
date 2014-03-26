@@ -15,6 +15,7 @@ type Event struct {
 	CanPublish   bool
 	CanSubscribe bool
 	ChannelReady chan bool
+	SubscriberMap map[reflect.Value] reflect.Value
 	// TODO Additional map for unsubscribing
 }
 
@@ -27,6 +28,7 @@ func newEvent(elemtype reflect.Type) *Event {
 		CanPublish:   false,
 		CanSubscribe: false,
 		ChannelReady: make(chan bool, 1), // Buffered with one, important
+		SubscriberMap: make(map[reflect.Value] reflect.Value),
 	}
 }
 
@@ -74,6 +76,8 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 	// Create the write and read channels
 	sendChan, recvChan := makeDirChannels(v, 256)
+
+	event.SubscriberMap[recvChan] = sendChan
 
 	if !event.CanSubscribe {
 
@@ -134,6 +138,31 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	} else {
 		return nil, errors.New("No event with that identifier is registred")
 	}
+}
+
+func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
+	// Check if event exisits
+	if event, ok := ee.eventMap[eventID]; ok {
+		recvChan := reflect.ValueOf(ch)
+		sendChan, ook := event.SubscriberMap[recvChan]
+
+		// Check if a mapping exisits
+		if !ook {
+			return errors.New("Can not find subscriber")
+		}
+
+		// Find the write channel and close it
+		for i := 0; i<event.Subscribers.Len(); i++ {
+			if event.Subscribers.Index(i).Interface() == sendChan.Interface() {
+				sendChan.Close()
+				delete(event.SubscriberMap, recvChan)
+				return nil
+			}
+		}
+	}
+
+	// No event with that eventID exists
+	return errors.New("Can not unsubscribe unregistered event")
 }
 
 func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {

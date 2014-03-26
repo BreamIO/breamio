@@ -169,7 +169,7 @@ func TestTypes(t *testing.T) {
 
 }
 
-/*
+
 func TestUnsubscribe(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", A{}).(<-chan A)
@@ -178,7 +178,6 @@ func TestUnsubscribe(t *testing.T) {
 		t.Errorf("error unsubscribing, %v", err)
 	}
 }
-*/
 
 func TestDispatch(t *testing.T) {
 	ee := New()
@@ -214,7 +213,7 @@ func TestPanicSubscriber(t *testing.T) {
 	_ = ee.Subscribe("event", A{}).(<-chan A)
 }
 
-/*
+
 func TestUnsubscribeWrongEE(t *testing.T) {
 	ee1 := New()
 	ee2 := New()
@@ -234,4 +233,4 @@ func TestUnsubscribeNoEvent(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 }
-*/
+
