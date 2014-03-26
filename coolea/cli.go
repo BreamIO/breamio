@@ -18,6 +18,7 @@ import (
 type handlerFunc func([]string) (string, handlerFunc, []string)
 
 var client *Client
+var running = true
 var ip = flag.String("ip", "localhost:4041", "Specify ip amd port")
 
 func main() {
@@ -38,15 +39,17 @@ func main() {
 
 	//Read a lot of input
 	for err == nil && !isPrefix {
-		//Parse the last read line
 		parseLine(string(line))
+		if !running {
+			break // If we are not supposed to be running break this loop
+		}
 		fmt.Print(">")
 		line, isPrefix, err = reader.ReadLine()
 	}
 	if isPrefix {
 		fmt.Println("Buffer size too small")
 	}
-	if err != io.EOF {
+	if err != io.EOF && err != nil{
 		fmt.Println(err)
 	}
 	client.Wait()
@@ -60,7 +63,7 @@ func parseLine(line string) {
 	commandTokens := strings.Fields(line)
 	ans, parse, tokens := startParse(commandTokens)
 	//Start itterative parsing for all tokens
-	for parse != nil && len(tokens) != 0 {
+	for parse != nil && len(tokens) > 0 {
 		ans, parse, tokens = parse(tokens)
 		if ans != "" {
 			fmt.Printf("%s\n", ans)
@@ -82,10 +85,13 @@ func parseLine(line string) {
 //	region id
 //--------------------------------------------------
 func startParse(tokens []string) (string, handlerFunc, []string) {
+	if len(tokens) > 0 && tokens[0] == "exit" {
+			running = false
+			return "exit program", nil, nil
+	}
+
 	if len(tokens) > 1 {
 		switch tokens[0] {
-		case "exit":
-
 		case "list":
 			return "", parseList, tokens[1:]
 		case "start":
