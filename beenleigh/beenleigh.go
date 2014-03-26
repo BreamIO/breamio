@@ -25,14 +25,14 @@ import (
 // In order for it to listen to anything, the ListenAndServe method must first be called
 type Logic interface {
 	RootEmitter() briee.EventEmitter
-	EmitterLookuper
-	ListenAndServe()
+	aioli.EmitterLookuper
+	ListenAndServe(aioli.IOManager)
 	io.Closer
 }
 
 // Creates a instance of the current Logic implementation.
-func New(eef func() briee.EventEmitter, io aioli.IOManager) Logic {
-	return newBL(eef, io)
+func New(eef func() briee.EventEmitter) Logic {
+	return newBL(eef)
 }
 
 type handlerFunc func(Spec) error
@@ -47,14 +47,14 @@ type breamLogic struct {
 	wg sync.WaitGroup
 	onNewTrackerEvent handlerFunc
 	eventEmitterConstructor func() briee.EventEmitter
-	emitters map[uint]briee.EventEmitter
+	emitters map[int]briee.EventEmitter
 }
 
 func newBL(eef func() briee.EventEmitter) *breamLogic {
 	logic := new(breamLogic)
 	logic.logger = log.New(os.Stdout, "[Beenleigh] ", log.LstdFlags)
 	logic.closer = make(chan struct{})
-	logic.emitters = make(map[uint]briee.EventEmitter)
+	logic.emitters = make(map[int]briee.EventEmitter)
 	logic.eventEmitterConstructor = eef
 	
 	//Create the first event emitter
@@ -74,18 +74,17 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 	return bl.root
 }
 
-func (bl *breamLogic) ListenAndServe() {
+func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 	defer bl.root.Close()
 	//Subscribe to events
 	
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 	
-	ioman := aioli.New()
 	go ioman.Run()
 	
 	//Set up servers.
-	ts := aioli.NewTCPServer(bl.ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
-	ws := aioli.NewWSServer(bl.ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
+	ts := aioli.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
+	ws := aioli.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
 	go ts.Listen()
 	go ws.Listen()
 	
@@ -133,20 +132,20 @@ func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 		return err
 	}
 	
-	bl.wg.Add(1)
-	go func() {
-		ee.Wait()
-		bl.wg.Done()
-	}()
-	
-	if _, ok != bl.emitters[event.Emitter]; !ok {
+	if _, ok := bl.emitters[event.Emitter]; !ok {
 		bl.emitters[event.Emitter] = bl.eventEmitterConstructor()
 	}
+	
+	bl.wg.Add(1)
+	go func() {
+		bl.emitters[event.Emitter].Wait()
+		bl.wg.Done()
+	}()
 	
 	go tracker.Link(bl.emitters[event.Emitter])
 	
 	//NOTE: Remove later when issue #32 is resolved.
-	go ancient.ListenAndServe(ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
+	go ancient.ListenAndServe(bl.emitters[event.Emitter], byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
 	return nil
@@ -164,7 +163,7 @@ func (bl *breamLogic) Close() error {
 	return nil
 }
 
-func (bl *breamLogic) EmitterLookup(id uint) (briee.EventEmitter, error) {
+func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 	if v, ok := bl.emitters[id]; ok {
 		return v, nil
 	}
@@ -178,8 +177,4 @@ func (bl *breamLogic) EmitterLookup(id uint) (briee.EventEmitter, error) {
 type Spec struct {
 	Emitter int
 	Data string
-}
-
-type EmitterLookuper interface {
-	EmitterLookup(uint) (briee.EventEmitter, error)
 }

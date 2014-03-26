@@ -12,16 +12,18 @@ type ExtPkg struct {
 	Data  []byte // Encoded data of the underlying struct for the event.
 }
 
+type EmitterLookuper interface {
+	EmitterLookup(int) (briee.EventEmitter, error)
+}
+
 // IOManager interface defines an I/O manager with external reader functionality.
 type IOManager interface {
 	Listen(dec Decoder, l *log.Logger)
 	Run()
-	AddEE(ee briee.EventEmitter, id int) error
-	RemoveEE(id int) error
 	Close() error
 }
 
 // New creates a new instance of the default implementation BasicIOManager
-func New() IOManager {
-	return newBasicIOManager()
+func New(lookuper EmitterLookuper) IOManager {
+	return newBasicIOManager(lookuper)
 }
