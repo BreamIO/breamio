@@ -1,13 +1,15 @@
-package statistics
+package heatmap
 
 import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"math"
-	"os"
 	"time"
+
+	"github.com/maxnordlund/breamio/analysis"
+	"github.com/maxnordlund/breamio/briee"
+	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
 const (
@@ -15,40 +17,43 @@ const (
 	limitRadius = 25
 )
 
-type HeatMap struct {
-	ee                int /*EventEmitter*/
-	coordinateHandler CoordinateHandler
+type Generator struct {
+	ee                briee.EventEmitter
+	coordinateHandler analysis.CoordinateHandler
 	width             int
 	height            int
-	publish           chan<- *image.RGBA
+	publish           chan<- image.Image
 }
 
-func NewHeatmap(ee /*EventEmitter*/ int, etID string, duration time.Duration, desiredFreq, resX, resY int) *HeatMap {
-	return &HeatMap{
+func NewGenerator(ee briee.EventEmitter, duration time.Duration, desiredFreq, resX, resY int) *Generator {
+	ch := ee.Subscribe("gorgonzola:gazedata", gr.ETData{}).(<-chan *gr.ETData)
+
+	return &Generator{
 		ee:                ee,
-		coordinateHandler: NewCoordinateHandler(make(chan *ETData) /*ee.Subscribe(etID, ETData{}).(<-chan *ETData)*/, duration, desiredFreq),
+		coordinateHandler: analysis.NewCoordBuffer(ch, duration, desiredFreq),
 		width:             resX,
 		height:            resY,
-		publish:           make(chan<- *image.RGBA), /*ee.Publish(etID + ":heatmap", *image.Image)*/
+		publish:           ee.Publish("heatmap:image", new(image.Image)).(chan<- image.Image),
 	}
 }
 
-func (hm HeatMap) Generate(height, width int) {
+func (gen *Generator) Generate(height, width int) {
 	heat := make([][]int, height)
 
 	for i := range heat {
 		heat[i] = make([]int, width)
 	}
 
-	coords := (*hm.GetCoordinateHandler()).GetCoords()
+	coords := gen.coordinateHandler.GetCoords()
 
 	var maxHeat int = 1
 	var x, y, px, py, dist int
 
 	for coord := range coords {
-		if valid(coord) {
-			x = int(coord.Filtered.X * float64(width))
-			y = int(coord.Filtered.Y * float64(height))
+		f := coord.Filtered
+		if valid(f) {
+			x = int(f.X() * float64(width))
+			y = int(f.Y() * float64(height))
 
 			for dx := -limitRadius; dx <= limitRadius; dx++ {
 				px = dx + x
@@ -93,33 +98,32 @@ func (hm HeatMap) Generate(height, width int) {
 			})
 		}
 	}
-	png.Encode(os.Stdout, heatmap)
 
-	hm.publish <- heatmap
+	gen.publish <- heatmap
 }
 
-func valid(coord *ETData) bool {
-	return coord.Filtered.X < 1 && coord.Filtered.X >= 0 && coord.Filtered.Y < 1 && coord.Filtered.Y >= 0
+func valid(coord gr.XYer) bool {
+	return coord.X() < 1 && coord.X() >= 0 && coord.Y() < 1 && coord.Y() >= 0
 }
 
-func (hm HeatMap) GetCoordinateHandler() *CoordinateHandler {
-	return hm.GetCoordinateHandler()
+func (gen *Generator) GetCoordinateHandler() *analysis.CoordinateHandler {
+	return &gen.coordinateHandler
 }
 
-func (hm HeatMap) SetResolution(width, height int) {
-	hm.height = height
-	hm.width = width
+func (gen *Generator) SetResolution(width, height int) {
+	gen.height = height
+	gen.width = width
 }
 
-func (hm HeatMap) SetDesiredFreq(desiredFreq int) {
-	hm.coordinateHandler.SetDesiredFreq(desiredFreq)
+func (gen *Generator) SetDesiredFreq(desiredFreq int) {
+	gen.coordinateHandler.SetDesiredFreq(desiredFreq)
 }
 
-func (hm HeatMap) SetDuration(duration time.Duration) {
-	hm.coordinateHandler.SetInterval(duration)
+func (gen *Generator) SetDuration(duration time.Duration) {
+	gen.coordinateHandler.SetInterval(duration)
 }
 
-func (hm HeatMap) SetColor(color color.RGBA) {
+func (gen *Generator) SetColor(color color.RGBA) {
 	//TODO
 	fmt.Println("SetColor is not implemented yet. sob--- T_T")
 }
