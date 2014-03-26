@@ -2,19 +2,9 @@ package regionStats
 
 import (
 	"testing"
+
+	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
-
-type Point2D struct {
-	x, y float64
-}
-
-func (p Point2D) X() float64 {
-	return p.x
-}
-
-func (p Point2D) Y() float64 {
-	return p.y
-}
 
 func TestCircle(t *testing.T) {
 	reg, _ := newRegion("center", RegionDefinition{
@@ -24,11 +14,11 @@ func TestCircle(t *testing.T) {
 		Width: 0.5,
 	})
 
-	if !reg.Contains(&Point2D{0.5, 0.5}) {
+	if !reg.Contains(&gr.Point2D{0.5, 0.5}) {
 		t.Fatal("Circle should contain center of itself!")
 	}
 
-	if reg.Contains(&Point2D{0.0, 0.5}) {
+	if reg.Contains(&gr.Point2D{0.0, 0.5}) {
 		t.Fatal("Circle shouldn't contain edge!")
 	}
 
@@ -46,7 +36,7 @@ func TestEllipse(t *testing.T) {
 		Height: 0.25,
 	})
 
-	if !reg.Contains(&Point2D{0.1, 0.1}) {
+	if !reg.Contains(&gr.Point2D{0.1, 0.1}) {
 		t.Fatal("Ellipse should contain 0.1 : 0.1!")
 	}
 
@@ -56,15 +46,15 @@ func TestEllipse(t *testing.T) {
 
 	reg, _ = newRegion("miniscule", RegionDefinition{
 		Type: "ellipse",
-		X: 0.5,
-		Y: 0.5,
+		X:    0.5,
+		Y:    0.5,
 	})
 
-	if !reg.Contains(&Point2D{0.5, 0.5}) {
+	if !reg.Contains(&gr.Point2D{0.5, 0.5}) {
 		t.Fatal("Ellipse should contain it's center.")
 	}
 
-	if reg.Contains(&Point2D{0.501, 0.501}) {
+	if reg.Contains(&gr.Point2D{0.501, 0.501}) {
 		t.Fatal("Ellipse shouldn't contain points on the edge.")
 	}
 }
@@ -77,15 +67,15 @@ func TestSquare(t *testing.T) {
 		Width: 0.5,
 	})
 
-	if !reg.Contains(&Point2D{0.5, 0.5}) {
+	if !reg.Contains(&gr.Point2D{0.5, 0.5}) {
 		t.Fatal("Square should contain center of itself!")
 	}
 
-	if !reg.Contains(&Point2D{0.26, 0.26}) {
+	if !reg.Contains(&gr.Point2D{0.26, 0.26}) {
 		t.Fatal("Square should points within itself!")
 	}
 
-	if reg.Contains(&Point2D{0.25, 0.25}) {
+	if reg.Contains(&gr.Point2D{0.25, 0.25}) {
 		t.Fatal("Square shouldn't contain edge!")
 	}
 
@@ -103,15 +93,15 @@ func TestRectangle(t *testing.T) {
 		Height: 0.1,
 	})
 
-	if !reg.Contains(&Point2D{0.5, 0.3}) {
+	if !reg.Contains(&gr.Point2D{0.5, 0.3}) {
 		t.Fatal("Rectangle should contain center of itself!")
 	}
 
-	if !reg.Contains(&Point2D{0.26, 0.26}) {
+	if !reg.Contains(&gr.Point2D{0.26, 0.26}) {
 		t.Fatal("Rectangle should points within itself!")
 	}
 
-	if reg.Contains(&Point2D{0.25, 0.25}) {
+	if reg.Contains(&gr.Point2D{0.25, 0.25}) {
 		t.Fatal("Rectangle shouldn't contain edge!")
 	}
 
@@ -131,5 +121,5 @@ func TestErronous(t *testing.T) {
 
 	if reg != nil {
 		t.Fatal("newRegion shouldn't return a region if an error occurs.")
-	}	
+	}
 }

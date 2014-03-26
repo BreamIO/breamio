@@ -1,9 +1,9 @@
 package regionStats
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
-	"encoding/json"
 
 	//"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/briee"
@@ -24,7 +24,7 @@ func TestStatisticsGeneration(t *testing.T) {
 			Width: 0.2,
 		},
 		"error": RegionDefinition{
-			Type:  "error",
+			Type: "error",
 		},
 		"afterFailure": RegionDefinition{
 			Type:  "square",
@@ -49,19 +49,13 @@ func TestStatisticsGeneration(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		ee.Dispatch("tracker:etdata", &gr.ETData{
-			Filtered: Point2D{
-				x: 0.1,
-				y: 0.1,
-			},
-			Timestamp: startTime.Add(time.Duration(i * 100) * time.Millisecond),
+			Filtered:  gr.Point2D{0.1, 0.1},
+			Timestamp: startTime.Add(time.Duration(i*100) * time.Millisecond),
 		})
 	}
 
 	ee.Dispatch("tracker:etdata", &gr.ETData{
-		Filtered: Point2D{
-			x: 1,
-			y: 1,
-		},
+		Filtered:  gr.Point2D{1, 1},
 		Timestamp: startTime.Add(1 * time.Second),
 	})
 
@@ -69,7 +63,7 @@ func TestStatisticsGeneration(t *testing.T) {
 
 	go rs.Generate()
 
-	m := <- subCh
+	m := <-subCh
 
 	if _, ok := m["error"]; ok {
 		t.Fatal("The region 'error' should never be created.")
