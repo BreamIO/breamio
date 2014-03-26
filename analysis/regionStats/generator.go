@@ -41,14 +41,30 @@ func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
 	return rs.coordinateHandler.GetCoords()
 }
 
-func (rs *RegionStatistics) AddRegion(name string, def RegionDefinition) {
-	rs.regions = append(rs.regions, newRegion(name, def))
+func (rs *RegionStatistics) AddRegion(name string, def RegionDefinition) error {
+	region, err := newRegion(name, def)
+
+	if err != nil {
+		return err
+	}
+
+	rs.regions = append(rs.regions, region)
+
+	return nil
 }
 
-func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) {
+func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 	for name, def := range defs {
-		rs.regions = append(rs.regions, newRegion(name, def))
+		region, err := newRegion(name, def)
+
+		if err != nil {
+			return err
+		}
+
+		rs.regions = append(rs.regions, region)
 	}
+
+	return nil
 }
 
 // Generates a RegionStatsMap and

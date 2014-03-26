@@ -1,7 +1,9 @@
 package statistics
 
 import (
- 	gr "github.com/maxnordlund/breamio/gorgonzola"
+	"errors"
+
+	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
 // Region is an interface describing Regions
@@ -12,20 +14,19 @@ type Region interface {
 }
 
 // Create a new Region.
-func newRegion(name string, rd RegionDefinition) Region {
+// Error is not nil if unsuccessful.
+func newRegion(name string, rd RegionDefinition) (Region, error) {
 	switch rd.Type {
 	case "square":
-		return newSquare(name, rd.X, rd.Y, rd.Width)
+		return newSquare(name, rd.X, rd.Y, rd.Width), nil
 	case "rect":
-		return newRectangle(name, rd.X, rd.Y, rd.Width, rd.Height)
+		return newRectangle(name, rd.X, rd.Y, rd.Width, rd.Height), nil
 	case "ellipse":
-		return newEllipse(name, rd.X, rd.Y, rd.Width, rd.Height)
+		return newEllipse(name, rd.X, rd.Y, rd.Width, rd.Height), nil
 	case "circle":
-		return newCircle(name, rd.X, rd.Y, rd.Width)
-	default:
-		panic("rd.type is unknown: " + rd.Type)
+		return newCircle(name, rd.X, rd.Y, rd.Width), nil
 	}
-	return nil
+	return nil, errors.New(rd.Type + " is not a recognized region type.")
 }
 
 type Ellipse struct {
