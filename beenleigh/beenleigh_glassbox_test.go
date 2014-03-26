@@ -3,9 +3,8 @@ package beenleigh
 import (
 	"testing"
 	. "github.com/smartystreets/goconvey/convey"
-	
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/gorgonzola"
+	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
 )
 
 func TestClose(t *testing.T) {
@@ -34,6 +33,12 @@ func TestListenAndServe(t *testing.T) {
 	done := make(chan struct{})
 	bl := newBL(func() briee.EventEmitter {return myEE}, myIOManager)
 	
+	doneNewTrackerEvent := make(chan struct{})
+	bl.onNewTrackerEvent = func(spec Spec) error {
+		close(doneNewTrackerEvent)
+		return nil
+	}
+	
 	go func() {
 		bl.ListenAndServe()
 		close(done)
@@ -41,7 +46,7 @@ func TestListenAndServe(t *testing.T) {
 	
 	Convey("Some its events should be subscribed to", t, func(){
 		t.Log(myEE)
-		So(myEE.subscribedTo("new"), ShouldEqual, true)
+		So(myEE.subscribedTo("new:tracker"), ShouldEqual, true)
 		So(myEE.subscribedTo("shutdown"), ShouldEqual, true)
 	})
 	
@@ -50,14 +55,9 @@ func TestListenAndServe(t *testing.T) {
 	})
 	
 	Convey("And events recieved handeled", t, func() {
-		Convey("Calls onNewTrackerEvent for \"new\" with type \"tracker\"", func() {
-			done := make(chan struct{})
-			bl.onNewTrackerEvent = func(spec Spec) error {
-				close(done)
-				return nil
-			}
-			myEE.pubsubs["new"].(chan Spec) <- Spec{"tracker", "", 0}
-			_, ok := <-done
+		Convey("Calls onNewTrackerEvent for \"new:tracker\"", func() {
+			myEE.pubsubs["new:tracker"].(chan Spec) <- Spec{0, "mock://constant"}
+			_, ok := <-doneNewTrackerEvent
 			So(ok, ShouldNotEqual, true)
 			
 		})
@@ -67,30 +67,18 @@ func TestListenAndServe(t *testing.T) {
 			So(ok, ShouldNotEqual, true)
 		})
 	})
-	
-	Convey("And closes when asked to", t, func() {
-		done := make(chan struct{})
-		go func() {
-			bl.ListenAndServe()
-			close(done)
-		}()
-		close(bl.closer)
-		_, ok := <-done
-		So(ok, ShouldNotEqual, true)
-	})
 }
 
 func TestOnNewTrackerEvent(t *testing.T) {
 	myEE := newMockEmitter()
 	myIOManager := newMockIOManager()
-	gorgonzola.RegisterDriver("beenleigh_mock", &BLMockTrackerDriver{&gorgonzola.MockTracker{}, false, ""})
 	bl := newBL(func() briee.EventEmitter {return myEE}, myIOManager)
-	onNewTrackerEvent(bl, Spec{"tracker", "beenleigh_mock://test", 1})
+	onNewTrackerEvent(bl, Spec{1, "mock://constant"})
 	Convey("Creates a new EE and adds it to IOManager", t, func() {
 		So(myIOManager.ees[1], ShouldEqual, myEE)
 	})
 	SkipConvey("Creates a Tracker from specification and connects it to EE", t, func(){
-		So(onNewTrackerEvent(bl, Spec{"tracker", "beenleigh_mock://error", 2}), ShouldNotBeNil)
+		So(onNewTrackerEvent(bl, Spec{2, "mock://ShouldNotExist"}), ShouldNotBeNil)
 	})
 }
 

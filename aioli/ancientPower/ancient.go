@@ -54,6 +54,7 @@ func (c *client) handle() {
 	
 	go func() {
 		etCh := c.ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
+		defer c.ee.Unsubscribe("tracker:etdata", etCh)
 		for data := range etCh {
 			//logger.Println("Recieved on tracker:etdata :", data)
 			if c.subscribing {
