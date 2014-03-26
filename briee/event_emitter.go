@@ -10,7 +10,7 @@ type EventEmitter interface {
 	Subscribe(eventID string, v interface{}) interface{}
 	//Unsubscribe(eventID string, ch <-chan interface{}) error
 	TypeOf(eventID string) (reflect.Type, error)
-	//Dispatch(eventID string, v interface{})
+	Dispatch(eventID string, v interface{})
 	//Close() error
 	//Wait()
 }

@@ -179,16 +179,15 @@ func TestUnsubscribe(t *testing.T) {
 	}
 }
 */
-/*
+
 func TestDispatch(t *testing.T) {
 	ee := New()
 	sub := ee.Subscribe("event", struct{}{}).(<-chan struct{})
 	ee.Dispatch("event", struct{}{})
 	ee.Dispatch("another event", struct{}{})
 	(<-sub)
-
 }
-*/
+
 func TestPanicPublisher(t *testing.T) {
 	ee := New()
 

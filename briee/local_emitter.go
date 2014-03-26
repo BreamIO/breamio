@@ -41,20 +41,10 @@ func newLocalEventEmitter() *LocalEventEmitter {
 }
 
 func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
-	vtype := reflect.TypeOf(v)
+	//vtype := reflect.TypeOf(v)
 
-	// Check if event is existing
-	event, ok := ee.eventMap[eventID]
-	if ok {
-		// Event exisits, check that element types are consistent
-		if event.ElemType != vtype {
-			panic("Cannot publish on an existing event with different element types")
-		}
-	} else {
-		// No existing event, create one and store in map
-		event = newEvent(vtype)
-		ee.eventMap[eventID] = event
-	}
+	event := ee.event(eventID, v)
+
 	// Create the write and read channels
 	sendChan, recvChan := makeDirChannels(v, 0)
 
@@ -62,18 +52,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	event.PublisherWG.Add(1)
 
 	// Check if able to add publisher
-	if !event.CanPublish {
-		// Create the internal data channel
-		event.DataChan = makeChan(v)
-		event.ChannelReady <- true
-		event.CanPublish = true
-
-		go func() {
-			event.PublisherWG.Wait()
-			event.DataChan.Close()
-			event.CanPublish = false
-		}()
-	}
+	event.RunPublisherOverhead(v)
 
 	go func() {
 		for {
@@ -90,21 +69,8 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 }
 
 func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{} {
-	// Check if event is existing
-	vtype := reflect.TypeOf(v)
 
-	// Check if event is existing
-	event, ok := ee.eventMap[eventID]
-	if ok {
-		// Event exisits, check that element types are consistent
-		if event.ElemType != vtype {
-			panic("Cannot subscribe on an existing event with different element types")
-		}
-	} else {
-		// No existing event, create one and store in map
-		event = newEvent(vtype)
-		ee.eventMap[eventID] = event
-	}
+	event := ee.event(eventID, v)
 
 	// Create the write and read channels
 	sendChan, recvChan := makeDirChannels(v, 256)
@@ -139,23 +105,51 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	return recvChan.Interface()
 }
 
-/*
-func (ee *LocalEventEmitter) Dispatch (eventID string, v interface{}) {
-	if event, ok := ee.eventMap[eventID]; ok {
-		data := reflect.ValueOf(v)
-		if data.Type() != event.ElemType {
-			panic("Cannot dispatch value different from the registered type")
-		}
-		event.DataChan.TrySend(data)
+func (ee *LocalEventEmitter) Dispatch(eventID string, v interface{}) {
+	event := ee.event(eventID, v)
+	event.PublisherWG.Add(1)
+	event.RunPublisherOverhead(v)
+	event.DataChan.TrySend(reflect.ValueOf(v))
+	event.PublisherWG.Done()
+}
+
+func (event *Event) RunPublisherOverhead(v interface{}) {
+	// Create the internal data channel
+	if !event.CanPublish {
+		event.DataChan = makeChan(v)
+		event.ChannelReady <- true
+		event.CanPublish = true
+
+		go func() {
+			event.PublisherWG.Wait()
+			event.DataChan.Close()
+			event.CanPublish = false
+		}()
 	}
 }
-*/
+
 func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
 	} else {
 		return nil, errors.New("No event with that identifier is registred")
 	}
+}
+
+func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {
+	vtype := reflect.TypeOf(v)
+	event, ok := ee.eventMap[eventID]
+	if ok {
+		// Event exisits, check that element types are consistent
+		if event.ElemType != vtype {
+			panic("Cannot send or receive data on an existing event with different element types")
+		}
+	} else {
+		// No existing event, create one and store in map
+		event = newEvent(vtype)
+		ee.eventMap[eventID] = event
+	}
+	return event
 }
 
 func makeDirChannels(v interface{}, buffer int) (reflect.Value, reflect.Value) {
