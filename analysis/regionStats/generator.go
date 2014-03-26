@@ -28,7 +28,7 @@ type RegionStatistics struct {
 }
 
 func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionStatistics {
-	ch := ee.Subscribe("gorgonzola:gazedata", &gr.ETData{}).(<-chan *gr.ETData)
+	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
 	return &RegionStatistics{
 		coordinateHandler: analysis.NewCoordBuffer(ch, duration, hertz),
