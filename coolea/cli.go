@@ -130,9 +130,13 @@ func parseStop(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 1 {
 		switch tokens[0] {
 		case "et":
-			
+			return stopET(tokens[1:])
 		}
 	}
 
 	return parseError(tokens[0])
+}
+
+func stopET(tokens []string) (string, handlerFunc, []string) {
+	return parseError("NOT IMPLEMENTED " + tokens[0])
 }
