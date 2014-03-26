@@ -249,3 +249,25 @@ func TestCloseEE(t *testing.T) {
 		t.Fatalf("Calling Close on already closed EE shall cause an error")
 	}
 }
+
+func TestOnOff(t *testing.T){
+	ee := New()
+	// Will start a subscriber + OH
+	subs := ee.Subscribe("A", A{}).(<-chan A)
+
+	dataSend := A{42, "A data"}
+
+	ee.Dispatch("A", dataSend)
+	dataRecv1 := <-subs
+
+	ee.Dispatch("A", dataSend)
+	dataRecv2 := <-subs
+
+	if dataSend != dataRecv1 {
+		t.Errorf("Got %v, want %v", dataRecv1, dataSend)
+	}
+
+	if dataSend != dataRecv2 {
+		t.Errorf("Got %v, want %v", dataRecv2, dataSend)
+	}
+}
