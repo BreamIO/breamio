@@ -14,37 +14,37 @@ type Event struct {
 	Subscribers  reflect.Value  // List of write-only channels to subscribers
 	CanPublish   bool
 	CanSubscribe bool
-	ChannelReady chan bool
+	ChannelReady chan struct{}
 	SubscriberMap map[reflect.Value] reflect.Value
-	// TODO Additional map for unsubscribing
 }
 
 func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
 		ElemType: elemtype,
-		//PublisherWG:
 		DataChan:     reflect.Value{},
 		Subscribers:  reflect.Value{},
 		CanPublish:   false,
 		CanSubscribe: false,
-		ChannelReady: make(chan bool, 1), // Buffered with one, important
+		ChannelReady: make(chan struct{}), // FIXME, might need to be buffered
 		SubscriberMap: make(map[reflect.Value] reflect.Value),
 	}
 }
 
 type LocalEventEmitter struct {
 	eventMap map[string]*Event
+	open bool
+	done chan struct{}
 }
 
 func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
 		eventMap: make(map[string]*Event),
+		open: true,
+		done: make(chan struct{}),
 	}
 }
 
 func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
-	//vtype := reflect.TypeOf(v)
-
 	event := ee.event(eventID, v)
 
 	// Create the write and read channels
@@ -57,13 +57,14 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 	event.RunPublisherOverhead(v)
 
 	go func() {
-		for {
+		for ee.IsOpen() {
 			if data, okRecv := recvChan.Recv(); okRecv {
 				event.DataChan.TrySend(data)
 			} else {
 				break
 			}
 		}
+
 		event.PublisherWG.Done()
 	}()
 
@@ -85,22 +86,21 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 		event.CanSubscribe = true
 		go func() {
 			<-event.ChannelReady
-
-			for {
-				//if data, chanOpen := event.DataChan.TryRecv(); data.IsValid() {
+			for ee.IsOpen() {
 				if data, ok := event.DataChan.Recv(); ok {
 					for i := 0; i < event.Subscribers.Len(); i++ {
 						ch := event.Subscribers.Index(i)
 						ch.TrySend(data)
 					}
 				} else {
-					// Clean up
-					for i := 0; i < event.Subscribers.Len(); i++ {
-						ch := event.Subscribers.Index(i)
-						ch.Close()
-					}
 					break
 				}
+			}
+
+			// Clean up
+			for i := 0; i < event.Subscribers.Len(); i++ {
+				ch := event.Subscribers.Index(i)
+				ch.Close()
 			}
 		}()
 	}
@@ -121,7 +121,8 @@ func (event *Event) RunPublisherOverhead(v interface{}) {
 	// Create the internal data channel
 	if !event.CanPublish {
 		event.DataChan = makeChan(v)
-		event.ChannelReady <- true
+		//event.ChannelReady <- true
+		close(event.ChannelReady)
 		event.CanPublish = true
 
 		go func() {
@@ -166,10 +167,24 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 }
 
 func (ee *LocalEventEmitter) Close() error {
+	//ee.open = false
+	select {
+		case <-ee.done:
+			return errors.New("Emitter already closed")
+		default:
+			close(ee.done)
+	}
+
 	return nil
 }
 
 func (ee *LocalEventEmitter) Wait() {
+	// Wait for close to finish
+	<-ee.done
+}
+
+func (ee *LocalEventEmitter) IsOpen() bool {
+	return ee.open
 }
 
 func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {
@@ -189,7 +204,6 @@ func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {
 }
 
 func makeDirChannels(v interface{}, buffer int) (reflect.Value, reflect.Value) {
-
 	vtype := reflect.TypeOf(v)
 
 	// Get channel type
