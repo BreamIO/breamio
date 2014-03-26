@@ -165,6 +165,13 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 	return errors.New("Can not unsubscribe unregistered event")
 }
 
+func (ee *LocalEventEmitter) Close() error {
+	return nil
+}
+
+func (ee *LocalEventEmitter) Wait() {
+}
+
 func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {
 	vtype := reflect.TypeOf(v)
 	event, ok := ee.eventMap[eventID]
