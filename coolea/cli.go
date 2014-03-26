@@ -153,5 +153,12 @@ func parseStop(tokens []string) (string, handlerFunc, []string) {
 }
 
 func stopET(tokens []string) (string, handlerFunc, []string) {
-	return parseError("NOT IMPLEMENTED " + tokens[0])
+	id, err := strconv.Atoi(tokens[0])
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[0])
+	}
+	payload, err := json.Marshal(struct{}{})
+	client.Send(aioli.ExtPkg{"tracker:shutdown", 256, payload})
+	return "Sent request to stop new ET", startParse, tokens[1:]
 }
