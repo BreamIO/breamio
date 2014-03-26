@@ -49,7 +49,7 @@ func main() {
 	if isPrefix {
 		fmt.Println("Buffer size too small")
 	}
-	if err != io.EOF && err != nil{
+	if err != io.EOF && err != nil {
 		fmt.Println(err)
 	}
 	client.Wait()
@@ -86,8 +86,8 @@ func parseLine(line string) {
 //--------------------------------------------------
 func startParse(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 0 && tokens[0] == "exit" {
-			running = false
-			return "exit program", nil, nil
+		running = false
+		return "exit program", nil, nil
 	}
 
 	if len(tokens) > 1 {
