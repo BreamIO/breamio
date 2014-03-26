@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/beenleigh"
@@ -16,16 +17,19 @@ import (
 
 type handlerFunc func([]string) (string, handlerFunc, []string)
 
-var client Client
+var client *Client
+var ip = flag.String("ip", "localhost:4041", "Specify ip amd port")
 
 func main() {
-	conn, err := net.Dial("tcp", "localhost:4041")
+	flag.Parse()
+	conn, err := net.Dial("tcp", *ip)
 	if err != nil {
 		log.Println("Could not connect to server:", err)
 		return
 	}
 	defer conn.Close()
-	client = *NewClient(conn)
+	client = NewClient(conn)
+	fmt.Println("Connected to", *ip)
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -80,6 +84,8 @@ func parseLine(line string) {
 func startParse(tokens []string) (string, handlerFunc, []string) {
 	if len(tokens) > 1 {
 		switch tokens[0] {
+		case "exit":
+
 		case "list":
 			return "", parseList, tokens[1:]
 		case "start":
@@ -87,6 +93,9 @@ func startParse(tokens []string) (string, handlerFunc, []string) {
 		}
 	}
 	//default
+	if len(tokens) == 0 {
+		return "", startParse, tokens
+	}
 	return parseError(tokens[0])
 }
 
@@ -114,14 +123,14 @@ func parseStart(tokens []string) (string, handlerFunc, []string) {
 
 //Sends a start et message
 func startET(tokens []string) (string, handlerFunc, []string) {
-			id, err := strconv.Atoi(tokens[0])
-			if err != nil {
-				fmt.Println(err)
-				return parseError(tokens[0])
-			}
-			payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
-			client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
-			return "sent id " + string(id) + " message " + tokens[1, startParse, tokens[2:]
+	id, err := strconv.Atoi(tokens[0])
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[0])
+	}
+	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
+	client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
+	return "Sent request to start new ET", startParse, tokens[2:]
 }
 
 //Parse the subtree of stop
