@@ -39,6 +39,12 @@ func TestStatisticsGeneration(t *testing.T) {
 			"terminate and return an error")
 	}
 
+	err = rs.AddRegions(RegionDefinitionMap{})
+
+	if err != nil {
+		t.Fatal("AddRegions with an empty map should be a problem")
+	}
+
 	startTime := time.Now()
 
 	for i := 0; i < 3; i++ {
@@ -89,5 +95,11 @@ func TestStatisticsGeneration(t *testing.T) {
 
 	if string(bytes) != `{"middle":{"looks":1,"time":"00:01"}}` {
 		t.Fatal("Marshaling to JSON failed")
+	}
+}
+
+func TestTimeToString(t *testing.T) {
+	if timeToString(12) != "12" {
+		t.Fatal("The float 12 toString should be '12'")
 	}
 }
