@@ -270,4 +270,15 @@ func TestOnOff(t *testing.T){
 	if dataSend != dataRecv2 {
 		t.Errorf("Got %v, want %v", dataRecv2, dataSend)
 	}
+
+	ee.Close()
+
+	ee.Dispatch("A", dataSend)
+	dataRecv3 := <-subs
+
+	if dataSend == dataRecv3 {
+		t.Errorf("Event emitter should be closed")
+	}
+
+	ee.Wait()
 }

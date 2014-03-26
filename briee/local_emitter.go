@@ -103,12 +103,10 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 }
 
 func (ee *LocalEventEmitter) Dispatch(eventID string, v interface{}) {
-	event := ee.event(eventID, v)
-	//event.PublisherWG.Add(1)
-	//event.RunPublisherOverhead(v)
-	event.DataChan.TrySend(reflect.ValueOf(v))
-	// TODO Skriv direkt på DataChan!!
-	//event.PublisherWG.Done()
+	if ee.IsOpen() {
+		event := ee.event(eventID, v)
+		event.DataChan.TrySend(reflect.ValueOf(v))
+	}
 }
 
 func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
