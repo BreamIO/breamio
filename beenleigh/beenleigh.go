@@ -89,6 +89,7 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 	go ws.Listen()
 	
 	go bl.handle("new:tracker", bl.onNewTrackerEvent)
+	go bl.handle("new:ancientpower", bl.onNewAncientEvent)
 	
 	for {
 		select {
@@ -133,28 +134,19 @@ func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 		return err
 	}
 	
-	if _, ok := bl.emitters[event.Emitter]; !ok {
-		bl.emitters[event.Emitter] = bl.eventEmitterConstructor()
-	}
-	
-	bl.wg.Add(1)
-	go func() {
-		bl.emitters[event.Emitter].Wait()
-		bl.wg.Done()
-	}()
-	
+	ee := getEmitter(event.Emitter)
 	go tracker.Link(bl.emitters[event.Emitter])
-	
-	//NOTE: Remove later when issue #32 is resolved.
-	go ancient.ListenAndServe(bl.emitters[event.Emitter], byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
 	return nil
 }
 
 func onNewAncientEvent(bl *breamLogic, event Spec) error {
-	//Should be moved to separate type handler
-	//go ancient.ListenAndServe(bl.ioman.ee, byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
+	ee := bl.getEmitter(event.Emitter)
+	go ancient.ListenAndServe(ee , byte(event.Emitter), add)
+	//addr := ":303" + strconv.Itoa(event.Emitter)
+	addr := event.Data
+	bl.logger.Printf("Created a new AncientPower Server address %s on EE %d.\n", addr, event.Emitter)
 	return nil
 }
 
@@ -162,6 +154,19 @@ func (bl *breamLogic) Close() error {
 	close(bl.closer)
 	bl.wg.Wait()
 	return nil
+}
+
+func (bl *breamLogic) getEmitter(id int) briee.EventEmitter {
+	if _, ok := bl.emitters[event.Emitter]; !ok {
+		bl.wg.Add(1)
+		bl.emitters[event.Emitter] = bl.eventEmitterConstructor()
+		go func() {
+			bl.emitters[event.Emitter].Wait()
+			bl.wg.Done()
+		}()
+		
+	}
+	return bl.emitters[id]
 }
 
 func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
