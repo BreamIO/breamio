@@ -62,6 +62,19 @@ func (m *MockTracker) Link(ee briee.PublishSubscriber) {
 	etDataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	go m.generate(etDataCh)
 	m.setupCalibrationEvents(ee)
+	
+	go func() {
+		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(<-chan struct{})
+		tShutdownCh := ee.Subscribe("tracker:shutdown", struct{}{}).(<-chan struct{})
+		defer ee.Unsubscribe("shutdown", shutdownCh)
+		defer ee.Unsubscribe("tracker:shutdown", tShutdownCh)
+		select {
+			case <-shutdownCh:
+			case <-tShutdownCh:
+		}
+		m.Close()
+	}()
+	
 }
 
 func (m *MockTracker) setupCalibrationEvents(ee briee.PublishSubscriber) {
