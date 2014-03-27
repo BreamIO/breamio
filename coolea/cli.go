@@ -19,7 +19,7 @@ type handlerFunc func([]string) (string, handlerFunc, []string)
 
 var client *Client
 var running = true
-var ip = flag.String("ip", "localhost:4041", "Specify ip and port. e.g. 127.0.0.1:4041 or localhost:4041")
+var ip = flag.String("ip", "localhost:4041", "Specify ip and port. e.g. 127.0.0.1:4041 or localhost:4041.")
 
 func main() {
 	flag.Parse()
