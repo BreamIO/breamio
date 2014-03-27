@@ -135,6 +135,9 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 //
 // The underlying value of the provided interface will be sent.
 // Will panic if the event string identifier has a different registered type as the underlying type of the provided interface.
+// The method call is not blocking.
+// Example:
+//		ee.Dispatch("event string identifier", MyStruct{...})
 func (ee *LocalEventEmitter) Dispatch(eventID string, v interface{}) {
 	if ee.IsOpen() {
 		event := ee.event(eventID, v)
