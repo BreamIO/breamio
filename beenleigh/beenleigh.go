@@ -94,6 +94,7 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 		select {
 			case <- shutdownEvents:
 				bl.logger.Println("Recieved shutdown event.")
+				bl.Close()
 				return
 			case <- bl.closer:
 				//bl.logger.Println("Time to close the shop!")
