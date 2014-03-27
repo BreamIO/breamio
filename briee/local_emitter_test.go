@@ -250,7 +250,7 @@ func TestCloseEE(t *testing.T) {
 	}
 }
 
-func TestOnOff(t *testing.T){
+func TestOnOff(t *testing.T) {
 	ee := New()
 	// Will start a subscriber + OH
 	subs := ee.Subscribe("A", A{}).(<-chan A)
