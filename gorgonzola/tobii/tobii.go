@@ -58,6 +58,17 @@ func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	//defer close(etdataCh)
 	go g.setupCalibrationEvents(ee)
+	go func() {
+		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(chan<- struct{})
+		tShutdownCh := ee.Subscribe("tracker:shutdown", struct{}{}).(chan<- struct{})
+		defer ee.Unsubscribe("shutdown", shutdownCh)
+		defer ee.Unsubscribe("tracker:shutdown", tShutdownCh)
+		select {
+			<-shutdown:
+			<-tShutdown:
+		}
+		close(g.closer)
+	}
 	
 	err := g.StartTracking(gobiiOnGazeCallback(etdataCh))
 	if err != nil {
