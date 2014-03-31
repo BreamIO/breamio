@@ -9,13 +9,14 @@ package beenleigh
 
 import (
 	"github.com/maxnordlund/breamio/aioli"
-	//ancient "github.com/maxnordlund/breamio/aioli/ancientPower"
+	ancient "github.com/maxnordlund/breamio/aioli/ancientPower"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 	"log"
 	"os"
 	"io"
-	//"strconv"
+	"errors"
+	"strconv"
 	"sync"
 )
 
@@ -24,13 +25,14 @@ import (
 // In order for it to listen to anything, the ListenAndServe method must first be called
 type Logic interface {
 	RootEmitter() briee.EventEmitter
-	ListenAndServe()
+	aioli.EmitterLookuper
+	ListenAndServe(aioli.IOManager)
 	io.Closer
 }
 
 // Creates a instance of the current Logic implementation.
-func New(eef func() briee.EventEmitter, io aioli.IOManager) Logic {
-	return newBL(eef, io)
+func New(eef func() briee.EventEmitter) Logic {
+	return newBL(eef)
 }
 
 type handlerFunc func(Spec) error
@@ -40,29 +42,25 @@ type handlerFunc func(Spec) error
 // Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root briee.EventEmitter
-	ioman aioli.IOManager
 	logger *log.Logger
 	closer chan struct{}
 	wg sync.WaitGroup
 	onNewTrackerEvent handlerFunc
 	eventEmitterConstructor func() briee.EventEmitter
+	emitters map[int]briee.EventEmitter
 }
 
-func newBL(eef func() briee.EventEmitter, io aioli.IOManager) *breamLogic {
+func newBL(eef func() briee.EventEmitter) *breamLogic {
 	logic := new(breamLogic)
 	logic.logger = log.New(os.Stdout, "[Beenleigh] ", log.LstdFlags)
 	logic.closer = make(chan struct{})
+	logic.emitters = make(map[int]briee.EventEmitter)
 	logic.eventEmitterConstructor = eef
 	
 	//Create the first event emitter
 	logic.root = eef()
-	
-	if io != nil {
-		//Hook it up to the io manager
-		logic.ioman = io
-		logic.ioman.AddEE(logic.root, 256)
-	}
-	
+	logic.emitters[256] = logic.root
+
 	logic.onNewTrackerEvent = func() handlerFunc {
 		return func(spec Spec) error {
 			return onNewTrackerEvent(logic, spec)
@@ -76,17 +74,17 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 	return bl.root
 }
 
-func (bl *breamLogic) ListenAndServe() {
+func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 	defer bl.root.Close()
 	//Subscribe to events
 	
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 	
-	go bl.ioman.Run()
+	go ioman.Run()
 	
 	//Set up servers.
-	ts := aioli.NewTCPServer(bl.ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
-	ws := aioli.NewWSServer(bl.ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
+	ts := aioli.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
+	ws := aioli.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
 	go ts.Listen()
 	go ws.Listen()
 	
@@ -134,15 +132,20 @@ func onNewTrackerEvent(bl *breamLogic, event Spec) error {
 		return err
 	}
 	
+	if _, ok := bl.emitters[event.Emitter]; !ok {
+		bl.emitters[event.Emitter] = bl.eventEmitterConstructor()
+	}
+	
 	bl.wg.Add(1)
-	ee := bl.eventEmitterConstructor()
 	go func() {
-		ee.Wait()
+		bl.emitters[event.Emitter].Wait()
 		bl.wg.Done()
 	}()
 	
-	bl.ioman.AddEE(ee, event.Emitter)
-	go tracker.Link(ee)
+	go tracker.Link(bl.emitters[event.Emitter])
+	
+	//NOTE: Remove later when issue #32 is resolved.
+	go ancient.ListenAndServe(bl.emitters[event.Emitter], byte(event.Emitter), ":303" + strconv.Itoa(event.Emitter))
 	
 	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
 	return nil
@@ -158,6 +161,13 @@ func (bl *breamLogic) Close() error {
 	close(bl.closer)
 	bl.wg.Wait()
 	return nil
+}
+
+func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
+	if v, ok := bl.emitters[id]; ok {
+		return v, nil
+	}
+	return nil, errors.New("No emitter with that id.")
 }
 
 // A specification for creation of new objects.

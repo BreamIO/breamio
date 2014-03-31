@@ -4,7 +4,6 @@ Package briee defines and implements the EventEmitter interface.
 Example use:
 
 		ee := New()
-		go ee.Run()
 
 		dataSend := MyStruct{...}
 		var dataRecv MyStruct
