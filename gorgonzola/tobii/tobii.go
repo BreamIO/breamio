@@ -2,6 +2,7 @@ package tobii
 
 import (
 	"fmt"
+	"os"
 	//"log"
 	"github.com/maxnordlund/breamio/briee"
 	. "github.com/maxnordlund/breamio/gorgonzola"
@@ -78,6 +79,11 @@ func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 	}
 }
 
+func (g *GazeTracker) Close() error {
+	close(g.closer)
+	return g.EyeTracker.Close()
+}
+
 func (g *GazeTracker) setupCalibrationEvents(ee briee.PublishSubscriber) {
 	go g.calibrateStartHandler(ee)
 	go g.calibrateAddHandler(ee)
@@ -119,12 +125,14 @@ func (g *GazeTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 	outCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
 	errorCh := ee.Publish("tracker:calibrate:error", NewError("")) .(chan<- Error)
 	defer ee.Unsubscribe("tracker:calibrate:start", outCh)
-	//defer close(outCh)
+	defer close(outCh)
 	
 	for {
 		select {
 			case <- inCh:
+				fmt.Fprintln(os.Stderr, "starting Calibration")
 				g.StartCalibration( handleError(errorCh, func() {
+						fmt.Fprintln(os.Stderr, "Start Callback is called!")
 						g.calibrationPoints = 0
 						outCh <- struct{}{}
 					}))
@@ -138,21 +146,22 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 	defer ee.Unsubscribe("tracker:calibrate:add", inCh)
 	
 	nextCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
-	//defer close(nextCh)
+	defer close(nextCh)
 	
 	endCh := ee.Publish("tracker:calibrate:end", struct{}{}).(chan<- struct{})
-	//defer close(endCh)
+	defer close(endCh)
 	
 	vstartCh := ee.Publish("tracker:validate:start", struct{}{}).(chan<- struct{})
-	//defer close(vstartCh)
+	defer close(vstartCh)
 	
 	errorCh := ee.Publish("tracker:calibrate:error", NewError("")) .(chan<- Error)
-	//defer close(errorCh)
+	defer close(errorCh)
 	
 	for {
 		select {
 			case p := <- inCh:
 				g.calibrationPoints++
+				//println("calubration points:", g.calibrationPoints)
 				if g.calibrationPoints >= 5 {
 					g.StopCalibration( handleError(errorCh, func() {
 							endCh <- struct{}{}
@@ -174,7 +183,7 @@ func (g *GazeTracker) validateStartHandler(ee briee.PublishSubscriber) {
 	inCh := ee.Subscribe("tracker:validate:start", struct{}{}).(<-chan struct{})
 	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
 	defer ee.Unsubscribe("tracker:validate:start", inCh)
-	//defer close(nextCh)
+	defer close(nextCh)
 	
 	for {
 		select {
@@ -192,10 +201,10 @@ func (g *GazeTracker) validateAddHandler(ee briee.PublishSubscriber) {
 	defer ee.Unsubscribe("tracker:validate:add", inCh)
 	
 	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
-	//defer close(nextCh)
+	defer close(nextCh)
 	
 	qualityCh := ee.Publish("tracker:validate:end", float64(0)).(chan<- float64)
-	//defer close(qualityCh)
+	defer close(qualityCh)
 	
 	for {
 		select {

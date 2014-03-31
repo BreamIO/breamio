@@ -1,9 +1,13 @@
 package tobii_test
 
 import (
+	"time"
+
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"	
+	"testing"
+	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
+	gt "github.com/maxnordlund/breamio/gorgonzola/testing"
 	
 	_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
 )
@@ -13,7 +17,7 @@ func TestGazeCreate(t *testing.T) {
 	Convey("Result should be a tracker", t, func() {
 		So(tracker, ShouldNotBeNil)
 	})
-	Convey("And the error should be nil.", t, func() {
+	Convey("And the error should be nil", t, func() {
 		So(err, ShouldBeNil)
 	})
 }
@@ -29,14 +33,14 @@ func TestGazeCreateFromId(t *testing.T) {
 	driver := gorgonzola.GetDriver("tobii")
 	ids := driver.List()
 	if len(ids) < 1 {
-		t.Fatal("No trackers connected.")
+		t.Fatal("No trackers connected")
 		return
 	}
 	tracker, err := driver.CreateFromId(ids[0])
 	Convey("Result should be a tracker", t, func() {
 		So(tracker, ShouldNotBeNil)
 	})
-	Convey("And the error should be nil.", t, func() {
+	Convey("And the error should be nil", t, func() {
 		So(err, ShouldBeNil)
 	})
 }
@@ -72,12 +76,100 @@ func TestGazeStream(t *testing.T) {
 	})
 }
 
-func TestGazeCalibration(t *testing.T) {
-	//tracker, _ := gorgonzola.GetDriver("mock").Create()
-	Convey("Calibrating a GazeTracker eat all points on channel", t, nil)
+func TestLink(t *testing.T) {
+	mee := &gt.MockEmitter{make(map[string]interface{}), make(map[string]bool)}
+	tracker, _ := gorgonzola.GetDriver("tobii").Create()
+	tracker.Connect()
+	Convey("Link should set up some event handlers", t, func() {
+		go tracker.Link(mee)
+		time.Sleep(1*time.Second)
+		So(mee.Pubsubs["tracker:etdata"], ShouldNotBeNil)
+		Convey("And register as publisher of the answers", func() {
+			So(mee.Pubsubs["tracker:calibrate:next"], ShouldNotBeNil)
+			So(mee.Pubsubs["tracker:calibrate:end"], ShouldNotBeNil)
+			So(mee.Pubsubs["tracker:validate:start"], ShouldNotBeNil)
+			So(mee.Pubsubs["tracker:validate:next"], ShouldNotBeNil)
+			So(mee.Pubsubs["tracker:validate:end"], ShouldNotBeNil)
+		})
+	})
 }
 
-func TestGazeIsCalibrated(t *testing.T) {
-	//tracker, _ := gorgonzola.GetDriver("mock").Create()
-	Convey("A GazeTracker should be calibrated after been given ~5 points", t, nil)
+func TestClose(t *testing.T) {
+	mee := &gt.MockEmitter{make(map[string]interface{}), make(map[string]bool)}
+	tracker, _ := gorgonzola.GetDriver("tobii").Create()
+	tracker.Connect()
+	go tracker.Link(mee)
+	SkipConvey("Closing should shut down all subscriptions", t, func() {
+		tracker.Close()
+		t.Log("-1")
+		time.Sleep(2*time.Second)
+		t.Log("0")
+		So(mee.Unsubscribed["tracker:calibrate:start"], ShouldEqual, true)
+		t.Log("1")
+		So(mee.Unsubscribed["tracker:calibrate:add"], ShouldEqual, true)
+		t.Log("2")
+		So(mee.Unsubscribed["tracker:validate:start"], ShouldEqual, true)
+		t.Log("3")
+		So(mee.Unsubscribed["tracker:validate:add"], ShouldEqual, true)
+		t.Log("4")
+	})
+}
+
+func TestCalibration(t *testing.T) {
+	tracker, _ := gorgonzola.GetDriver("tobii").Create()
+	tracker.Connect()
+	ee := briee.New()
+	tracker.Link(ee)
+	
+	calib_nextCh := ee.Subscribe("tracker:calibrate:next", struct{}{}).(<-chan struct{})
+	calib_errorCh := ee.Subscribe("tracker:calibrate:error", gorgonzola.NewError("")) .(<-chan gorgonzola.Error)
+	calib_endCh := ee.Subscribe("tracker:calibrate:end", struct{}{}).(<-chan struct{})
+	valid_startCh := ee.Subscribe("tracker:validate:start", struct{}{}).(<-chan struct{})
+	valid_nextCh := ee.Subscribe("tracker:validate:next", struct{}{}).(<-chan struct{})
+	valid_endCh := ee.Subscribe("tracker:validate:end", float64(0)).(<-chan float64)
+	
+	Convey("tracker:calibrate:start", t, func() {
+		ee.Dispatch("tracker:calibrate:start", struct{}{})
+		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
+	})
+	
+	Convey("tracker:calibrate:add", t, func(){
+		addCh := ee.Publish("tracker:calibrate:add", gorgonzola.Point2D{}).(chan<- gorgonzola.Point2D)
+		defer close(addCh)
+		
+		addCh <- gorgonzola.Point2D{0.1,0.1}
+		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
+		
+		addCh <- gorgonzola.Point2D{0.9,0.1}
+		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
+		
+		addCh <- gorgonzola.Point2D{0.1,0.9}
+		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
+		
+		addCh <- gorgonzola.Point2D{0.9,0.9}
+		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
+		
+		addCh <- gorgonzola.Point2D{0.5,0.5}
+		So(gt.CheckError(calib_endCh, calib_errorCh), ShouldBeNil)
+		So(<-valid_startCh, ShouldResemble, struct{}{})
+	})
+	
+	Convey("tracker:validate:start", t, func() {
+		ee.Dispatch("tracker:validate:start", struct{}{})
+		So(<-valid_nextCh, ShouldResemble, struct{}{})
+	})
+	
+	Convey("tracker:validate:add", t, func(){
+		addCh := ee.Publish("tracker:validate:add", gorgonzola.Point2D{}).(chan<- gorgonzola.Point2D)
+		addCh <- gorgonzola.Point2D{0.1,0.1}
+		So(<-valid_nextCh, ShouldResemble, struct{}{})
+		addCh <- gorgonzola.Point2D{0.9,0.1}
+		So(<-valid_nextCh, ShouldResemble, struct{}{})
+		addCh <- gorgonzola.Point2D{0.1,0.9}
+		So(<-valid_nextCh, ShouldResemble, struct{}{})
+		addCh <- gorgonzola.Point2D{0.9,0.9}
+		So(<-valid_nextCh, ShouldResemble, struct{}{})
+		addCh <- gorgonzola.Point2D{0.5,0.5}
+		So(<-valid_endCh, ShouldResemble, float64(0.05))
+	})
 }
