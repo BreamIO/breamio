@@ -7,8 +7,8 @@ import (
 
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
-	gt "github.com/maxnordlund/breamio/gorgonzola/testing"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
+	gt "github.com/maxnordlund/breamio/gorgonzola/testing"
 )
 
 func TestCreate(t *testing.T) {
@@ -32,10 +32,10 @@ func TestCreateFromId(t *testing.T) {
 	driver := gorgonzola.GetDriver("mock")
 	for _, id := range driver.List() {
 		tracker, err := driver.CreateFromId(id)
-		Convey("(" + id + ") Result should be a tracker", t, func() {
+		Convey("("+id+") Result should be a tracker", t, func() {
 			So(tracker, ShouldNotBeNil)
 		})
-		Convey("(" + id + ") And the error should be nil.", t, func() {
+		Convey("("+id+") And the error should be nil.", t, func() {
 			So(err, ShouldBeNil)
 		})
 	}
@@ -53,7 +53,7 @@ func TestConstant(t *testing.T) {
 	Convey("Value from Constant tracker should be constant.", t, func() {
 		stream, _ := tracker.Stream()
 		first := <-stream
-		for i:=0; i < 20; i++ {
+		for i := 0; i < 20; i++ {
 			data := <-stream
 			So(data.Filtered.X(), ShouldResemble, first.Filtered.X())
 			So(data.Filtered.Y(), ShouldResemble, first.Filtered.Y())
@@ -96,7 +96,7 @@ func TestLink(t *testing.T) {
 	tracker.Connect()
 	Convey("Link should set up some event handlers", t, func() {
 		go tracker.Link(mee)
-		time.Sleep(1*time.Second)
+		time.Sleep(1 * time.Second)
 		So(mee.Pubsubs["tracker:etdata"], ShouldNotBeNil)
 		Convey("And register as publisher of the answers", func() {
 			So(mee.Pubsubs["tracker:calibrate:start"], ShouldNotBeNil)
@@ -117,7 +117,7 @@ func TestClose(t *testing.T) {
 	SkipConvey("Closing should shut down all subscriptions", t, func() {
 		tracker.Close()
 		t.Log("-1")
-		time.Sleep(2*time.Second)
+		time.Sleep(2 * time.Second)
 		t.Log("0")
 		So(mee.Unsubscribed["tracker:calibrate:start"], ShouldEqual, true)
 		t.Log("1")
@@ -135,56 +135,56 @@ func TestCalibration(t *testing.T) {
 	tracker.Connect()
 	ee := briee.New()
 	tracker.Link(ee)
-	
+
 	calib_nextCh := ee.Subscribe("tracker:calibrate:next", struct{}{}).(<-chan struct{})
-	calib_errorCh := ee.Subscribe("tracker:calibrate:error", gorgonzola.NewError("")) .(<-chan gorgonzola.Error)
+	calib_errorCh := ee.Subscribe("tracker:calibrate:error", gorgonzola.NewError("")).(<-chan gorgonzola.Error)
 	calib_endCh := ee.Subscribe("tracker:calibrate:end", struct{}{}).(<-chan struct{})
 	valid_startCh := ee.Subscribe("tracker:validate:start", struct{}{}).(<-chan struct{})
 	valid_nextCh := ee.Subscribe("tracker:validate:next", struct{}{}).(<-chan struct{})
 	valid_endCh := ee.Subscribe("tracker:validate:end", float64(0)).(<-chan float64)
-	
+
 	Convey("tracker:calibrate:start", t, func() {
 		ee.Dispatch("tracker:calibrate:start", struct{}{})
 		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
 	})
-	
-	Convey("tracker:calibrate:add", t, func(){
+
+	Convey("tracker:calibrate:add", t, func() {
 		addCh := ee.Publish("tracker:calibrate:add", gorgonzola.Point2D{}).(chan<- gorgonzola.Point2D)
 		defer close(addCh)
-		
-		addCh <- gorgonzola.Point2D{0.1,0.1}
+
+		addCh <- gorgonzola.Point2D{0.1, 0.1}
 		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
-		
-		addCh <- gorgonzola.Point2D{0.9,0.1}
+
+		addCh <- gorgonzola.Point2D{0.9, 0.1}
 		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
-		
-		addCh <- gorgonzola.Point2D{0.1,0.9}
+
+		addCh <- gorgonzola.Point2D{0.1, 0.9}
 		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
-		
-		addCh <- gorgonzola.Point2D{0.9,0.9}
+
+		addCh <- gorgonzola.Point2D{0.9, 0.9}
 		So(gt.CheckError(calib_nextCh, calib_errorCh), ShouldBeNil)
-		
-		addCh <- gorgonzola.Point2D{0.5,0.5}
+
+		addCh <- gorgonzola.Point2D{0.5, 0.5}
 		So(gt.CheckError(calib_endCh, calib_errorCh), ShouldBeNil)
 		So(<-valid_startCh, ShouldResemble, struct{}{})
 	})
-	
+
 	Convey("tracker:validate:start", t, func() {
 		ee.Dispatch("tracker:validate:start", struct{}{})
 		So(<-valid_nextCh, ShouldResemble, struct{}{})
 	})
-	
-	Convey("tracker:validate:add", t, func(){
+
+	Convey("tracker:validate:add", t, func() {
 		addCh := ee.Publish("tracker:validate:add", gorgonzola.Point2D{}).(chan<- gorgonzola.Point2D)
-		addCh <- gorgonzola.Point2D{0.1,0.1}
+		addCh <- gorgonzola.Point2D{0.1, 0.1}
 		So(<-valid_nextCh, ShouldResemble, struct{}{})
-		addCh <- gorgonzola.Point2D{0.9,0.1}
+		addCh <- gorgonzola.Point2D{0.9, 0.1}
 		So(<-valid_nextCh, ShouldResemble, struct{}{})
-		addCh <- gorgonzola.Point2D{0.1,0.9}
+		addCh <- gorgonzola.Point2D{0.1, 0.9}
 		So(<-valid_nextCh, ShouldResemble, struct{}{})
-		addCh <- gorgonzola.Point2D{0.9,0.9}
+		addCh <- gorgonzola.Point2D{0.9, 0.9}
 		So(<-valid_nextCh, ShouldResemble, struct{}{})
-		addCh <- gorgonzola.Point2D{0.5,0.5}
+		addCh <- gorgonzola.Point2D{0.5, 0.5}
 		So(<-valid_endCh, ShouldResemble, float64(0.05))
 	})
 }

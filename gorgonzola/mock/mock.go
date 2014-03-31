@@ -38,13 +38,13 @@ func (d MockDriver) CreateFromId(identifier string) (Tracker, error) {
 }
 
 type MockTracker struct {
-	f                     func(float64) (float64, float64)
-	t                     float64
-	calibrating           bool
-	calibrated            bool
-	calibrationPoints     int
-	validationPoints      int
-	closer                chan struct{}
+	f                 func(float64) (float64, float64)
+	t                 float64
+	calibrating       bool
+	calibrated        bool
+	calibrationPoints int
+	validationPoints  int
+	closer            chan struct{}
 }
 
 func New(f func(float64) (float64, float64)) *MockTracker {
@@ -62,25 +62,25 @@ func (m *MockTracker) Link(ee briee.PublishSubscriber) {
 	etDataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	go m.generate(etDataCh)
 	m.setupCalibrationEvents(ee)
-	
+
 	go func() {
 		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 		tShutdownCh := ee.Subscribe("tracker:shutdown", struct{}{}).(<-chan struct{})
 		defer ee.Unsubscribe("shutdown", shutdownCh)
 		defer ee.Unsubscribe("tracker:shutdown", tShutdownCh)
 		select {
-			case <-shutdownCh:
-			case <-tShutdownCh:
+		case <-shutdownCh:
+		case <-tShutdownCh:
 		}
 		m.Close()
 	}()
-	
+
 }
 
 func (m *MockTracker) setupCalibrationEvents(ee briee.PublishSubscriber) {
 	go m.calibrateStartHandler(ee)
 	go m.calibrateAddHandler(ee)
-	
+
 	go m.validateStartHandler(ee)
 	go m.validateAddHandler(ee)
 }
@@ -101,10 +101,10 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 	defer ticker.Stop()
 	for t := range ticker.C {
 		select {
-			case <-m.closer: 
-				close(ch)
-				return
-			default:
+		case <-m.closer:
+			close(ch)
+			return
+		default:
 		}
 		x, y := m.f(m.t)
 		ch <- &ETData{Point2D{x, y}, t}
@@ -116,15 +116,15 @@ func (m *MockTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 	inCh := ee.Subscribe("tracker:calibrate:start", struct{}{}).(<-chan struct{})
 	outCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
 	defer ee.Unsubscribe("tracker:calibrate:start", outCh)
-	//defer close(outCh)
-	
+	defer close(outCh)
 	for {
 		select {
-			case <- inCh:
-				m.calibrating = true
-				m.calibrationPoints = 0
-				outCh <- struct{}{}
-			case <-m.closer: return
+		case <-inCh:
+			m.calibrating = true
+			m.calibrationPoints = 0
+			outCh <- struct{}{}
+		case <-m.closer:
+			return
 		}
 	}
 }
@@ -132,27 +132,28 @@ func (m *MockTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 func (m *MockTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 	inCh := ee.Subscribe("tracker:calibrate:add", Point2D{}).(<-chan Point2D)
 	defer ee.Unsubscribe("tracker:calibrate:add", inCh)
-	
+
 	nextCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
-	//defer close(nextCh)
-	
+	defer close(nextCh)
+
 	endCh := ee.Publish("tracker:calibrate:end", struct{}{}).(chan<- struct{})
-	//defer close(endCh)
-	
+	defer close(endCh)
+
 	vstartCh := ee.Publish("tracker:validate:start", struct{}{}).(chan<- struct{})
-	//defer close(vstartCh)
-	
+	defer close(vstartCh)
+
 	for {
 		select {
-			case <- inCh:
-				m.calibrationPoints++
-				if m.calibrationPoints >= 5 {
-					endCh <- struct{}{}
-					vstartCh <- struct{}{}
-				} else {
-					nextCh <- struct{}{}
-				}
-			case <-m.closer: return
+		case <-inCh:
+			m.calibrationPoints++
+			if m.calibrationPoints >= 5 {
+				endCh <- struct{}{}
+				vstartCh <- struct{}{}
+			} else {
+				nextCh <- struct{}{}
+			}
+		case <-m.closer:
+			return
 		}
 	}
 }
@@ -162,14 +163,15 @@ func (m *MockTracker) validateStartHandler(ee briee.PublishSubscriber) {
 	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
 	defer ee.Unsubscribe("tracker:validate:start", inCh)
 	//defer close(nextCh)
-	
+
 	for {
 		select {
-			case <- inCh:
-				m.calibrating = true
-				m.validationPoints = 0
-				nextCh <- struct{}{}
-			case <-m.closer: return
+		case <-inCh:
+			m.calibrating = true
+			m.validationPoints = 0
+			nextCh <- struct{}{}
+		case <-m.closer:
+			return
 		}
 	}
 }
@@ -177,23 +179,24 @@ func (m *MockTracker) validateStartHandler(ee briee.PublishSubscriber) {
 func (m *MockTracker) validateAddHandler(ee briee.PublishSubscriber) {
 	inCh := ee.Subscribe("tracker:validate:add", Point2D{}).(<-chan Point2D)
 	defer ee.Unsubscribe("tracker:validate:add", inCh)
-	
+
 	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
 	//defer close(nextCh)
-	
+
 	qualityCh := ee.Publish("tracker:validate:end", float64(0)).(chan<- float64)
 	//defer close(qualityCh)
-	
+
 	for {
 		select {
-			case <- inCh:
-				m.validationPoints++
-				if m.validationPoints >= 5 {
-					qualityCh <- float64(0.05)
-				} else {
-					nextCh <- struct{}{}
-				}
-			case <-m.closer: return
+		case <-inCh:
+			m.validationPoints++
+			if m.validationPoints >= 5 {
+				qualityCh <- float64(0.05)
+			} else {
+				nextCh <- struct{}{}
+			}
+		case <-m.closer:
+			return
 		}
 	}
 }
