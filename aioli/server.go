@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"path"
 )
 
 const (
@@ -30,11 +32,25 @@ func NewWSServer(ioman IOManager, l *log.Logger) *WSServer {
 	}
 }
 
-// Listen and Serve for incoming message on the websocket.
+// Serve static files and listen for incoming websocket messages
 func (s *WSServer) Listen() {
-	http.Handle("/", websocket.Handler(s.handler))
+	pwd, err := os.Getwd()
+	if err != nil {
+		s.logger.Printf("Failed to get current working directory: %s\n", err)
+		return
+	}
+	wsHandler := websocket.Handler(s.handler)
+	fileHandler := http.FileServer(http.Dir(path.Join(pwd, "static")))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Handle websocket requests separately, but still serve static files
+		if r.Header.Get("Upgrade") == "websocket" && r.Header.Get("Connection") == "Upgrade" {
+			wsHandler.ServeHTTP(w, r)
+		} else {
+			fileHandler.ServeHTTP(w, r)
+		}
+	})
 	s.logger.Printf("Listening on %s.", wsJSONaddr)
-	err := http.ListenAndServe(wsJSONaddr, nil)
+	err = http.ListenAndServe(wsJSONaddr, nil)
 	if err != nil {
 		s.logger.Printf("Failed to listen on TCP address %s: %s\n", tcpJSONaddr, err)
 		return
