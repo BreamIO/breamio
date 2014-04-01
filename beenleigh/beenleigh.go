@@ -18,7 +18,7 @@ import (
 	"sync"
 )
 
-var constructers = []Constructer{}
+var constructers []Constructer
 
 func Register(c Constructer) {
 	constructers = append(constructers, c)
@@ -29,6 +29,7 @@ func Register(c Constructer) {
 // In order for it to listen to anything, the ListenAndServe method must first be called
 type Logic interface {
 	RootEmitter() briee.EventEmitter
+	CreateEmitter(id int) briee.EventEmitter
 	aioli.EmitterLookuper
 	ListenAndServe(aioli.IOManager)
 	io.Closer

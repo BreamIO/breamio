@@ -14,19 +14,24 @@ import (
 
 var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
 
+func init() {
+	bl.Register(&AncientConstructor{})
+}
+
 type AncientConstructor struct{
 	closing chan struct{}
 }
 
 func (ac *AncientConstructor) Init(logic bl.Logic) {
+	logger.Println("Initializing AncientPower subsystem.")
 	ac.closing = make(chan struct{})
-	newCh = logic.RootEmitter().Subscribe("new:ancientpower", bl.Spec{}).(<-chan bl.Spec)
-	defer ac.logic.RootEmitter().Unsubscribe()
+	newCh := logic.RootEmitter().Subscribe("new:ancientpower", bl.Spec{}).(<-chan bl.Spec)
+	defer logic.RootEmitter().Unsubscribe("new:ancientpower", newCh)
 	
 	for {
 		select {
 			case event := <-newCh:
-				New(event)
+				New(logic, event)
 			case <-ac.closing: return
 		}
 	}
@@ -34,16 +39,17 @@ func (ac *AncientConstructor) Init(logic bl.Logic) {
 }
 
 func (ac *AncientConstructor) Close() error {
-	close(closing)
+	close(ac.closing)
+	return nil
 }
 
-func New(spec bl.Spec) {
-	ee := bl.getEmitter(spec.Emitter)
-	go ancient.ListenAndServe(ee, byte(spec.Emitter), add)
+func New(logic bl.Logic, spec bl.Spec) {
+	ee := logic.CreateEmitter(spec.Emitter)
 	//addr := ":303" + strconv.Itoa(spec.Emitter)
 	addr := spec.Data
-	bl.logger.Printf("Created a new AncientPower Server address %s on EE %d.\n", addr, spec.Emitter)
-	return nil
+	go ListenAndServe(ee, byte(spec.Emitter), addr)
+	logger.Printf("Created a new AncientPower Server address %s on EE %d.\n", addr, spec.Emitter)
+	return
 }
 
 func ListenAndServe(ee briee.EventEmitter, id byte, addr string) {
