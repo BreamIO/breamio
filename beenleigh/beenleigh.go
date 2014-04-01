@@ -11,7 +11,6 @@ import (
 	"errors"
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/gorgonzola"
 	"io"
 	"log"
 	"os"
@@ -20,6 +19,9 @@ import (
 
 var constructers []Constructer
 
+// Allows a module to register a constructor to be called during startup.
+// The system also allows for destructors through the Close() error method.
+// This is typically used to register global events and similar.
 func Register(c Constructer) {
 	constructers = append(constructers, c)
 }
@@ -40,8 +42,6 @@ func New(eef func() briee.EventEmitter) Logic {
 	return newBL(eef)
 }
 
-type handlerFunc func(Spec) error
-
 // First actual implementation
 // Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
@@ -49,7 +49,6 @@ type breamLogic struct {
 	logger                  *log.Logger
 	closer                  chan struct{}
 	wg                      sync.WaitGroup
-	onNewTrackerEvent       handlerFunc
 	eventEmitterConstructor func() briee.EventEmitter
 	emitters                map[int]briee.EventEmitter
 }
@@ -64,12 +63,6 @@ func newBL(eef func() briee.EventEmitter) *breamLogic {
 	//Create the first event emitter
 	logic.root = eef()
 	logic.emitters[256] = logic.root
-
-	logic.onNewTrackerEvent = func() handlerFunc {
-		return func(spec Spec) error {
-			return onNewTrackerEvent(logic, spec)
-		}
-	}()
 
 	return logic
 }
@@ -97,8 +90,6 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 	go ts.Listen()
 	go ws.Listen()
 
-	go bl.handle("new:tracker", bl.onNewTrackerEvent)
-
 	for {
 		select {
 		case <-shutdownEvents:
@@ -110,44 +101,6 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 			return
 		}
 	}
-}
-
-func (bl *breamLogic) handle(eventId string, f handlerFunc) {
-	bl.wg.Add(1)
-	defer bl.wg.Done()
-
-	events := bl.root.Subscribe(eventId, Spec{}).(<-chan Spec)
-	for {
-		select {
-		case <-bl.closer:
-			return
-		case spec := <-events:
-			if err := f(spec); err != nil {
-				bl.root.Dispatch("beenleigh:error", err)
-			}
-		}
-	}
-}
-
-func onNewTrackerEvent(bl *breamLogic, event Spec) error {
-	bl.logger.Println("Recieved new:tracker event.")
-
-	tracker, err := gorgonzola.CreateFromURI(event.Data)
-	if err != nil {
-		bl.logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
-		return err
-	}
-	err = tracker.Connect()
-	if err != nil {
-		bl.logger.Println("Unable to connect to tracker:", err)
-		return err
-	}
-
-	ee := bl.CreateEmitter(event.Emitter)
-	go tracker.Link(ee)
-
-	bl.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
-	return nil
 }
 
 func (bl *breamLogic) Close() error {
