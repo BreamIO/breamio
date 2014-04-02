@@ -19,7 +19,7 @@ type EmitterLookuper interface {
 
 // IOManager interface defines an I/O manager with external reader functionality.
 type IOManager interface {
-	Listen(codec Codec, l *log.Logger)
+	Listen(codec EncodeDecoder, l *log.Logger)
 	Run()
 	Close() error
 }

@@ -35,7 +35,7 @@ type publMapEntry struct {
 // Listen will try to decode ExtPkg structs from the underlying data stream of the provided decoder and handle the structs accordingly.
 //
 // Requires that the IOManager Run method is running.
-func (biom *BasicIOManager) Listen(codec Codec, logger *log.Logger) {
+func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := codec.Decode(&ep)
