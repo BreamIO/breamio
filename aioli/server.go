@@ -43,8 +43,8 @@ func (s *WSServer) Listen() {
 
 // handler is called for every established connection and will send data to the manager
 func (s *WSServer) handler(ws *websocket.Conn) {
-	dec := NewDecoder(ws)
-	go s.manager.Listen(dec, s.logger)
+	codec := NewCodec(ws)
+	go s.manager.Listen(codec, s.logger)
 }
 
 type TCPServer struct {
@@ -73,7 +73,7 @@ func (t *TCPServer) Listen() {
 			return
 		}
 
-		dec := NewDecoder(in)
-		go t.manager.Listen(dec, t.logger)
+		codec := NewCodec(in)
+		go t.manager.Listen(codec, t.logger)
 	}
 }
