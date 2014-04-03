@@ -22,14 +22,14 @@ func main() {
 	signal.Notify(done, os.Interrupt)
 
 	fmt.Println("Welcome to", Company, Product, Version)
-	logic := bl.New(briee.New, aioli.New())
+	logic := bl.New(briee.New)
 
 	go func() {
 		<-done
 		logic.Close()
 	}()
 
-	logic.ListenAndServe()
+	logic.ListenAndServe(aioli.New(logic))
 	fmt.Println("Thank you for using our product.")
 }
 

@@ -1,10 +1,9 @@
 package beenleigh
 
 import (
-	"time"
 	"reflect"
-	"errors"
-	
+	"time"
+
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
@@ -17,15 +16,16 @@ import (
 
 type mockEmitter struct {
 	pubsubs map[string]interface{}
-	subs map[string]chan bool
+	subs    map[string]chan bool
 }
 
 func newMockEmitter() *mockEmitter {
 	return &mockEmitter{
 		make(map[string]interface{}),
 		map[string](chan bool){
-			"new": make(chan bool, 1),
-			"shutdown": make(chan bool, 1),
+			"new:tracker": make(chan bool, 1),
+			"new:ancient": make(chan bool, 1),
+			"shutdown":    make(chan bool, 1),
 		},
 	}
 }
@@ -35,14 +35,15 @@ func (m *mockEmitter) Publish(chid string, v interface{}) interface{} {
 		return (chan<- interface{})(m.pubsubs[chid].(chan interface{}))
 	}
 	switch v.(type) {
-		case Spec:
-			ch := make(chan Spec)
-			m.pubsubs[chid] = ch
-			return (chan<- Spec)(ch)
-		case *gorgonzola.ETData:
-			ch := make(chan *gorgonzola.ETData)
-			return (chan<- *gorgonzola.ETData)(ch)
-		default: return nil
+	case Spec:
+		ch := make(chan Spec)
+		m.pubsubs[chid] = ch
+		return (chan<- Spec)(ch)
+	case *gorgonzola.ETData:
+		ch := make(chan *gorgonzola.ETData)
+		return (chan<- *gorgonzola.ETData)(ch)
+	default:
+		return nil
 	}
 }
 
@@ -57,23 +58,29 @@ func (m *mockEmitter) Subscribe(chid string, v interface{}) interface{} {
 		m.subs[chid] <- true
 	}
 	switch v.(type) {
-		case Spec:
-			ch := make(chan Spec)
-			m.pubsubs[chid] = ch
-			return (<-chan Spec)(ch)
-		case struct{}:
-			ch := make(chan struct{})
-			m.pubsubs[chid] = ch
-			return (<-chan struct{})(ch)
-		default: return nil
+	case Spec:
+		ch := make(chan Spec)
+		m.pubsubs[chid] = ch
+		return (<-chan Spec)(ch)
+	case struct{}:
+		ch := make(chan struct{})
+		m.pubsubs[chid] = ch
+		return (<-chan struct{})(ch)
+	default:
+		return nil
 	}
+}
+
+func (m *mockEmitter) Unsubscribe(chid string, v interface{}) error {
+	delete(m.pubsubs, chid)
+	return nil
 }
 
 func (m *mockEmitter) Close() error {
 	return nil
 }
 
-func (m *mockEmitter) Run() {
+func (m *mockEmitter) Wait() {
 }
 
 func (m *mockEmitter) TypeOf(chid string) (reflect.Type, error) {
@@ -82,18 +89,17 @@ func (m *mockEmitter) TypeOf(chid string) (reflect.Type, error) {
 
 func (m *mockEmitter) subscribedTo(chid string) bool {
 	select {
-		case <-m.subs[chid]:
-			return true
-		case <-time.After(50*time.Millisecond):
-			return false
+	case <-m.subs[chid]:
+		return true
+	case <-time.After(100 * time.Millisecond):
+		return false
 	}
 	return false
 }
 
-
 type mockIOManager struct {
 	aioli.IOManager
-	ees map[int]briee.EventEmitter
+	ees     map[int]briee.EventEmitter
 	started bool
 }
 
@@ -118,27 +124,4 @@ func (m *mockIOManager) RemoveEE(id int) error {
 func (m *mockIOManager) Run() {
 	m.started = true
 	m.IOManager.Run()
-} 
-
-type BLMockTrackerDriver struct {
-	gorgonzola.Tracker
-	created bool
-	id string
-}
-
-func (m *BLMockTrackerDriver) Create() (gorgonzola.Tracker, error) {
-	return m.CreateFromId("test")
-}
-
-func (m *BLMockTrackerDriver) CreateFromId(id string) (gorgonzola.Tracker, error){
-	if (id == "error") {
-		return nil, errors.New("Nope.")
-	}
-	m.created = true
-	m.id = id
-	return m, nil
-}
-
-func (m *BLMockTrackerDriver) List() []string {
-	return []string{"test"}
 }

@@ -3,7 +3,6 @@ package aioli
 import (
 	"encoding/json"
 	"errors"
-	"github.com/maxnordlund/breamio/briee"
 	"io"
 	"log"
 	"reflect"
@@ -12,16 +11,16 @@ import (
 
 // BasicIOManager implements IOManager.
 type BasicIOManager struct {
-	eeMap    map[int]briee.EventEmitter
+	lookuper EmitterLookuper
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
 	closed   bool
 }
 
 // newBasicIOManager creates a new BasicIOManager.
-func newBasicIOManager() *BasicIOManager {
+func newBasicIOManager(lookuper EmitterLookuper) *BasicIOManager {
 	return &BasicIOManager{
-		eeMap:    make(map[int]briee.EventEmitter),
+		lookuper: lookuper,
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 		closed:   true,
@@ -70,7 +69,7 @@ func (biom *BasicIOManager) Run() {
 // Handle tries to decode and send the provided ExtPkg on one or more event emitters
 func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	// TODO Add broadcast functionality
-	if ee, ok := biom.eeMap[recvData.ID]; ok {
+	if ee, err := biom.lookuper.EmitterLookup(recvData.ID); err == nil {
 
 		// Look up the type in the event emitter
 		rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
@@ -97,41 +96,6 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	} else {
 		log.Printf("No match for packet: %v", recvData)
 		time.Sleep(time.Millisecond * 500)
-	}
-}
-
-// AddEE adds a pointer to an event emitter and an identifier if not already present. Will return a error if unsuccessful.
-//
-// Provided interger identigier must not be zero as this is reverved for broadcasting all event emitters. Doing so will return an error.
-func (biom *BasicIOManager) AddEE(ee briee.EventEmitter, id int) error {
-	if id == 0 {
-		return errors.New("Integer identifier zero is reserved for broadcasting")
-	}
-	if _, ok := biom.eeMap[id]; !ok {
-		biom.eeMap[id] = ee
-		return nil
-	} else {
-		return errors.New("Can not add event emitter with existing identifier")
-	}
-}
-
-// RemoveEE removes the registered event emitter if the provided identifier is present. Will return a error if unsuccessful.
-//
-// Provided interger identigier must not be zero as this is reverved for broadcasting all event emitters. Doing so will return an error.
-func (biom *BasicIOManager) RemoveEE(id int) error {
-	if id == 0 {
-		return errors.New("Integer identifier zero is reserved for broadcasting")
-	}
-	if ee, ok := biom.eeMap[id]; ok {
-		err := ee.Close()
-		if err != nil {
-			return err
-		}
-
-		delete(biom.eeMap, id)
-		return nil
-	} else {
-		return errors.New("Can not remove non-existing event emitter")
 	}
 }
 
