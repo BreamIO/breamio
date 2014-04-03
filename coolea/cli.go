@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/analysis/regionStats"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
 	"log"
@@ -98,6 +99,10 @@ func startParse(tokens []string) (string, handlerFunc, []string) {
 			return "", parseStart, tokens[1:]
 		case "stop":
 			return "", parseStop, tokens[1:]
+		case "create":
+			return "", parseCreate, tokens[1:]
+		case "update":
+			return "", parseUpdate, tokens[1:]
 		}
 	}
 	//default
@@ -129,6 +134,75 @@ func parseStart(tokens []string) (string, handlerFunc, []string) {
 	return parseError(tokens[0])
 }
 
+//Parse the subtree of create
+func parseCreate(tokens []string) (string, handlerFunc, []string) {
+	if len(tokens) > 1 {
+		switch tokens[0] {
+		case "region":
+			return createRegion(tokens[1:])
+		}
+	}
+	return parseError(tokens[0])
+}
+
+func parseUpdate(tokens []string) (string, handlerFunc, []string) {
+
+	switch tokens[0] {
+	case "region":
+		return updateRegion(tokens[1:])
+	}
+
+	return parseError(tokens[0])
+}
+
+//Sends a message to start a region
+func createRegion(tokens []string) (string, handlerFunc, []string) {
+
+	//tokens[0] is name
+
+	id, err := strconv.Atoi(tokens[1])
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[0])
+	}
+
+	rd := regionStats.RegionDefinition{
+		Type: "rect",
+	}
+	for i := 2; i < len(tokens); i += 2 {
+		switch str[i] {
+		case "type":
+			rd.Type = str[i+1]
+			continue
+		case "x":
+			rd.X = str2float(str[i+1])
+			continue
+		case "y":
+			rd.Y = str2float(str[i+1])
+			continue
+		case "w":
+			rd.Width = str2float(str[i+1])
+			continue
+		case "h":
+			rd.Height = str2float(str[i+1])
+			continue
+		}
+	}
+	payload, err := json.Marshal(dregionStats.RegionDefinitionPackage{tokens[0], rd}) //tokens[0] is name
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[0])
+	}
+
+	client.Send(aioli.ExtPkg{"regionStats:addRegion", id, payload})
+	return "Sent request to start new ET", startParse, nil
+}
+
+func updateRegion(tokens []string) (string, handlerFunc, []string) {
+	//TODO
+	return nil, nil, nil
+}
+
 //Sends a start et message
 func startET(tokens []string) (string, handlerFunc, []string) {
 	id, err := strconv.Atoi(tokens[0])
@@ -137,8 +211,12 @@ func startET(tokens []string) (string, handlerFunc, []string) {
 		return parseError(tokens[0])
 	}
 	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[1])
+	}
 	client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
-	return "Sent request to start new ET", startParse, tokens[2:]
+	return "Sent request to start new ET", startParse, nil
 }
 
 //Parse the subtree of stop
@@ -162,5 +240,13 @@ func stopET(tokens []string) (string, handlerFunc, []string) {
 	}
 	payload, err := json.Marshal(struct{}{})
 	client.Send(aioli.ExtPkg{"tracker:shutdown", id, payload})
-	return "Sent request to stop ET " + tokens[0], startParse, tokens[1:]
+	return "Sent request to stop ET " + tokens[0], startParse, nil
+}
+
+func str2float(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return parseError(s)
+	}
+	return f
 }
