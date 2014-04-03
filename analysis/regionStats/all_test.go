@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	//"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
@@ -96,4 +95,12 @@ func TestTimeToString(t *testing.T) {
 	if timeToString(12) != "12" {
 		t.Fatal("The float 12 toString should be '12'")
 	}
+
+	if timeToString(7) != "07" {
+		t.Fatal("The float 7 toString should be '07'")
+	}
+}
+
+func TestWithBeenleigh(t *testing.T) {
+	
 }

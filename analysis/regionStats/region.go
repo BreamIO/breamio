@@ -10,6 +10,47 @@ import (
 type Region interface {
 	Contains(gr.XYer) bool
 	Name() string
+	SetName(string)
+	SetX(float64)
+	SetY(float64)
+	SetWidth(float64)
+	SetHeight(float64)
+}
+
+type nameHolder struct {
+	name string
+}
+
+func (n nameHolder) Name() string {
+	return n.name
+}
+
+func (n *nameHolder) SetName(nam string) {
+	n.name = nam
+}
+
+type point struct {
+	x, y float64
+}
+
+func (p *point) SetX(x float64) {
+	p.x = x
+}
+
+func (p *point) SetY(y float64) {
+	p.y = y
+}
+
+type area struct {
+	width, height float64
+}
+
+func (a *area) SetWidth(w float64) {
+	a.width = w
+}
+
+func (a *area) SetHeight(h float64) {
+	a.height = h
 }
 
 // Create a new Region.
@@ -29,38 +70,43 @@ func newRegion(name string, rd RegionDefinition) (Region, error) {
 }
 
 type Ellipse struct {
-	cx, cy, width, height float64
-	name                  string
+	nameHolder
+	point
+	area
 }
 
 func newEllipse(name string, cx, cy, width, height float64) *Ellipse {
 	// Set small width and height values to a small number
 	// to avoid devision by zero.
 	if width <= 0 {
-		width = 0.001
+		width = 0.002
 	}
 
 	if height <= 0 {
-		height = 0.001
+		height = 0.002
 	}
 
 	return &Ellipse{
-		cx:     cx,
-		cy:     cy,
-		height: height,
-		width:  width,
-		name:   name,
+		nameHolder{name: name},
+		point{cx, cy},
+		area{width / 2, height / 2},
 	}
 }
 
-func (e Ellipse) Contains(coord gr.XYer) bool {
-	dx := coord.X() - e.cx
-	dy := coord.Y() - e.cy
-	return ((dx*dx)/(e.width*e.width) + (dy*dy)/(e.height*e.height)) < 1
+func (e Ellipse) SetWidth(w float64) {
+	e.area.width = w / 2
 }
 
-func (e Ellipse) Name() string {
-	return e.name
+func (e Ellipse) SetHeight(w float64) {
+	e.area.width = w / 2
+}
+
+func (e Ellipse) Contains(coord gr.XYer) bool {
+	dx := coord.X() - e.point.x
+	dy := coord.Y() - e.point.y
+	w := e.area.width
+	h := e.area.height
+	return ((dx*dx)/(w*w) + (dy*dy)/(h*h)) < 1
 }
 
 // Alias for an Ellipse with the same width and height
@@ -69,29 +115,24 @@ func newCircle(name string, cx, cy, radius float64) *Ellipse {
 }
 
 type Rectangle struct {
-	top, right, bottom, left float64
-	name                     string
+	nameHolder
+	point
+	area
 }
 
 func newRectangle(name string, x, y, width, height float64) *Rectangle {
 	return &Rectangle{
-		left:   x,
-		top:    y,
-		right:  x + width,
-		bottom: y + height,
-		name:   name,
+		nameHolder{name: name},
+		point{x, y},
+		area{width, height},
 	}
 }
 
 func (r Rectangle) Contains(coord gr.XYer) bool {
-	return r.left < coord.X() &&
-		coord.X() < r.right &&
-		r.top < coord.Y() &&
-		coord.Y() < r.bottom
-}
-
-func (r Rectangle) Name() string {
-	return r.name
+	return r.point.x < coord.X() &&
+		coord.X() < (r.point.x + r.area.width) &&
+		r.point.y < coord.Y() &&
+		coord.Y() < (r.point.y + r.area.height)
 }
 
 // Alias for a rectangle with equal width and height
