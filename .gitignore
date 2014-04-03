@@ -24,4 +24,6 @@ _testmain.go
 # Vim swap files
 *.swp
 
+*sublime*
+
 /statistics statistics
