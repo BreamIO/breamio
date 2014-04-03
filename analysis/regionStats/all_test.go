@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
@@ -102,5 +103,7 @@ func TestTimeToString(t *testing.T) {
 }
 
 func TestWithBeenleigh(t *testing.T) {
+	bl := been.New(briee.New)
+
 	
 }

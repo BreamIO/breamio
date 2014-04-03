@@ -10,11 +10,7 @@ import (
 type Region interface {
 	Contains(gr.XYer) bool
 	Name() string
-	SetName(string)
-	SetX(float64)
-	SetY(float64)
-	SetWidth(float64)
-	SetHeight(float64)
+	Update(RegionUpdatePackage)
 }
 
 type nameHolder struct {
@@ -25,32 +21,42 @@ func (n nameHolder) Name() string {
 	return n.name
 }
 
-func (n *nameHolder) SetName(nam string) {
-	n.name = nam
+func (n *nameHolder) setName(nam *string) {
+	if nam != nil {
+		n.name = *nam
+	}
 }
 
 type point struct {
 	x, y float64
 }
 
-func (p *point) SetX(x float64) {
-	p.x = x
+func (p *point) setX(x *float64) {
+	if x != nil {
+		p.x = *x
+	}
 }
 
-func (p *point) SetY(y float64) {
-	p.y = y
+func (p *point) setY(y *float64) {
+	if y != nil {
+		p.y = *y
+	}
 }
 
 type area struct {
 	width, height float64
 }
 
-func (a *area) SetWidth(w float64) {
-	a.width = w
+func (a *area) setWidth(w *float64) {
+	if w != nil {
+		a.width = *w
+	}
 }
 
-func (a *area) SetHeight(h float64) {
-	a.height = h
+func (a *area) setHeight(h *float64) {
+	if h != nil {
+		a.height = *h
+	}
 }
 
 // Create a new Region.
@@ -93,12 +99,24 @@ func newEllipse(name string, cx, cy, width, height float64) *Ellipse {
 	}
 }
 
-func (e Ellipse) SetWidth(w float64) {
-	e.area.width = w / 2
+func (e *Ellipse) Update(pack RegionUpdatePackage) {
+	e.setName(pack.NewName)
+	e.setX(pack.X)
+	e.setY(pack.Y)
+	e.setWidth(pack.Width)
+	e.setHeight(pack.Height)
 }
 
-func (e Ellipse) SetHeight(w float64) {
-	e.area.width = w / 2
+func (e *Ellipse) setWidth(w *float64) {
+	if w != nil {
+		e.area.width = *w / 2
+	}
+}
+
+func (e *Ellipse) setHeight(h *float64) {
+	if h != nil {
+		e.area.height = *h / 2
+	}
 }
 
 func (e Ellipse) Contains(coord gr.XYer) bool {
@@ -126,6 +144,14 @@ func newRectangle(name string, x, y, width, height float64) *Rectangle {
 		point{x, y},
 		area{width, height},
 	}
+}
+
+func (e *Rectangle) Update(pack RegionUpdatePackage) {
+	e.setName(pack.NewName)
+	e.setX(pack.X)
+	e.setY(pack.Y)
+	e.setWidth(pack.Width)
+	e.setHeight(pack.Height)
 }
 
 func (r Rectangle) Contains(coord gr.XYer) bool {

@@ -159,28 +159,13 @@ func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 }
 
 func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
+	if pack == nil {
+		return errors.New("Got nil update package.")
+	}
+
 	for _, region := range r.regions {
 		if region.Name() == pack.Name {
-			if len(pack.NewName) > 0 {
-				region.SetName(pack.NewName)
-			}
-
-			if pack.X != nil {
-				region.SetX(*pack.X)
-			}
-
-			if pack.Y != nil {
-				region.SetY(*pack.Y)
-			}
-
-			if pack.Width != nil {
-				region.SetWidth(*pack.Width)
-			}
-
-			if pack.Height != nil {
-				region.SetHeight(*pack.Height)
-			}
-
+			region.Update(*pack)
 			return nil
 		}
 	}
