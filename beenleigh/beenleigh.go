@@ -17,13 +17,13 @@ import (
 	"sync"
 )
 
-var constructers []Constructer
+var runners []RunCloser
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
-func Register(c Constructer) {
-	constructers = append(constructers, c)
+func Register(c RunCloser) {
+	runners = append(runners, c)
 }
 
 // The interface of a BreamIO logic.
@@ -75,8 +75,8 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 	defer bl.root.Close()
 
 	//Subscribe to events
-	for _, c := range constructers {
-		go c.Init(bl)
+	for _, c := range runners {
+		go c.Run(bl)
 		defer c.Close()
 	}
 
@@ -131,8 +131,8 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 	return nil, errors.New("No emitter with that id.")
 }
 
-type Constructer interface {
-	Init(Logic)
+type RunCloser interface {
+	Run(Logic)
 	io.Closer
 }
 

@@ -15,16 +15,16 @@ import (
 var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
 
 func init() {
-	bl.Register(&AncientConstructor{})
+	bl.Register(&AncientRun{})
 }
 
-type AncientConstructor struct{
+type AncientRun struct{
 	closing chan struct{}
 }
 
-func (ac *AncientConstructor) Init(logic bl.Logic) {
+func (ar *AncientRun) Run(logic bl.Logic) {
 	logger.Println("Initializing AncientPower subsystem.")
-	ac.closing = make(chan struct{})
+	ar.closing = make(chan struct{})
 	newCh := logic.RootEmitter().Subscribe("new:ancientpower", bl.Spec{}).(<-chan bl.Spec)
 	defer logic.RootEmitter().Unsubscribe("new:ancientpower", newCh)
 	
@@ -32,14 +32,14 @@ func (ac *AncientConstructor) Init(logic bl.Logic) {
 		select {
 			case event := <-newCh:
 				New(logic, event)
-			case <-ac.closing: return
+			case <-ar.closing: return
 		}
 	}
 	
 }
 
-func (ac *AncientConstructor) Close() error {
-	close(ac.closing)
+func (ar *AncientRun) Close() error {
+	close(ar.closing)
 	return nil
 }
 

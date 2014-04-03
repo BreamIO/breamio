@@ -8,29 +8,30 @@ import (
 	"strings"
 )
 
-type GorgonzolaConstructer struct {
+type GorgonzolaRun struct {
 	closing chan struct{}
 }
 
-func (gc GorgonzolaConstructer) Init(logic bl.Logic) {
+func (gr GorgonzolaRun) Run(logic bl.Logic) {
 	newCh := logic.RootEmitter().Subscribe("new:tracker", bl.Spec{}).(<-chan bl.Spec)
 	for {
 		select {
-		case <-gc.closing:
+		case <-gr.closing:
 			return
 		case spec := <-newCh:
-			if err := gc.onNewEvent(logic, spec); err != nil {
+			if err := gr.onNewEvent(logic, spec); err != nil {
 				logic.RootEmitter().Dispatch("gorgonzola:error", err)
 			}
 		}
 	}
 }
 
-func (gc GorgonzolaConstructer) Close() error {
+func (gr GorgonzolaRun) Close() error {
+	close(gr.closing)
 	return nil
 }
 
-func (gc GorgonzolaConstructer) onNewEvent(logic bl.Logic, event bl.Spec) error {
+func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
 	logger.Println("Recieved new:tracker event.")
 
 	tracker, err := CreateFromURI(event.Data)
@@ -52,7 +53,7 @@ func (gc GorgonzolaConstructer) onNewEvent(logic bl.Logic, event bl.Spec) error 
 }
 
 func init() {
-	// bl.Register(&GorgonzolaConstructer{})
+	bl.Register(&GorgonzolaRun{})
 }
 
 var logger = log.New(os.Stdout, "[Gorgonzola]", log.LstdFlags)
