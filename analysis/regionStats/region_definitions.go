@@ -15,7 +15,7 @@ type RegionDefinition struct {
 }
 
 type RegionDefinitionPackage struct {
-	Name string           `json:ǹame`
+	Name string           `json:name`
 	Def  RegionDefinition `json:def`
 }
 
