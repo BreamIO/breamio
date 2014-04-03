@@ -8,10 +8,15 @@ import (
 )
 
 const (
+	//Access server port for JSON encoded events over normal TCP connections.
 	tcpJSONaddr = ":4041"
+	
+	//Access server port for JSON encoded events over WebSockets.
 	wsJSONaddr  = ":8080"
 )
 
+// A Server is something that can listen.
+// The intended usage is Event Access Servers, like WSServer and TCPServer.
 type Server interface {
 	Listen()
 	//Close() Future update (ETA: 2037)
@@ -23,6 +28,7 @@ type WSServer struct {
 	logger  *log.Logger
 }
 
+// Creates a new WebSocket Event Access Server.
 func NewWSServer(ioman IOManager, l *log.Logger) *WSServer {
 	return &WSServer{
 		manager: ioman,
@@ -47,15 +53,21 @@ func (s *WSServer) handler(ws *websocket.Conn) {
 	go s.manager.Listen(codec, s.logger)
 }
 
+// This describes a Access Server over TCP.
 type TCPServer struct {
 	manager IOManager
 	logger  *log.Logger
 }
 
+// Creates a new TCP Event Access Server.
 func NewTCPServer(ioman IOManager, l *log.Logger) *TCPServer {
 	return &TCPServer{ioman, l}
 }
 
+// Listen starts the TCP server, listening for incoming connections.
+//
+// When a connection is established, 
+// it starts reading packages from it, handling them as it goes.
 func (t *TCPServer) Listen() {
 	ln, err := net.Listen("tcp", tcpJSONaddr)
 	if err != nil {

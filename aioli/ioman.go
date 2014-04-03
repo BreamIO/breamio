@@ -13,6 +13,7 @@ type ExtPkg struct {
 	Data  []byte // Encoded data of the underlying struct for the event.
 }
 
+// Defines something that can be used to retrieve EventEmitters.
 type EmitterLookuper interface {
 	EmitterLookup(int) (briee.EventEmitter, error)
 }
