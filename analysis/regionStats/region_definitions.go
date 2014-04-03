@@ -11,7 +11,7 @@ type RegionDefinition struct {
 	Width  float64 `json:width`
 	Y      float64 `json:y`
 	// optional for "square" and "circle" types
-	Height float64 `json:"height"`
+	Height float64 `json:height`
 }
 
 type RegionDefinitionPackage struct {
