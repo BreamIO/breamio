@@ -48,8 +48,8 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 	var ee briee.EventEmitter
 
 	ee = logic.RootEmitter()
-	newChan = ee.Subscribe("region:new", new(Config)).(<-chan *Config)
-	defer ee.Unsubscribe("region:new", newChan)
+	newChan = ee.Subscribe("new:regionStats", new(Config)).(<-chan *Config)
+	defer ee.Unsubscribe("new:regionStats", newChan)
 
 	for {
 		select {

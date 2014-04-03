@@ -25,6 +25,20 @@ func TestCircle(t *testing.T) {
 	if reg.Name() != "center" {
 		t.Fatal("Name getter should work!")
 	}
+
+	reg.Update(RegionUpdatePackage{
+		Name: "center",
+		NewName: strAddr("middle"),
+		X: f64Addr(0),
+	})
+
+	if reg.Name() != "middle" {
+		t.Fatal("Update should work!")
+	}
+
+	if reg.Contains(&gr.Point2D{0.5, 0.5}) {
+		t.Fatal("Update should work!")
+	}
 }
 
 func TestEllipse(t *testing.T) {
@@ -122,4 +136,12 @@ func TestErronous(t *testing.T) {
 	if reg != nil {
 		t.Fatal("newRegion shouldn't return a region if an error occurs.")
 	}
+}
+
+func strAddr(s string) *string {
+	return &s
+}
+
+func f64Addr(s float64) *float64 {
+	return &s
 }

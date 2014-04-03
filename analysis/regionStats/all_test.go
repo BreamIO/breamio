@@ -105,5 +105,11 @@ func TestTimeToString(t *testing.T) {
 func TestWithBeenleigh(t *testing.T) {
 	bl := been.New(briee.New)
 
-	
+	ee := bl.RootEmitter()
+
+	// ee2 := bl.CreateEmitter(777)
+
+	ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	})
+
+	// ee2.Subscribe("")
 }
