@@ -35,10 +35,10 @@ type publMapEntry struct {
 // Listen will try to decode ExtPkg structs from the underlying data stream of the provided decoder and handle the structs accordingly.
 //
 // Requires that the IOManager Run method is running.
-func (biom *BasicIOManager) Listen(dec Decoder, logger *log.Logger) {
+func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
-		err := dec.Decode(&ep)
+		err := codec.Decode(&ep)
 		if err != nil {
 			if err == io.EOF {
 				logger.Printf("Connection closed.")
@@ -50,6 +50,9 @@ func (biom *BasicIOManager) Listen(dec Decoder, logger *log.Logger) {
 			time.Sleep(time.Millisecond * 500)
 		} else {
 			logger.Println("Recieved:", ep)
+			if ep.Subscribe {
+				go biom.handleSubscription(ep, codec, logger)
+			}
 			biom.dataChan <- ep
 		}
 	}
@@ -96,6 +99,38 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	} else {
 		log.Printf("No match for packet: %v", recvData)
 		time.Sleep(time.Millisecond * 500)
+	}
+}
+
+func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, logger *log.Logger) {
+	ee, err := biom.lookuper.EmitterLookup(recvData.ID)
+	if err != nil {
+		logger.Printf("Subscription for event \"%s\" failed: No such emitter %d.\n", recvData.Event, recvData.ID)
+		return
+	}
+	
+	rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
+	if err != nil {
+		logger.Printf("Subscription for event \"%s\" failed: No such event.\n", recvData.Event, recvData.ID)
+		return
+	}
+	
+	dataCh := reflect.ValueOf(ee.Subscribe(recvData.Event, rtype)) //Reflected channel. 
+	// No we do not care about exact type.
+	
+	for !biom.IsClosed() {
+		val, ok := dataCh.TryRecv()
+		if !ok {
+			return
+		}
+		
+		if val.IsValid() {
+			//Now we are clear to do stuff with data.
+			err = enc.Encode(val.Interface())
+			if err != nil {
+				logger.Printf("Subscription for event \"%s\" encountered a error during encoding: %s.\n", err.Error())
+			}
+		}
 	}
 }
 
