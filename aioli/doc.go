@@ -8,7 +8,7 @@ Uses the event emitter package briee:
 Example use:
 		ee := briee.New()
 		go ee.Run()
-		
+
 		bl := beenleigh.New(briee.New) //Something to keep track of emitters.
 		bl.ListenAndServe()
 

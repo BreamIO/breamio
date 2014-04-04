@@ -51,6 +51,7 @@ func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 		} else {
 			logger.Println("Recieved:", ep)
 			if ep.Subscribe {
+				//logger.Println("Recieved subscription request for", ep.Event)
 				go biom.handleSubscription(ep, codec, logger)
 			}
 			biom.dataChan <- ep
@@ -106,26 +107,41 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 	ee, err := biom.lookuper.EmitterLookup(recvData.ID)
 	if err != nil {
 		logger.Printf("Subscription for event \"%s\" failed: No such emitter %d.\n", recvData.Event, recvData.ID)
+		enc.Encode(ExtPkg{
+			Event:     recvData.Event,
+			Subscribe: true,
+			ID:        recvData.ID,
+			Error:     NewError("No such emitter"),
+		})
 		return
 	}
-	
+
 	rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
 	if err != nil {
-		logger.Printf("Subscription for event \"%s\" failed: No such event.\n", recvData.Event, recvData.ID)
+		logger.Printf("Subscription for event \"%s\" failed: No such event.\n", recvData.Event)
+		enc.Encode(ExtPkg{
+			Event:     recvData.Event,
+			Subscribe: true,
+			ID:        recvData.ID,
+			Error:     NewError("No such event"),
+		})
 		return
 	}
-	
-	dataCh := reflect.ValueOf(ee.Subscribe(recvData.Event, rtype)) //Reflected channel. 
+
+	template := reflect.New(rtype).Elem().Interface()
+	dataCh := reflect.ValueOf(ee.Subscribe(recvData.Event, template)) //Reflected channel.
 	// No we do not care about exact type.
-	
+
+	logger.Printf("Subscription for event \"%s\" on emitter %d started.\n", recvData.Event, recvData.ID)
 	for !biom.IsClosed() {
 		val, ok := dataCh.TryRecv()
 		if !ok {
-			return
+			continue
 		}
-		
+
 		if val.IsValid() {
 			//Now we are clear to do stuff with data.
+
 			err = enc.Encode(val.Interface())
 			if err != nil {
 				logger.Printf("Subscription for event \"%s\" encountered a error during encoding: %s.\n", err.Error())
