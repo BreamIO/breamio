@@ -7,10 +7,24 @@ import (
 
 // ExtPkg is the struct used as the external protocol
 type ExtPkg struct {
-	Event string // Name of the event
-	Subscribe bool // Should the handler setup a subscription channel for this event and client.
-	ID    int    // Event Emitter identifier, 0 for broadcast
-	Data  []byte // Encoded data of the underlying struct for the event.
+	Event     string // Name of the event
+	Subscribe bool   // Should the handler setup a subscription channel for this event and client.
+	ID        int    // Event Emitter identifier, 0 for broadcast
+	Data      []byte // Encoded data of the underlying struct for the event.
+	*Error           // Meta-data to indicate errors in requests.
+	//TODO Change Data to read interface{} `json:",string"` in future.
+}
+
+func NewError(err string) *Error {
+	return &Error{err}
+}
+
+type Error struct {
+	err string
+}
+
+func (e Error) Error() string {
+	return e.err
 }
 
 // Defines something that can be used to retrieve EventEmitters.

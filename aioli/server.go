@@ -12,9 +12,9 @@ import (
 const (
 	//Access server port for JSON encoded events over normal TCP connections.
 	tcpJSONaddr = ":4041"
-	
+
 	//Access server port for JSON encoded events over WebSockets.
-	wsJSONaddr  = ":8080"
+	wsJSONaddr = ":8080"
 )
 
 // A Server is something that can listen.
@@ -82,7 +82,7 @@ func NewTCPServer(ioman IOManager, l *log.Logger) *TCPServer {
 
 // Listen starts the TCP server, listening for incoming connections.
 //
-// When a connection is established, 
+// When a connection is established,
 // it starts reading packages from it, handling them as it goes.
 func (t *TCPServer) Listen() {
 	ln, err := net.Listen("tcp", tcpJSONaddr)
