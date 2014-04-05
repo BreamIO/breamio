@@ -1,6 +1,8 @@
 package quercy
 
 import (
+	"sync"
+
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -42,16 +44,52 @@ func (s *sqlRun) Close() error {
 type DBHandler struct {
 	*sql.DB
 	insertETData *sql.Stmt
+	closer chan struct{}
+	wg sync.WaitGroup
 }
 
-func New(ee briee.EventEmitter, source string) (db *DBHandler, err error) {
+func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
 	raw, err := sql.Open("sqlite3", source)
 	db = &DBHandler{DB: raw}
 	if err != nil {
 		return
 	}
-	err = db.Ping()
+	
+	if err = db.Ping(); err != nil {
+		return
+	}
+	
+	etdataCh := ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan gorgonzola.ETData)
+	closeCh := ee.Subscribe("storage:shutdown", struct{}).(<-chan struct{})
+	
+	errorCh := ee.Publish("storage:error", string("")).(chan<- string)
+	
+	db.wg.Add(1)
+	go func() {
+		defer db.wg.Done()
+		defer close(errorCh)
+		defer ee.Unsubscribe("tracker:etdata", etdataCh)
+		defer ee.Unsubscribe("storage:shutdown", closeCh)
+		
+		for {
+			select {
+				case etdata := <-etdataCh: 
+					if err := db.StoreETData(etdata); err != nil {
+						errorCh <- err.Error()
+					}
+				case <-closeCh: db.Close()
+				case <-db.closer: return
+			}
+		}
+	}()
+	
 	return
+}
+
+func (dbh *DBHandler) Close() error {
+	close()
+	wg.Wait()
+	dbh.DB.Close()
 }
 
 func (db *DBHandler) createTables() error {
