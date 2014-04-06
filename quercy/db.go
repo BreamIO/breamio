@@ -2,6 +2,8 @@ package quercy
 
 import (
 	"sync"
+	"log"
+	"os"
 
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
@@ -10,6 +12,8 @@ import (
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
+
+var logger = log.New(os.Stdout, "[Quercy]", log.LstdFlags)
 
 func init() {
 	beenleigh.Register(&sqlRun{make(chan struct{})})
@@ -24,12 +28,14 @@ func (s *sqlRun) Run(logic beenleigh.Logic) {
 	ee := logic.RootEmitter()
 	newCh := ee.Subscribe("new:storage", beenleigh.Spec{}).(<-chan beenleigh.Spec)
 	defer ee.Unsubscribe("new:storage", newCh)
+	logger.Println("Storage system is activating.")
 	for {
 		select {
 			case spec := <-newCh: 
-				 if _, err := New(logic.CreateEmitter(spec.Emitter), spec.Data); err != nil {
+				if _, err := New(logic.CreateEmitter(spec.Emitter), spec.Data); err != nil {
 					ee.Dispatch("storage:error", err.Error())
-				 }
+				}
+				logger.Printf("New Storage module created on emitter %d using \"%s\" as source.", spec.Emitter, spec.Data)
 			case <-s.closing:
 				return
 		}
@@ -37,6 +43,7 @@ func (s *sqlRun) Run(logic beenleigh.Logic) {
 }
 
 func (s *sqlRun) Close() error {
+	logger.Printf("Storage system is going down.")
 	close(s.closing)
 	return nil
 }
@@ -50,7 +57,7 @@ type DBHandler struct {
 
 func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
 	raw, err := sql.Open("sqlite3", source)
-	db = &DBHandler{DB: raw}
+	db = &DBHandler{DB: raw, closer: make(chan struct{})}
 	if err != nil {
 		return
 	}
@@ -59,8 +66,8 @@ func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
 		return
 	}
 	
-	etdataCh := ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan gorgonzola.ETData)
-	closeCh := ee.Subscribe("storage:shutdown", struct{}).(<-chan struct{})
+	etdataCh := ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
+	closeCh := ee.Subscribe("storage:shutdown", struct{}{}).(<-chan struct{})
 	
 	errorCh := ee.Publish("storage:error", string("")).(chan<- string)
 	
@@ -87,9 +94,9 @@ func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
 }
 
 func (dbh *DBHandler) Close() error {
-	close()
-	wg.Wait()
-	dbh.DB.Close()
+	close(dbh.closer)
+	dbh.wg.Wait()
+	return dbh.DB.Close()
 }
 
 func (db *DBHandler) createTables() error {
