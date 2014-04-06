@@ -1,9 +1,9 @@
 package quercy
 
 import (
+	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	g "github.com/maxnordlund/breamio/gorgonzola"
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	//"github.com/maxnordlund/breamio/quercy"
 
 	"database/sql"
@@ -34,11 +34,12 @@ func TestRunner(t *testing.T) {
 	defer runner.Close()
 	time.Sleep(time.Second) //Wait for subscriptions to be setup.
 	errorCh := logic.RootEmitter().Subscribe("storage:error", string("")).(<-chan string)
-	
+
 	logic.RootEmitter().Dispatch("new:storage", bl.Spec{1, "quercy_test.db"})
 	select {
-		case err := <-errorCh: t.Error(err)
-		case <-time.After(time.Second):
+	case err := <-errorCh:
+		t.Error(err)
+	case <-time.After(time.Second):
 	}
 	logic.RootEmitter().Dispatch("storage:shutdown", struct{}{})
 }
@@ -47,14 +48,11 @@ func TestRunner(t *testing.T) {
 func TestCreateTables(t *testing.T) {
 	_, dbh := setup(t)
 	defer teardown(dbh, t)
-	err := dbh.createTables()
-	if err != nil {
-		t.Error(err)
-	}
-	
+	dbh.createTables()
+
 	db, _ := sql.Open("sqlite3", "quercy_test.db")
 	defer db.Close()
-	_, err = db.Query("Select * from ETDATA;")
+	_, err := db.Query("Select * from ETDATA;")
 	if err != nil {
 		t.Error(err)
 	}
@@ -77,10 +75,10 @@ func TestCreateOnUnconnectedHandler(t *testing.T) {
 	if err == nil {
 		t.Error("Should return a error.")
 	}
-	
+
 }
 
-// Method should verify the integrity of the database, 
+// Method should verify the integrity of the database,
 // and decide if it needs to be initialized
 func TestVerify(t *testing.T) {
 	t.Skip("NOT IMPLEMENTED")
@@ -104,7 +102,7 @@ func TestClearETData(t *testing.T) {
 	}
 	if results.Next() {
 		t.Error("No data should remain.")
-	}	
+	}
 }
 
 func TestClearWithNoTable(t *testing.T) {
@@ -123,8 +121,8 @@ func TestStoreETData(t *testing.T) {
 	_, dbh := setup(t)
 	defer teardown(dbh, t)
 	dbh.createETDataTable()
-	for i:=float64(0); i < 11; i++ {
-		err := dbh.StoreETData(&g.ETData{g.Point2D{0.123+0.1*i, 0.456+0.01*i}, time.Now()})
+	for i := float64(0); i < 11; i++ {
+		err := dbh.StoreETData(&g.ETData{g.Point2D{0.123 + 0.1*i, 0.456 + 0.01*i}, time.Now()})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -135,7 +133,7 @@ func TestStoreETData(t *testing.T) {
 	if !ok {
 		t.Fatal("No records stored.")
 	}
-	
+
 	var x, y float64
 	results.Scan(&x, &y)
 	if x != 0.123 || y != 0.456 {
@@ -158,17 +156,18 @@ func TestStoreETDataFromEvent(t *testing.T) {
 	ee, dbh := setup(t)
 	defer teardown(dbh, t)
 	dbh.createETDataTable()
-	
+
 	errCh := ee.Subscribe("storage:error", string("")).(<-chan string)
 	//defer ee.Unsubscribe("storage:error", errCh)
-	for i:=float64(0); i < 5; i++ {
-		ee.Dispatch("tracker:etdata", &g.ETData{g.Point2D{0.456+0.1*i, 0.123+0.01*i}, time.Now()})
+	for i := float64(0); i < 5; i++ {
+		ee.Dispatch("tracker:etdata", &g.ETData{g.Point2D{0.456 + 0.1*i, 0.123 + 0.01*i}, time.Now()})
 	}
-	
+
 	//Check
 	select {
-		case err := <-errCh: t.Fatal(err)
-		case <-time.After(time.Second): //Timeout. No errors occured.
+	case err := <-errCh:
+		t.Fatal(err)
+	case <-time.After(time.Second): //Timeout. No errors occured.
 	}
 	results, _ := dbh.Query("Select LeftX,LeftY from ETDATA;")
 	defer results.Close()
@@ -176,7 +175,7 @@ func TestStoreETDataFromEvent(t *testing.T) {
 	if !ok {
 		t.Fatal("No records stored.")
 	}
-	
+
 	var x, y float64
 	results.Scan(&x, &y)
 	if x != 0.456 || y != 0.123 {
@@ -188,7 +187,8 @@ func TestEventClose(t *testing.T) {
 	ee, dbh := setup(t)
 	ee.Dispatch("storage:shutdown", struct{}{})
 	select {
-		case <-dbh.closer:
-		case <-time.After(time.Second): t.Error("Timed out on closer listening.")
+	case <-dbh.closer:
+	case <-time.After(time.Second):
+		t.Error("Timed out on closer listening.")
 	}
 }

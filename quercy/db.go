@@ -1,12 +1,12 @@
 package quercy
 
 import (
-	"sync"
 	"log"
 	"os"
+	"sync"
 
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
+	sqlite "github.com/mattn/go-sqlite3"
 
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
@@ -31,13 +31,13 @@ func (s *sqlRun) Run(logic beenleigh.Logic) {
 	logger.Println("Storage system is activating.")
 	for {
 		select {
-			case spec := <-newCh: 
-				if _, err := New(logic.CreateEmitter(spec.Emitter), spec.Data); err != nil {
-					ee.Dispatch("storage:error", err.Error())
-				}
-				logger.Printf("New Storage module created on emitter %d using \"%s\" as source.", spec.Emitter, spec.Data)
-			case <-s.closing:
-				return
+		case spec := <-newCh:
+			if _, err := New(logic.CreateEmitter(spec.Emitter), spec.Data); err != nil {
+				ee.Dispatch("storage:error", err.Error())
+			}
+			logger.Printf("New Storage module created on emitter %d using \"%s\" as source.", spec.Emitter, spec.Data)
+		case <-s.closing:
+			return
 		}
 	}
 }
@@ -51,8 +51,8 @@ func (s *sqlRun) Close() error {
 type DBHandler struct {
 	*sql.DB
 	insertETData *sql.Stmt
-	closer chan struct{}
-	wg sync.WaitGroup
+	closer       chan struct{}
+	wg           sync.WaitGroup
 }
 
 func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
@@ -61,35 +61,39 @@ func New(ee briee.PublishSubscriber, source string) (db *DBHandler, err error) {
 	if err != nil {
 		return
 	}
-	
+
 	if err = db.Ping(); err != nil {
 		return
 	}
-	
+
+	db.createTables() // Create all tables if not already there.
+
 	etdataCh := ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
 	closeCh := ee.Subscribe("storage:shutdown", struct{}{}).(<-chan struct{})
-	
+
 	errorCh := ee.Publish("storage:error", string("")).(chan<- string)
-	
+
 	db.wg.Add(1)
 	go func() {
 		defer db.wg.Done()
 		defer close(errorCh)
 		defer ee.Unsubscribe("tracker:etdata", etdataCh)
 		defer ee.Unsubscribe("storage:shutdown", closeCh)
-		
+
 		for {
 			select {
-				case etdata := <-etdataCh: 
-					if err := db.StoreETData(etdata); err != nil {
-						errorCh <- err.Error()
-					}
-				case <-closeCh: db.Close()
-				case <-db.closer: return
+			case etdata := <-etdataCh:
+				if err := db.StoreETData(etdata); err != nil {
+					errorCh <- err.Error()
+				}
+			case <-closeCh:
+				db.Close()
+			case <-db.closer:
+				return
 			}
 		}
 	}()
-	
+
 	return
 }
 
@@ -99,21 +103,27 @@ func (dbh *DBHandler) Close() error {
 	return dbh.DB.Close()
 }
 
+//Creates all tables necessary, if they do not exist.
+// We swallow all errors, because at this point, the database should be good for use.
 func (db *DBHandler) createTables() error {
 	return db.createETDataTable()
 }
 
 func (db *DBHandler) createETDataTable() error {
-	if _, err := db.Exec(`CREATE TABLE ETDATA (
+	_, err := db.Exec(`CREATE TABLE ETDATA (
 		LeftX REAL,
 		LeftY REAL,
 		RightX REAL,
 		RightY REAL,
 		Timestamp INT
-		);`); err != nil {
-		return err
+		);`)
+	if rerr, ok := err.(sqlite.Error); ok {
+		if rerr.Code == sqlite.ErrError { //SQL logical error
+			//"Catch" this.
+			return nil
+		}
 	}
-	return nil
+	return err
 }
 
 func (db *DBHandler) StoreETData(data *gorgonzola.ETData) error {
@@ -128,7 +138,7 @@ func (db *DBHandler) StoreETData(data *gorgonzola.ETData) error {
 	return nil
 }
 
-func (db *DBHandler) ClearETData() (err error) {
+func (db *DBHandler) ClearETData() error {
 	db.Exec("DROP TABLE ETDATA;")
 	return db.createETDataTable()
 }
