@@ -10,68 +10,121 @@ import (
 	"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
+	been "github.com/maxnordlund/breamio/beenleigh"
 )
 
-const (
-	powVar      = 0.5
-	limitRadius = 25
-)
-
-type Generator struct {
-	ee                briee.EventEmitter
-	coordinateHandler analysis.CoordinateHandler
-	width             int
-	height            int
-	publish           chan<- image.Image
+func init() {
+	been.Register(new(HeatmapRun))
 }
 
-func NewGenerator(ee briee.EventEmitter, duration time.Duration, desiredFreq, resX, resY int) *Generator {
-	ch := ee.Subscribe("gorgonzola:gazedata", gr.ETData{}).(<-chan *gr.ETData)
+type Config struct {
+	Emitter int
+	Duration time.Duration
+	Hertz uint
+	Res Resolution
+}
 
-	return &Generator{
-		ee:                ee,
-		coordinateHandler: analysis.NewCoordBuffer(ch, duration, desiredFreq),
-		width:             resX,
-		height:            resY,
-		publish:           ee.Publish("heatmap:image", new(image.Image)).(chan<- image.Image),
+type HeatmapRun struct {
+	close chan struct {}
+}
+
+func (h *HeatmapRun) Run(logic been.Logic) {
+	ee := logic.RootEmitter()
+	new := ee.Subscribe("new:heatmap", new(Config)).(<-chan *Config)
+	defer ee.Unsubscribe("new:heatmap", new)
+
+	for {
+		select {
+		case config := <-new:
+			New(logic.CreateEmitter(config.Emitter), config)
+		case <-h.close:
+			break
+		}
 	}
 }
 
-func (gen *Generator) Generate(height, width int) {
-	heat := make([][]int, height)
+func (h *HeatmapRun) Close() error {
+	close(h.close)
+	return nil
+}
+
+const (
+	powVar      = 0.5
+	limitRadius = 10
+)
+
+type Generator struct {
+	coordinateHandler analysis.CoordinateHandler
+	width, height     int
+	publish           chan<- *image.RGBA
+	close chan struct{}
+}
+
+func New(ee briee.EventEmitter, c *Config) *Generator {
+	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
+	changeResolution := ee.Subscribe("heatmap:resolution", new(Resolution)).(<-chan *Resolution)
+
+	g := &Generator{
+		coordinateHandler: analysis.NewCoordBuffer(ch, c.Duration, int(c.Hertz)),
+		width:             c.Res.Width,
+		height:            c.Res.Height,
+		publish:           ee.Publish("heatmap:image", new(image.RGBA)).(chan<- *image.RGBA),
+	}
+
+	go func() {
+		for {
+			select {
+			case res := <-changeResolution:
+				g.SetResolution(res)
+			case <-time.After(10 * time.Second):
+				g.Generate()
+			}
+		}
+	}()
+
+	return g
+}
+
+func (gen *Generator) Generate() {
+	width, height := gen.width, gen.height
+
+	heat := make([][]float64, height)
 
 	for i := range heat {
-		heat[i] = make([]int, width)
+		heat[i] = make([]float64, width)
 	}
 
 	coords := gen.coordinateHandler.GetCoords()
 
-	var maxHeat int = 1
-	var x, y, px, py, dist int
+	var maxHeat float64 = 0
+	var px, py int
+	var x, y float64
+	var dist float64
+
+	limSq := float64(limitRadius * limitRadius)
 
 	for coord := range coords {
 		f := coord.Filtered
 		if valid(f) {
-			x = int(f.X() * float64(width))
-			y = int(f.Y() * float64(height))
+			x = f.X() * float64(width)
+			y = f.Y() * float64(height)
 
 			for dx := -limitRadius; dx <= limitRadius; dx++ {
-				px = dx + x
+				px = dx + int(x)
 				if px >= width || px < 0 {
 					continue
 				}
 
 				for dy := -limitRadius; dy <= limitRadius; dy++ {
-					py = dy + y
+					py = dy + int(y)
 					if py >= width || py < 0 {
 						continue
 					}
 
-					dist = dx*dx + dy*dy + 1
+					dist = float64(dx*dx + dy*dy)
 
-					if math.Sqrt(float64(dist)) <= limitRadius {
-						heat[px][py] += int(float64(100) / math.Pow(float64(dist), powVar))
-
+					if dist <= limSq {
+						heat[py][px] += math.Cos(dist / limSq)
 					}
 				}
 			}
@@ -90,16 +143,63 @@ func (gen *Generator) Generate(height, width int) {
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
+			v := heat[y][x] / maxHeat
+
 			heatmap.SetRGBA(x, y, color.RGBA{
-				R: 200,
-				G: uint8(math.Max(float64(100-(heat[x][y]/maxHeat)), 0)),
+				R: 255,
+				G: 0,
 				B: 0,
-				A: uint8(255 * heat[x][y] / maxHeat),
+				A: uint8(128 - 128 * math.Cos(v * math.Pi)),
 			})
 		}
 	}
 
 	gen.publish <- heatmap
+}
+
+func colorFor(val float64) (r, g, b byte) {
+	return hsl2rgb((1-val)*100, 100, val*50)
+}
+
+func hsl2rgb(h, s, l float64) (r, g, b byte) {
+	var q, p float64
+
+	if s == 0 {
+		ret := byte(l * 255)
+		return ret, ret, ret
+	}
+
+	if l < 0.5 {
+		q = l * (1 + s)
+	} else {
+		q = l + s - l*s
+	}
+	p = 2*l - q
+
+	return byte(hue2rgb(p, q, h+1/3) * 255), byte(hue2rgb(p, q, h) * 255), byte(hue2rgb(p, q, h-1/3) * 255)
+
+}
+
+func hue2rgb(p, q, t float64) float64 {
+	if t < 0 {
+		t += 1
+	} else if t > 1 {
+		t -= 1
+	}
+
+	if t < 1/6 {
+		return p + (q-p)*6*t
+	}
+
+	if t < 1/2 {
+		return q
+	}
+
+	if t < 2/3 {
+		return p + (q-p)*(2/3-t)*6
+	}
+
+	return p
 }
 
 func valid(coord gr.XYer) bool {
@@ -110,9 +210,14 @@ func (gen *Generator) GetCoordinateHandler() *analysis.CoordinateHandler {
 	return &gen.coordinateHandler
 }
 
-func (gen *Generator) SetResolution(width, height int) {
-	gen.height = height
-	gen.width = width
+func (gen *Generator) SetResolution(res *Resolution) {
+	if res == nil {
+		fmt.Println("Got nil Resolution package")
+		return
+	}
+
+	gen.height = res.Height
+	gen.width = res.Width
 }
 
 func (gen *Generator) SetDesiredFreq(desiredFreq int) {

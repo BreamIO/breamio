@@ -107,9 +107,41 @@ func TestWithBeenleigh(t *testing.T) {
 
 	ee := bl.RootEmitter()
 
-	// ee2 := bl.CreateEmitter(777)
+	ee2 := bl.CreateEmitter(777)
 
 	ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	})
 
-	// ee2.Subscribe("")
+	reg := ee2.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap)
+
+	// ee2.Dispatch("regionStats:updateRegion", nil)
+
+	ee2.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+		Name: "upper-left",
+		Def: RegionDefinition{
+			Type: "square",
+			Width: 0.5,
+		},
+	})
+
+	// startTime := time.Now()
+
+	// ee2.Dispatch("tracker:etdata", &gr.ETData{
+	// 	Filtered:  gr.Point2D{0.1, 0.1},
+	// 	Timestamp: startTime,
+	// })
+
+	// ee2.Dispatch("tracker:etdata", &gr.ETData{
+	// 	Filtered:  gr.Point2D{1, 1},
+	// 	Timestamp: startTime.Add(time.Second),
+	// })
+
+	bytes, err := json.Marshal(<-reg)
+
+	if err != nil {
+		t.Fatal("No error should occur when Marshaling JSON.")
+	}
+
+	if string(bytes) != `{"upper-left":{"looks":1,"time":"00:01"}}` {
+		t.Fatal("Marshaling to JSON failed")
+	}
 }

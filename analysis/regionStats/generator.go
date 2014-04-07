@@ -94,7 +94,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionS
 		publish:     ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
 	}
 
-	go func() {
+	go func(rs *RegionStatistics) {
 		for {
 			select {
 			case <-rs.close:
@@ -106,26 +106,31 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionS
 				return
 
 			case regionDef := <-addRegionCh:
-				err := rs.AddRegion(regionDef.Name, regionDef.Def)
+				err := rs.AddRegion(regionDef)
+
 				if err != nil {
 					log.Println(err.Error())
 				}
 
 			case regionUpdate := <-updateRegionCh:
 				err := rs.UpdateRegion(regionUpdate)
+
 				if err != nil {
 					log.Println(err.Error())
 				}
 
 			case regs := <-removeRegionCh:
-				rs.RemoveRegions(regs)
+				err := rs.RemoveRegions(regs)
 
-			default:
-				time.Sleep(time.Second)
+				if err != nil {
+					log.Println(err.Error())
+				}
+
+			case <-time.After(time.Second):
 				rs.Generate()
 			}
 		}
-	}()
+	}(rs)
 
 	return rs
 }
@@ -134,8 +139,12 @@ func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
 	return rs.coordinates.GetCoords()
 }
 
-func (rs *RegionStatistics) AddRegion(name string, def RegionDefinition) error {
-	region, err := newRegion(name, def)
+func (rs *RegionStatistics) AddRegion(pack *RegionDefinitionPackage) error {
+	if pack == nil {
+		return errors.New("Got nil RegionDefinitionPackage.")
+	}
+
+	region, err := newRegion(pack.Name, pack.Def)
 
 	if err != nil {
 		return err
@@ -148,11 +157,13 @@ func (rs *RegionStatistics) AddRegion(name string, def RegionDefinition) error {
 
 func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 	for name, def := range defs {
-		err := rs.AddRegion(name, def)
+		region, err := newRegion(name, def)
 
 		if err != nil {
 			return err
 		}
+
+		rs.regions = append(rs.regions, region)
 	}
 
 	return nil
@@ -160,7 +171,7 @@ func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 
 func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
 	if pack == nil {
-		return errors.New("Got nil update package.")
+		return errors.New("Got nil RegionUpdatePackage.")
 	}
 
 	for _, region := range r.regions {
@@ -173,7 +184,11 @@ func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
 	return errors.New("No such region: " + pack.Name)
 }
 
-func (rs *RegionStatistics) RemoveRegions(regs []string) {
+func (rs *RegionStatistics) RemoveRegions(regs []string) error {
+	if regs == nil {
+		return errors.New("Got nil RegionRemovePackage.")
+	}
+
 	for _, name := range regs {
 		for i, reg := range rs.regions {
 			if reg.Name() == name {
@@ -184,6 +199,8 @@ func (rs *RegionStatistics) RemoveRegions(regs []string) {
 			}
 		}
 	}
+
+	return nil
 }
 
 // Generates a RegionStatsMap and
