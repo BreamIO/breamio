@@ -53,7 +53,7 @@ func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
 }
 
 func init() {
-	bl.Register(&GorgonzolaRun{})
+	bl.Register(&GorgonzolaRun{make(chan struct{})})
 }
 
 var logger = log.New(os.Stdout, "[Gorgonzola]", log.LstdFlags)

@@ -27,3 +27,7 @@ _testmain.go
 *sublime*
 
 /statistics statistics
+
+# On-file databases
+*.db
+*.sqlite3
