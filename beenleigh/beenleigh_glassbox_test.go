@@ -8,20 +8,20 @@ import (
 )
 
 func TestClose(t *testing.T) {
-	bl := newBL(briee.New, nil)
+	bl := newBL(briee.New)
 	Convey("Should close the internal closer channel", t, func() {
 		go bl.Close()
 		_, ok := <-bl.closer
 		So(ok, ShouldNotEqual, true)
 	})
 	Convey("Return value should be nil", t, func() {
-		bl = newBL(briee.New, nil)
+		bl = newBL(briee.New)
 		So(bl.Close(), ShouldBeNil)
 	})
 }
 
 func TestRootEmitter(t *testing.T) {
-	bl := newBL(briee.New, nil)
+	bl := newBL(briee.New)
 	Convey("A first root event emitter should be running.", t, func() {
 		So(bl.RootEmitter(), ShouldNotEqual, nil)
 	})
@@ -29,15 +29,9 @@ func TestRootEmitter(t *testing.T) {
 
 func TestListenAndServe(t *testing.T) {
 	myEE := newMockEmitter()
-	myIOManager := newMockIOManager()
 	done := make(chan struct{})
-	bl := newBL(func() briee.EventEmitter { return myEE }, myIOManager)
-
-	doneNewTrackerEvent := make(chan struct{})
-	bl.onNewTrackerEvent = func(spec Spec) error {
-		close(doneNewTrackerEvent)
-		return nil
-	}
+	bl := newBL(func() briee.EventEmitter { return myEE })
+	ioman := newMockIOManager()
 
 	go func() {
 		bl.ListenAndServe()
@@ -46,7 +40,6 @@ func TestListenAndServe(t *testing.T) {
 
 	Convey("Some its events should be subscribed to", t, func() {
 		t.Log(myEE)
-		So(myEE.subscribedTo("new:tracker"), ShouldEqual, true)
 		So(myEE.subscribedTo("shutdown"), ShouldEqual, true)
 	})
 
@@ -55,12 +48,6 @@ func TestListenAndServe(t *testing.T) {
 	})
 
 	Convey("And events recieved handeled", t, func() {
-		Convey("Calls onNewTrackerEvent for \"new:tracker\"", func() {
-			myEE.pubsubs["new:tracker"].(chan Spec) <- Spec{0, "mock://constant"}
-			_, ok := <-doneNewTrackerEvent
-			So(ok, ShouldNotEqual, true)
-
-		})
 		Convey("Returns when recieving a\"shutdown\" event", func() {
 			myEE.pubsubs["shutdown"].(chan struct{}) <- struct{}{}
 			_, ok := <-done
@@ -69,18 +56,18 @@ func TestListenAndServe(t *testing.T) {
 	})
 }
 
-func TestOnNewTrackerEvent(t *testing.T) {
-	myEE := newMockEmitter()
-	myIOManager := newMockIOManager()
-	bl := newBL(func() briee.EventEmitter { return myEE }, myIOManager)
-	onNewTrackerEvent(bl, Spec{1, "mock://constant"})
-	Convey("Creates a new EE and adds it to IOManager", t, func() {
-		So(myIOManager.ees[1], ShouldEqual, myEE)
-	})
-	SkipConvey("Creates a Tracker from specification and connects it to EE", t, func() {
-		So(onNewTrackerEvent(bl, Spec{2, "mock://ShouldNotExist"}), ShouldNotBeNil)
-	})
-}
+// func TestOnNewTrackerEvent(t *testing.T) {
+	// myEE := newMockEmitter()
+	// myIOManager := newMockIOManager()
+	// bl := newBL(func() briee.EventEmitter { return myEE }, myIOManager)
+	// onNewTrackerEvent(bl, Spec{1, "mock://constant"})
+	// Convey("Creates a new EE and adds it to IOManager", t, func() {
+		// So(myIOManager.ees[1], ShouldEqual, myEE)
+	// })
+	// SkipConvey("Creates a Tracker from specification and connects it to EE", t, func() {
+		// So(onNewTrackerEvent(bl, Spec{2, "mock://ShouldNotExist"}), ShouldNotBeNil)
+	// })
+// }
 
 /*
 func TestNewStatisticsEvent(t *testing.T) {

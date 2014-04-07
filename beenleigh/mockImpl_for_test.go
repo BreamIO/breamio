@@ -6,7 +6,6 @@ import (
 
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
 /*
@@ -39,9 +38,6 @@ func (m *mockEmitter) Publish(chid string, v interface{}) interface{} {
 		ch := make(chan Spec)
 		m.pubsubs[chid] = ch
 		return (chan<- Spec)(ch)
-	case *gorgonzola.ETData:
-		ch := make(chan *gorgonzola.ETData)
-		return (chan<- *gorgonzola.ETData)(ch)
 	default:
 		return nil
 	}
