@@ -14,6 +14,7 @@ type Subscriber interface {
 // Publisher interface contains methods for publishing events.
 type Publisher interface {
 	Publish(eventID string, v interface{}) interface{}
+	ShutdownChannel() <-chan struct{}
 }
 
 // PublishSubscriber contains the Subscriber and Publisher interface.

@@ -3,18 +3,20 @@ package briee
 import (
 	"errors"
 	"reflect"
+	"sync"
 )
 
-// Event is the internal representation of an event on the event emitter. 
+// Event is the internal representation of an event on the event emitter.
 //
 // An event contains information about the underlying type sent on publishing and subscribing channels but also the subscribing channels them selfs.
 // The publishing channels are administrated by stand-alone goroutines and the calling publisher.
 type Event struct {
-	ElemType reflect.Type // Underlying element type
-	DataChan    reflect.Value // Channel used for the internal data
-	Subscribers reflect.Value // Slice of write-only channels to subscribers
-	CanSubscribe bool // Boolean indicating if the overhead subscriber goroutine is running or not.
+	ElemType      reflect.Type                    // Underlying element type
+	DataChan      reflect.Value                   // Channel used for the internal data
+	Subscribers   reflect.Value                   // Slice of write-only channels to subscribers
+	CanSubscribe  bool                            // Boolean indicating if the overhead subscriber goroutine is running or not.
 	SubscriberMap map[reflect.Value]reflect.Value // Subscriber binding to enable unsubscription.
+	publishers    *sync.WaitGroup
 }
 
 // newEvent is the constructor of an event.
@@ -22,19 +24,21 @@ type Event struct {
 // The constructor takes a reflect.Type as the only parameter and corresponds to the underlying type to be sent on the generated channels.
 func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
-		ElemType: elemtype,
-		DataChan:    makeChan(elemtype),
-		Subscribers: reflect.Value{},
-		CanSubscribe: false,
+		ElemType:      elemtype,
+		DataChan:      makeChan(elemtype),
+		Subscribers:   reflect.Value{},
+		CanSubscribe:  false,
 		SubscriberMap: make(map[reflect.Value]reflect.Value),
+		publishers:    new(sync.WaitGroup),
 	}
 }
 
 // LocalEventEmitter implements the EventEmitter interface.
 type LocalEventEmitter struct {
-	eventMap map[string]*Event
-	open     bool
-	done     chan struct{}
+	eventMap        map[string]*Event
+	open            bool
+	done            chan struct{}
+	shutdownChannel chan struct{}
 }
 
 // newLocalEventEmitter is the constructor for the LocalEventEmitter.
@@ -42,12 +46,12 @@ type LocalEventEmitter struct {
 // The event emitter is open when constructed.
 func newLocalEventEmitter() *LocalEventEmitter {
 	return &LocalEventEmitter{
-		eventMap: make(map[string]*Event),
-		open:     true,
-		done:     make(chan struct{}),
+		eventMap:        make(map[string]*Event),
+		open:            true,
+		done:            make(chan struct{}),
+		shutdownChannel: make(chan struct{}),
 	}
 }
-
 
 // Publish returns a write-only channel with element type equal to the underlying type of the provided interface.
 //
@@ -61,6 +65,7 @@ func newLocalEventEmitter() *LocalEventEmitter {
 // 		sendChan <- MyStruct{...}
 func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} {
 	event := ee.event(eventID, v)
+	event.publishers.Add(1)
 
 	// Create the write and read channels
 	sendChan, recvChan := makeDirChannels(v, 0)
@@ -73,6 +78,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 				break
 			}
 		}
+		event.publishers.Done()
 	}()
 
 	return sendChan.Interface()
@@ -81,7 +87,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 // Subscribe returns a read-only channel with element type equal to the underlying type of the provided interface.
 //
 // An explicit type assertion of the returned channel is required if used in a non-reflective context.
-// Will panic if called with an already registred event string identifier of unmatching types. 
+// Will panic if called with an already registred event string identifier of unmatching types.
 //
 // Example use:
 //		var recvData MyStruct
@@ -102,7 +108,7 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 		event.CanSubscribe = true
 
 		go func() {
-			defer func(){
+			defer func() {
 				for i := 0; i < event.Subscribers.Len(); i++ {
 					ch := event.Subscribers.Index(i)
 					ch.Close()
@@ -110,7 +116,7 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 			}()
 
 			for {
-				if data, ok := event.DataChan.Recv(); ok && ee.IsOpen(){
+				if data, ok := event.DataChan.Recv(); ok && ee.IsOpen() {
 					for i := 0; i < event.Subscribers.Len(); i++ {
 						if ee.IsOpen() {
 							ch := event.Subscribers.Index(i)
@@ -129,7 +135,6 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 	event.Subscribers = reflect.Append(event.Subscribers, sendChan)
 	return recvChan.Interface()
 }
-
 
 // Dispatch will perform a one-time publish to all listening subscribers.
 //
@@ -190,6 +195,10 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 	return errors.New("Can not unsubscribe unregistered event")
 }
 
+func (ee *LocalEventEmitter) ShutdownChannel() <-chan struct{} {
+	return ee.shutdownChannel
+}
+
 // Close will close all subscribing channels of all registered events.
 //
 // Will return an error if Close is called on an already closed event emitter.
@@ -199,7 +208,9 @@ func (ee *LocalEventEmitter) Close() error {
 		return errors.New("Emitter already closed")
 	default:
 		ee.open = false
+		close(ee.shutdownChannel)
 		for _, event := range ee.eventMap {
+			event.publishers.Wait()
 			event.DataChan.Close()
 		}
 		close(ee.done)

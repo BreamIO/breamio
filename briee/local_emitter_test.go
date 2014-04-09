@@ -235,9 +235,14 @@ func TestUnsubscribeNoEvent(t *testing.T) {
 func TestCloseEE(t *testing.T) {
 	ee := New()
 
-	_ = ee.Publish("A", A{}).(chan<- A)
+	pub := ee.Publish("A", A{}).(chan<- A)
 	_ = ee.Subscribe("A", A{}).(<-chan A)
 
+	go func() {
+		<-ee.ShutdownChannel()
+		close(pub)
+	}()
+	
 	err := ee.Close()
 	if err != nil {
 		t.Fatalf("EE already closed")
