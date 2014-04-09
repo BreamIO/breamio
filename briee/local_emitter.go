@@ -109,10 +109,10 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 		go func() {
 			defer func() {
-				for i := 0; i < event.Subscribers.Len(); i++ {
-					ch := event.Subscribers.Index(i)
+				for _, ch := range event.SubscriberMap {
 					ch.Close()
 				}
+				event.CanSubscribe = false
 			}()
 
 			for {
