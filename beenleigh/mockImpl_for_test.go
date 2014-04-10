@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/briee"
+	//"github.com/maxnordlund/breamio/briee"
 )
 
 /*
@@ -95,26 +95,14 @@ func (m *mockEmitter) subscribedTo(chid string) bool {
 
 type mockIOManager struct {
 	aioli.IOManager
-	ees     map[int]briee.EventEmitter
 	started bool
 }
 
-func newMockIOManager() *mockIOManager {
+func newMockIOManager(el aioli.EmitterLookuper) *mockIOManager {
 	return &mockIOManager{
-		aioli.New(),
-		make(map[int]briee.EventEmitter),
+		aioli.New(el),
 		false,
 	}
-}
-
-func (m *mockIOManager) AddEE(ee briee.EventEmitter, id int) error {
-	m.ees[id] = ee
-	return m.IOManager.AddEE(ee, id)
-}
-
-func (m *mockIOManager) RemoveEE(id int) error {
-	delete(m.ees, id)
-	return m.IOManager.RemoveEE(id)
 }
 
 func (m *mockIOManager) Run() {
