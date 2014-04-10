@@ -3,7 +3,7 @@ package access
 import (
 	"log"
 	"os"
-	
+
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/beenleigh"
 )
@@ -27,12 +27,12 @@ func accessRun(logic beenleigh.Logic, closeCh <-chan struct{}) {
 	log.Println("Starting ExternalAccessService subsystem.")
 	go ioman.Run()
 	go func() {
-		<- closeCh
+		<-closeCh
 		ioman.Close()
 	}()
-	
+
 	for name, as := range servers {
-		logger := log.New(os.Stdout, "[" + name + "] ", log.LstdFlags)
+		logger := log.New(os.Stdout, "["+name+"] ", log.LstdFlags)
 		go as.Listen(ioman, logger)
 	}
 }

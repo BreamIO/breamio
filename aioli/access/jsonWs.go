@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
-	
+
 	"github.com/maxnordlund/breamio/aioli"
 	//"github.com/maxnordlund/breamio/beenleigh"
 )
@@ -23,7 +23,7 @@ func init() {
 // Server is websocket server using the default decoder
 type WSServer struct {
 	manager aioli.IOManager
-	logger *log.Logger
+	logger  *log.Logger
 }
 
 // Serve static files and listen for incoming websocket messages
