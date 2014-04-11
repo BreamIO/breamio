@@ -35,7 +35,7 @@ func (GazeDriver) List() (res []string) {
 }
 
 type GazeTracker struct {
-	*gaze.EyeTracker
+	gaze.EyeTracker
 	closer            chan struct{}
 	calibrated        bool
 	calibrationPoints uint
