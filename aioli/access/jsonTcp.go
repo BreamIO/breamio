@@ -11,6 +11,10 @@ import (
 const tcpJSONaddr = ":4041"
 
 func init() {
+	registerTCPJSON()
+}
+
+func registerTCPJSON() {
 	Register("TCP(JSON)", TCPServer{})
 }
 
