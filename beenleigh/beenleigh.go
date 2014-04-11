@@ -33,7 +33,7 @@ type Logic interface {
 	RootEmitter() briee.EventEmitter
 	CreateEmitter(id int) briee.EventEmitter
 	aioli.EmitterLookuper
-	ListenAndServe(aioli.IOManager)
+	ListenAndServe()
 	io.Closer
 }
 
@@ -71,7 +71,7 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 	return bl.root
 }
 
-func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
+func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 
 	//Subscribe to events
@@ -82,13 +82,11 @@ func (bl *breamLogic) ListenAndServe(ioman aioli.IOManager) {
 
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 
-	go ioman.Run()
-
 	//Set up servers.
-	ts := aioli.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
-	ws := aioli.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
-	go ts.Listen()
-	go ws.Listen()
+	//ts := aioli.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
+	//ws := aioli.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
+	//go ts.Listen()
+	//go ws.Listen()
 
 	for {
 		select {
@@ -129,18 +127,4 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 		return v, nil
 	}
 	return nil, errors.New("No emitter with that id.")
-}
-
-type RunCloser interface {
-	Run(Logic)
-	io.Closer
-}
-
-// A specification for creation of new objects.
-// Type should be a type available for creation by the logic implementation.
-// Data is a context sensitive string, which syntax depends on the type.
-// Emitter is a integer, identifying the emitter number to link the new object to.
-type Spec struct {
-	Emitter int
-	Data    string
 }
