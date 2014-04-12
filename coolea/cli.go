@@ -124,6 +124,8 @@ func parseStart(tokens []string) (string, handlerFunc, []string) {
 		switch tokens[0] {
 		case "et":
 			return startET(tokens[1:])
+		case "ancient":
+			return startAncient(tokens[1:])
 		}
 	}
 	return parseError(tokens[0])
@@ -137,8 +139,19 @@ func startET(tokens []string) (string, handlerFunc, []string) {
 		return parseError(tokens[0])
 	}
 	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
-	client.Send(aioli.ExtPkg{"new:tracker", 256, payload})
+	client.Send(aioli.ExtPkg{"new:tracker", false, 256, payload, nil})
 	return "Sent request to start new ET", startParse, tokens[2:]
+}
+
+func startAncient(tokens []string) (string, handlerFunc, []string) {
+	id, err := strconv.Atoi(tokens[0])
+	if err != nil {
+		fmt.Println(err)
+		return parseError(tokens[0])
+	}
+	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
+	client.Send(aioli.ExtPkg{"new:ancientpower", false, 256, payload, nil})
+	return "Sent request to start new AncientPower adapter", startParse, tokens[2:]
 }
 
 //Parse the subtree of stop
@@ -161,6 +174,6 @@ func stopET(tokens []string) (string, handlerFunc, []string) {
 		return parseError(tokens[0])
 	}
 	payload, err := json.Marshal(struct{}{})
-	client.Send(aioli.ExtPkg{"tracker:shutdown", id, payload})
+	client.Send(aioli.ExtPkg{"tracker:shutdown", false, id, payload, nil})
 	return "Sent request to stop ET " + tokens[0], startParse, tokens[1:]
 }
