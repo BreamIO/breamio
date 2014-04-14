@@ -5,15 +5,15 @@ import (
 	"reflect"
 )
 
-// Event is the internal representation of an event on the event emitter. 
+// Event is the internal representation of an event on the event emitter.
 //
 // An event contains information about the underlying type sent on publishing and subscribing channels but also the subscribing channels them selfs.
 // The publishing channels are administrated by stand-alone goroutines and the calling publisher.
 type Event struct {
-	ElemType reflect.Type // Underlying element type
-	DataChan    reflect.Value // Channel used for the internal data
-	Subscribers reflect.Value // Slice of write-only channels to subscribers
-	CanSubscribe bool // Boolean indicating if the overhead subscriber goroutine is running or not.
+	ElemType reflect.Type  // Underlying element type
+	DataChan reflect.Value // Channel used for the internal data
+	//Subscribers reflect.Value // Slice of write-only channels to subscribers
+	CanSubscribe  bool                            // Boolean indicating if the overhead subscriber goroutine is running or not.
 	SubscriberMap map[reflect.Value]reflect.Value // Subscriber binding to enable unsubscription.
 }
 
@@ -23,9 +23,9 @@ type Event struct {
 func newEvent(elemtype reflect.Type) *Event {
 	return &Event{
 		ElemType: elemtype,
-		DataChan:    makeChan(elemtype),
-		Subscribers: reflect.Value{},
-		CanSubscribe: false,
+		DataChan: makeChan(elemtype),
+		//Subscribers: reflect.Value{},
+		CanSubscribe:  false,
 		SubscriberMap: make(map[reflect.Value]reflect.Value),
 	}
 }
@@ -47,7 +47,6 @@ func newLocalEventEmitter() *LocalEventEmitter {
 		done:     make(chan struct{}),
 	}
 }
-
 
 // Publish returns a write-only channel with element type equal to the underlying type of the provided interface.
 //
@@ -81,7 +80,7 @@ func (ee *LocalEventEmitter) Publish(eventID string, v interface{}) interface{} 
 // Subscribe returns a read-only channel with element type equal to the underlying type of the provided interface.
 //
 // An explicit type assertion of the returned channel is required if used in a non-reflective context.
-// Will panic if called with an already registred event string identifier of unmatching types. 
+// Will panic if called with an already registred event string identifier of unmatching types.
 //
 // Example use:
 //		var recvData MyStruct
@@ -98,7 +97,7 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 
 	if !event.CanSubscribe {
 
-		event.Subscribers = makeSlice(reflect.TypeOf(v))
+		//event.Subscribers = makeSlice(reflect.TypeOf(v))
 		event.CanSubscribe = true
 
 		go func() {
@@ -110,10 +109,9 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 			}()
 
 			for {
-				if data, ok := event.DataChan.Recv(); ok && ee.IsOpen(){
-					for i := 0; i < event.Subscribers.Len(); i++ {
+				if data, ok := event.DataChan.Recv(); ok && ee.IsOpen() {
+					for _, ch := range event.SubscriberMap {
 						if ee.IsOpen() {
-							ch := event.Subscribers.Index(i)
 							ch.TrySend(data)
 						} else {
 							return
@@ -126,10 +124,9 @@ func (ee *LocalEventEmitter) Subscribe(eventID string, v interface{}) interface{
 		}()
 	}
 
-	event.Subscribers = reflect.Append(event.Subscribers, sendChan)
+	//event.Subscribers = reflect.Append(event.Subscribers, sendChan)
 	return recvChan.Interface()
 }
-
 
 // Dispatch will perform a one-time publish to all listening subscribers.
 //
@@ -176,14 +173,9 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 			return errors.New("Can not find subscriber")
 		}
 
-		// Find the write channel and close it
-		for i := 0; i < event.Subscribers.Len(); i++ {
-			if event.Subscribers.Index(i).Interface() == sendChan.Interface() {
-				sendChan.Close()
-				delete(event.SubscriberMap, recvChan)
-				return nil
-			}
-		}
+		sendChan.Close()
+		delete(event.SubscriberMap, recvChan)
+		return nil
 	}
 
 	// No event with that eventID exists
