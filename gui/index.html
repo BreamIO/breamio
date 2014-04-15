@@ -214,13 +214,13 @@
 						ID: id,
 						Data: data
 					}
-					console.log("WebSocket sending:", pkg)
+					// console.log("WebSocket sending:", pkg)
 					this.send(pkg)
 					return this.recieve()
 				}
 
 				Server.prototype._error = function error(err) {
-					console.log("WebSocket error:", err)
+					// console.log("WebSocket error:", err)
 					if (this.reject) {
 						this.reject(err)
 						delete this.resolve
@@ -229,7 +229,7 @@
 				}
 
 				Server.prototype._message = function message(event) {
-					console.log("WebSocket message:", event)
+					// console.log("WebSocket message:", event)
 					if (this.resolve) {
 						this.resolve(event.data)
 						delete this.resolve
@@ -238,11 +238,11 @@
 				}
 
 				Server.prototype._open = function open() {
-					console.log("WebSocket opened")
+					// console.log("WebSocket opened")
 				}
 
 				Server.prototype._close = function close() {
-					console.log("WebSocket closed")
+					// console.log("WebSocket closed")
 				}
 
 				function delay(time) {
@@ -257,8 +257,31 @@
 
 				function startCalibration(event) {
 					// this is the a element clicked
+					var id = parseInt(event.target.getAttribute("href").slice(1), 10)
 					event.preventDefault()
 					circle.requestFullscreen()
+					window.stuff = event
+					console.log("startCalibration", event)
+
+					delay(1000).then(function() {
+						circle.show()
+						Circle.points.reduce(function(promise, point) {
+							return promise.then(function() {
+								// console.log("Main starting move to", point)
+								return circle.move(point[0], point[1])
+							}).then(function() {
+								// console.log("Main movement complete, starting pulse")
+								return Promise.all([
+									server.wait("calibrate:add", id, point).then(circle.pulse.end.bind(circle.pulse)),
+									circle.pulse.begin()
+								])
+							}).then(function() {
+								// console.log("Main pulse complete")
+							})
+						}, Promise.resolve()).then(function() {
+							// console.log("Main all complete")
+						})
+					})
 				}
 
 				for (i = anchors.length - 1; i >= 0; i--) {
@@ -271,24 +294,6 @@
 				window.circle = circle
 				window.Server = Server
 				window.server = server
-
-				circle.show()
-				Circle.points.reduce(function(promise, point) {
-					return promise.then(function() {
-						console.log("Main starting move to", point)
-						return circle.move(point[0], point[1])
-					}).then(function() {
-						console.log("Main movement complete, starting pulse")
-						return Promise.all([
-							server.wait("calibrate:add", 1, point).then(circle.pulse.end.bind(circle.pulse)),
-							circle.pulse.begin()
-						])
-					}).then(function(){
-						console.log("Main pulse complete")
-					})
-				}, Promise.resolve()).then(function() {
-					console.log("Main all complete")
-				})
 			})
 		</script>
 	</head>
