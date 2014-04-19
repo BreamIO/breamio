@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"runtime"
 
-	"github.com/maxnordlund/breamio/aioli"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 )
@@ -29,7 +28,7 @@ func main() {
 		logic.Close()
 	}()
 
-	logic.ListenAndServe(aioli.New(logic))
+	logic.ListenAndServe()
 	fmt.Println("Thank you for using our product.")
 }
 
