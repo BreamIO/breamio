@@ -59,6 +59,10 @@ func (a *area) setHeight(h *float64) {
 	}
 }
 
+func NewRegion(name string, rd RegionDefinition) (Region, error) {
+	return newRegion(name, rd)
+}
+
 // Create a new Region.
 // Error is not nil if unsuccessful.
 func newRegion(name string, rd RegionDefinition) (Region, error) {
