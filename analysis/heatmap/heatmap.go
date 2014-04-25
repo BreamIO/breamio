@@ -74,7 +74,7 @@ func New(ee briee.EventEmitter, c *Config) *Generator {
 	defer ee.Unsubscribe("heatmap:update", updateSettings)
 
 	g := &Generator{
-		coordinateHandler: analysis.NewCoordBuffer(ch, *c.Duration, uint(*c.Hertz)),
+		coordinateHandler: analysis.NewCoordBuffer(ch, c.Duration, uint(c.Hertz)),
 		width:             c.Res.Width,
 		height:            c.Res.Height,
 		publish:           ee.Publish("heatmap:image", new(image.RGBA)).(chan<- *image.RGBA),
@@ -231,8 +231,11 @@ func (gen *Generator) updateSettings(conf *Config) {
 	//Res Resolution
 	//Color image.RGBA
 
-	//Don't bother to update Emitter
+	if conf == nil {
+		return
+	}
 
+	//Don't bother to update Emitter
 	if conf.Duration > 0 {
 		gen.setDuration(conf.Duration)
 	}
@@ -261,8 +264,8 @@ func (gen *Generator) setDesiredFreq(desiredFreq uint) {
 	gen.coordinateHandler.SetDesiredFreq(desiredFreq)
 }
 
-func (gen *Generator) setDuration(duration *time.Duration) {
-	gen.coordinateHandler.SetInterval(*duration)
+func (gen *Generator) setDuration(duration time.Duration) {
+	gen.coordinateHandler.SetInterval(duration)
 }
 
 func (gen *Generator) setColor(color *color.RGBA) {
