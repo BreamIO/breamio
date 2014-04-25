@@ -142,7 +142,12 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 
 		if val.IsValid() {
 			//Now we are clear to do stuff with data.
-			data, _ := json.Marshal(val.Interface())
+			data, err := json.Marshal(val.Interface())
+			if err != nil {
+				logger.Printf("Subscription for event \"%s\" encountered a error during encoding of payload: %s.\n", recvData.Event, err.Error())
+				logger.Println(val.Interface())
+				return
+			}
 			err = enc.Encode(ExtPkg{
 				Event:     recvData.Event,
 				Subscribe: true,
