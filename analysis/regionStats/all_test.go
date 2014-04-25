@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	been "github.com/maxnordlund/breamio/beenleigh"
+	//been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
@@ -101,17 +101,17 @@ func TestTimeToString(t *testing.T) {
 		t.Fatal("The float 7 toString should be '07'")
 	}
 }
-
+/*
 func TestWithBeenleigh(t *testing.T) {
 	bl := been.New(briee.New)
 
-	ee := bl.RootEmitter()
+	_ = bl.RootEmitter()
 
 	ee2 := bl.CreateEmitter(777)
 
-	ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	})
+	//pub := ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	}).(chan<- Config)
 
-	reg := ee2.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap)
+	reg := ee2.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
 
 	// ee2.Dispatch("regionStats:updateRegion", nil)
 
@@ -144,4 +144,4 @@ func TestWithBeenleigh(t *testing.T) {
 	if string(bytes) != `{"upper-left":{"looks":1,"time":"00:01"}}` {
 		t.Fatal("Marshaling to JSON failed")
 	}
-}
+}*/

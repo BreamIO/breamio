@@ -98,31 +98,43 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 	}
 
 	go func(rs *RegionStatistics) {
+		defer func(){
+			close(rs.publish)
+			ee.Unsubscribe("regionStats:addRegions", addRegionCh)
+			ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
+			ee.Unsubscribe("regionStats:removeRegions", removeRegionCh)
+			ee.Unsubscribe("tracker:etdata", ch)
+		}()
 		for {
 			select {
 			case <-rs.closeChan:
-				close(rs.publish)
-				ee.Unsubscribe("regionStats:addRegions", addRegionCh)
-				ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
-				ee.Unsubscribe("regionStats:removeRegions", removeRegionCh)
-				ee.Unsubscribe("tracker:etdata", ch)
 				return
 
-			case regionDef := <-addRegionCh:
+			// TODO refactor select case structure
+			case regionDef, ok := <-addRegionCh:
+				if !ok {
+					return
+				}
 				err := rs.AddRegion(regionDef)
 
 				if err != nil {
 					log.Println(err.Error())
 				}
 
-			case regionUpdate := <-updateRegionCh:
+			case regionUpdate, ok := <-updateRegionCh:
+				if !ok {
+					return
+				}
 				err := rs.UpdateRegion(regionUpdate)
 
 				if err != nil {
 					log.Println(err.Error())
 				}
 
-			case regs := <-removeRegionCh:
+			case regs, ok := <-removeRegionCh:
+				if !ok {
+					return
+				}
 				err := rs.RemoveRegions(regs)
 
 				if err != nil {
