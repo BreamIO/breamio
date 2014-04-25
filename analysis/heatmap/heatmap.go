@@ -19,7 +19,7 @@ func init() {
 
 type Config struct {
 	Emitter  int
-	Duration *time.Duration
+	Duration time.Duration
 	Hertz    uint
 	Res      *Resolution
 	Color    *color.RGBA
@@ -233,7 +233,7 @@ func (gen *Generator) updateSettings(conf *Config) {
 
 	//Don't bother to update Emitter
 
-	if conf.Duration != nil {
+	if conf.Duration > 0 {
 		gen.setDuration(conf.Duration)
 	}
 	if conf.Hertz > uint(0) {
