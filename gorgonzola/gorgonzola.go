@@ -12,10 +12,15 @@ import (
 
 var trackers = make(map[Tracker]Metadata)
 
+//
 func RemoveTracker(tracker Tracker) {
-	delete(trackers, tracker)
+	if _, ok := trackers[tracker]; ok {
+		delete(trackers, tracker)
+	}
 }
 
+// Returns a map of all known running trackers.
+// Only tracks trackers created using the new:tracker event.
 func Trackers() map[Tracker]Metadata {
 	return trackers
 }
