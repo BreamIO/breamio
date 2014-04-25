@@ -28,7 +28,7 @@ type Generator interface {
 type Config struct {
 	Emitter  int
 	Duration time.Duration
-	Hertz    int
+	Hertz    uint
 }
 
 // Register in Logic
