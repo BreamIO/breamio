@@ -74,7 +74,7 @@ func New(ee briee.EventEmitter, c *Config) *Generator {
 	defer ee.Unsubscribe("heatmap:update", updateSettings)
 
 	g := &Generator{
-		coordinateHandler: analysis.NewCoordBuffer(ch, *c.Duration, int(*c.Hertz)),
+		coordinateHandler: analysis.NewCoordBuffer(ch, *c.Duration, uint(*c.Hertz)),
 		width:             c.Res.Width,
 		height:            c.Res.Height,
 		publish:           ee.Publish("heatmap:image", new(image.RGBA)).(chan<- *image.RGBA),
