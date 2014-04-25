@@ -43,7 +43,7 @@ func (h *HeatmapRun) Run(logic been.Logic) {
 	for {
 		select {
 		case config := <-newHM:
-			New(logic.CreateEmitter(config.Emitter), config)
+			NewGenerator(logic.CreateEmitter(config.Emitter), config)
 		case <-h.closeChan:
 			break
 		}
@@ -68,10 +68,9 @@ type Generator struct {
 	closeChan         chan struct{}
 }
 
-func New(ee briee.EventEmitter, c *Config) *Generator {
+func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 	updateSettings := ee.Subscribe("heatmap:update", new(Config)).(<-chan *Config)
-	defer ee.Unsubscribe("heatmap:update", updateSettings)
 
 	g := &Generator{
 		coordinateHandler: analysis.NewCoordBuffer(ch, *c.Duration, uint(*c.Hertz)),
@@ -81,6 +80,7 @@ func New(ee briee.EventEmitter, c *Config) *Generator {
 	}
 
 	go func() {
+		defer ee.Unsubscribe("heatmap:update", updateSettings)
 		for {
 			select {
 			//TODO make sure goroutine can end
@@ -89,6 +89,8 @@ func New(ee briee.EventEmitter, c *Config) *Generator {
 			case <-time.After(10 * time.Second):
 				g.generate()
 			}
+			case <-g.closeChan:
+				return
 		}
 	}()
 

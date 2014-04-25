@@ -33,14 +33,17 @@ type Config struct {
 
 // Register in Logic
 func init() {
-	beenleigh.Register(new(RegionRun))
+	beenleigh.Register(&RegionRun{
+		generators: make(map[int]*RegionStatistics),
+		closeChan:  make(chan struct{}),
+	})
 }
 
 // RegionRun creates and runs generators,
 // and terminates them once closed.
 type RegionRun struct {
 	generators map[int]*RegionStatistics
-	close      chan struct{}
+	closeChan      chan struct{}
 }
 
 func (r *RegionRun) Run(logic beenleigh.Logic) {
@@ -56,17 +59,17 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 		case rc := <-newChan:
 			r.generators[rc.Emitter] =
 				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz)
-		case <-r.close:
+		case <-r.closeChan:
 			break
 		}
 	}
 }
 
 func (r *RegionRun) Close() error {
-	close(r.close)
+	close(r.closeChan)
 
 	for _, generator := range r.generators {
-		close(generator.close)
+		close(generator.closeChan)
 	}
 
 	return nil
@@ -76,10 +79,10 @@ type RegionStatistics struct {
 	coordinates *analysis.CoordBuffer
 	regions     []Region
 	publish     chan<- RegionStatsMap
-	close       chan struct{}
+	closeChan       chan struct{}
 }
 
-func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionStatistics {
+func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
 	addRegionCh := ee.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
@@ -97,7 +100,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz int) *RegionS
 	go func(rs *RegionStatistics) {
 		for {
 			select {
-			case <-rs.close:
+			case <-rs.closeChan:
 				close(rs.publish)
 				ee.Unsubscribe("regionStats:addRegions", addRegionCh)
 				ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
