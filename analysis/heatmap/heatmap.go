@@ -20,7 +20,7 @@ func init() {
 type Config struct {
 	Emitter  int
 	Duration *time.Duration
-	Hertz    *uint
+	Hertz    uint
 	Res      *Resolution
 	Color    *color.RGBA
 }
@@ -236,7 +236,7 @@ func (gen *Generator) updateSettings(conf *Config) {
 	if conf.Duration != nil {
 		gen.setDuration(conf.Duration)
 	}
-	if conf.Hertz != nil {
+	if conf.Hertz > uint(0) {
 		gen.setDesiredFreq(conf.Hertz)
 	}
 	if conf.Res != nil {
@@ -257,8 +257,8 @@ func (gen *Generator) setResolution(res *Resolution) {
 	gen.width = res.Width
 }
 
-func (gen *Generator) setDesiredFreq(desiredFreq *uint) {
-	gen.coordinateHandler.SetDesiredFreq(*desiredFreq)
+func (gen *Generator) setDesiredFreq(desiredFreq uint) {
+	gen.coordinateHandler.SetDesiredFreq(desiredFreq)
 }
 
 func (gen *Generator) setDuration(duration *time.Duration) {
