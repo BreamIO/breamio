@@ -79,15 +79,15 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 		publish:           ee.Publish("heatmap:image", new(image.RGBA)).(chan<- *image.RGBA),
 	}
 
-	if (c.color == nil) {
-		g.color = color.RGBA{
+	if (c.Color == nil) {
+		g.color = &color.RGBA{
 			R: 255,
 			G: 0,
 			B: 0,
 			A: 128,
 		}
 	} else {
-		g.color = c.color
+		g.color = c.Color
 	}
 
 	go func() {
