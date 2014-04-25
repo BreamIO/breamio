@@ -72,7 +72,7 @@ type Tracker interface {
 }
 
 type ETData struct {
-	Filtered  XYer
+	Filtered  Point2D
 	Timestamp time.Time
 }
 

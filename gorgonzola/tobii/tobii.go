@@ -56,7 +56,9 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 
 func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
-	//defer close(etdataCh)
+	defer RemoveTracker(g)
+	defer close(etdataCh)
+
 	go g.setupCalibrationEvents(ee)
 	go func() {
 		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(<-chan struct{})
@@ -102,7 +104,7 @@ func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 			return //Bad data
 		}
 		etdata := new(ETData)
-		etdata.Filtered = Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay())
+		etdata.Filtered = ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
 		etdata.Timestamp = data.Timestamp()
 		//log.Println(etdata)
 		ch <- etdata

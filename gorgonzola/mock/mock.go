@@ -64,6 +64,7 @@ func (m *MockTracker) Link(ee briee.PublishSubscriber) {
 	m.setupCalibrationEvents(ee)
 
 	go func() {
+		defer RemoveTracker(m)
 		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 		tShutdownCh := ee.Subscribe("tracker:shutdown", struct{}{}).(<-chan struct{})
 		defer ee.Unsubscribe("shutdown", shutdownCh)
