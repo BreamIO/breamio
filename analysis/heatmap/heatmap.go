@@ -88,9 +88,9 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 				g.updateSettings(conf)
 			case <-time.After(10 * time.Second):
 				g.generate()
-			}
 			case <-g.closeChan:
 				return
+			}
 		}
 	}()
 
