@@ -1,12 +1,29 @@
 package gorgonzola
 
 import (
+	//"encoding/json"
 	"errors"
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"log"
 	"os"
 	"strings"
+
+	bl "github.com/maxnordlund/breamio/beenleigh"
 )
+
+var trackers = make(map[Tracker]Metadata)
+
+//
+func RemoveTracker(tracker Tracker) {
+	if _, ok := trackers[tracker]; ok {
+		delete(trackers, tracker)
+	}
+}
+
+// Returns a map of all known running trackers.
+// Only tracks trackers created using the new:tracker event.
+func Trackers() map[Tracker]Metadata {
+	return trackers
+}
 
 type GorgonzolaRun struct {
 	closing chan struct{}
@@ -49,6 +66,7 @@ func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
 	go tracker.Link(ee)
 
 	logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
+	trackers[tracker] = Metadata{Emitter: event.Emitter, Name: event.Data}
 	return nil
 }
 
@@ -82,6 +100,16 @@ type XYer interface {
 	Y() float64
 }
 
+func ToPoint2D(in XYer) (out Point2D) {
+	out, ok := in.(Point2D)
+	if ok {
+		return
+	}
+	out.Xf = in.X()
+	out.Yf = in.Y()
+	return
+}
+
 // A struct of two float64s.
 // It is meant to serve as a practical implementation of XYer.
 type Point2D struct {
@@ -100,6 +128,11 @@ func (p Point2D) Y() float64 {
 
 func Filter(left, right XYer) XYer {
 	return Point2D{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
+}
+
+type Metadata struct {
+	Emitter int
+	Name    string
 }
 
 // Due to the lack of interface types in the briee.EventEmitter events,

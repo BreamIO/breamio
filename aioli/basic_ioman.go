@@ -53,6 +53,7 @@ func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 			if ep.Subscribe {
 				//logger.Println("Recieved subscription request for", ep.Event)
 				go biom.handleSubscription(ep, codec, logger)
+				continue
 			}
 			biom.dataChan <- ep
 		}
@@ -141,10 +142,21 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 
 		if val.IsValid() {
 			//Now we are clear to do stuff with data.
-
-			err = enc.Encode(val.Interface())
+			data, err := json.Marshal(val.Interface())
 			if err != nil {
-				logger.Printf("Subscription for event \"%s\" encountered a error during encoding: %s.\n", err.Error())
+				logger.Printf("Subscription for event \"%s\" encountered a error during encoding of payload: %s.\n", recvData.Event, err.Error())
+				logger.Println(val.Interface())
+				return
+			}
+			err = enc.Encode(ExtPkg{
+				Event:     recvData.Event,
+				Subscribe: true,
+				ID:        recvData.ID,
+				Data:      data,
+			})
+			if err != nil {
+				logger.Printf("Subscription for event \"%s\" encountered a error during encoding: %s.\n", recvData.Event, err.Error())
+				return
 			}
 		}
 	}
