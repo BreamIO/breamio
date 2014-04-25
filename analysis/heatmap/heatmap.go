@@ -129,7 +129,7 @@ func (gen *Generator) generate() {
 
 				for dy := -limitRadius; dy <= limitRadius; dy++ {
 					py = dy + int(y)
-					if py >= width || py < 0 {
+					if py >= height || py < 0 {
 						continue
 					}
 
