@@ -5,68 +5,35 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<title></title>
 		<meta name="description" content="" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- <meta name="viewport" content="width=device-width, initial-scale=1" /> -->
 		<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.0/normalize.min.css" /> -->
 		<style>
 		{{ .Normalize }}
 		</style>
 		<style>
-			/* Main style for calibration application */
-
+			/* Main style for X-configuration application */
 			main {
-				position: relative;
+				width: 100%;
+				height: 100%;
 			}
 
-			ul {
-				background-color: lightgrey;
-				z-index: 1;
-				position: absolute;
-				top: 0;
-				right: 0;
-				bottom: 0;
-				left: 0;
-				margin: auto;
-				padding: 1em 0 1em 2em;
-				width: 12em;
-				line-height: 1em;
-				border-radius: 1em;
-				height: {{ len .EyeTrackers }}em;
+			#front, #top {
+				float: left;
 			}
 
-			li {
-				color: darkgrey;
-			}
-
-			.done {
-				color: green;
-			}
-
-			.in-progress {
-				color: orange;
-			}
-
-			a {
-				color: black;
-				text-decoration: none;
-				cursor: default;
-			}
-
-			a::after {
-				content: " " attr(href);
-			}
-
-			a:hover {
-				background-color: grey;
-			}
-
-			circle {
-				fill: lightsteelblue;
+			#front .screen {
+				fill: transparent;
 				stroke: black;
 				stroke-width: 1px;
 			}
 
-			.hidden {
-				display: none;
+			#top .screen {
+				fill: black;
+				stroke-width: 0;
+			}
+
+			circle {
+				fill: red;
 			}
 		</style>
 		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js" async="async"></script>-->
@@ -76,261 +43,103 @@
 			document.addEventListener("DOMContentLoaded", function main(event) {
 				console.log("DOM fully loaded and parsed")
 
-				function Pulse() {
-					this.elem = document.getElementById("pulse")
-					this.elem.addEventListener("endEvent", this.handle.bind(this))
-					return this
-				}
+				var minimum,
+				front = {
+					screen: document.querySelector("#front .screen"),
+					tracker: document.querySelector("#front .tracker")
+				}, top = {
+					screen: document.querySelector("#top .screen"),
+					tracker: document.querySelector("#top .tracker")
+				}, form = {
+					x: document.getElementById("x"),
+					y: document.getElementById("y"),
+					z: document.getElementById("z"),
+					diagonal: document.getElementById("diagonal"),
+					ratio: document.getElementById("ratio"),
+					options: Array.prototype.slice.call(
+						document.querySelectorAll("option")
+					).reduce(function populateOptions(map, option) {
+						var key = option.getAttribute("value"),
+					      either = key.split(":"),
+					      width = parseInt(either[0], 10),
+					      height = parseInt(either[1], 10)
+						map[key] = {
+							ratio: width / height,
+							element: option
+						}
+						return map
+					}, {})
+				}, test = {
+					// devicePixelRatio = physical pixels / device-independent pixels
+					width: window.screen.width * window.devicePixelRatio,
+					height: window.screen.height * window.devicePixelRatio
+				}, req = new XMLHttpRequest()
 
-				Pulse.prototype.handle = function handle(event) {
-					this.resolve(event)
-				}
+				test.ratio = test.width / test.height
+				test.diagonal = Math.sqrt(Math.pow(test.width, 2) + Math.pow(test.height, 2))
 
-				Pulse.prototype.begin = function begin() {
-					var self = this
-					this.elem.beginElement()
-					return new Promise(function resolver(resolve, reject) {
-						self.resolve = resolve
-						self.reject  = reject
-					})
-				}
-
-				Pulse.prototype.end = function end() {
-					var dur = this.elem.getSimpleDuration(),
-						start = this.elem.getStartTime(),
-						time  = this.elem.getCurrentTime()
-					this.elem.endElementAt(dur - ((time - start) % dur))
-				}
-
-				function Movement(direction, circle) {
-					this.direction = direction
-					this.circle    = circle
-					this.where     = circle.getAttribute("c" + direction)
-					this.elem      = document.getElementById("move-" + direction)
-					this.elem.addEventListener("endEvent", this.handle.bind(this))
-					return this
-				}
-
-				Movement.prototype.to = function to(where) {
-					this.elem.setAttribute("to", "" + where + "%")
-					this.where = where
-				}
-
-				Movement.prototype.begin = function begin() {
-					var self = this
-					this.elem.beginElement()
-					return new Promise(function resolver(resolve, reject) {
-						self.resolve = resolve
-						self.reject  = reject
-					})
-				}
-
-				Movement.prototype.handle = function handle(event) {
-					this.circle.setAttribute("c" + this.direction, "" + this.where + "%")
-					this.resolve(event)
-				}
-
-				function Circle() {
-					this.ul    = document.getElementsByTagName("ul")[0]
-					this.elem  = document.getElementsByTagName("circle")[0]
-					this.pulse = new Pulse()
-					this.x     = new Movement("x", this.elem)
-					this.y     = new Movement("y", this.elem)
-				}
-
-				Circle.points = [
-					[10, 10],
-					[90, 10],
-					[50, 50],
-					[90, 90],
-					[10, 90],
-					[50, 50]
-				]
-
-				Circle.prototype.show = function show() {
-					this.ul.classList.add("hidden")
-					this.elem.classList.remove("hidden")
-				}
-
-				Circle.prototype.hide = function hide() {
-					this.ul.classList.remove("hidden")
-					this.elem.classList.add("hidden")
-				}
-
-				Circle.prototype.requestFullscreen = function requestFullscreen() {
-					this.show()
-					if (document.body.requestFullscreen) {
-					  document.body.requestFullscreen();
-					} else if (document.body.msRequestFullscreen) {
-					  document.body.msRequestFullscreen();
-					} else if (document.body.mozRequestFullScreen) {
-					  document.body.mozRequestFullScreen();
-					} else if (document.body.webkitRequestFullscreen) {
-					  document.body.webkitRequestFullscreen();
+				req.onreadystatechange = function xhrReadyState() {
+					if(req.readyState !== 4) {
+						return
 					}
-				}
+					var screens = JSON.parse(req.responseText)
 
-				Circle.prototype.move = function move(x, y) {
-					var resolve, reject, self = this,
-						promise = new Promise(function resolver(_resolve, _reject) {
-							resolve = _resolve
-							reject  = _reject
-						})
-					this.x.to(x)
-					this.y.to(y)
-					window.requestAnimationFrame(function paint(timestamp) {
-						Promise.all([
-							self.x.begin(),
-							self.y.begin()
-						]).then(resolve, reject)
-					})
-					return promise
 				}
+				req.open("GET", "https://rawgit.com/LeaVerou/dpi/gh-pages/screens.json")
+				req.send()
 
-				function Server() {
-					this.socket = new WebSocket("ws:" + window.location.host)
-					this.socket.onerror   = this._error.bind(this)
-					this.socket.onmessage = this._message.bind(this)
-					this.socket.onopen    = this._open.bind(this)
-					this.socket.onclose   = this._close.bind(this)
-				}
-
-				Server.prototype.send = function send(pkg) {
-					this.socket.send(JSON.stringify(pkg))
-				}
-
-				Server.prototype.recieve = function recieve() {
-					var resolve, reject, self = this,
-						promise = new Promise(function resolver(resolve, reject) {
-							self.resolve = resolve
-							self.reject  = reject
-						})
-					return promise
-				}
-
-				Server.prototype.wait = function wait(event, id, data) {
-					var pkg = {
-						Event: event,
-						ID: id,
-						Data: data
+				minimum = Object.keys(form.options).reduce(function findMinimum(left, right) {
+					var diff = {
+						left: Math.abs(form.options[left].ratio - test.ratio),
+						right: Math.abs(form.options[right].ratio - test.ratio)
 					}
-					// console.log("WebSocket sending:", pkg)
-					this.send(pkg)
-					return this.recieve()
+					return (diff.left < diff.right) ? left : right
+				})
+				form.ratio.selectedIndex = form.options[minimum].element.index
+
+				console.log("diagonal in px", test.diagonal)
+
+				window.data = {
+					front: front,
+					top: top,
+					form: form,
+					test: test
 				}
-
-				Server.prototype._error = function error(err) {
-					// console.log("WebSocket error:", err)
-					if (this.reject) {
-						this.reject(err)
-						delete this.resolve
-						delete this.reject
-					}
-				}
-
-				Server.prototype._message = function message(event) {
-					// console.log("WebSocket message:", event)
-					if (this.resolve) {
-						this.resolve(event.data)
-						delete this.resolve
-						delete this.reject
-					}
-				}
-
-				Server.prototype._open = function open() {
-					// console.log("WebSocket opened")
-				}
-
-				Server.prototype._close = function close() {
-					// console.log("WebSocket closed")
-				}
-
-				function delay(time) {
-					return new Promise(function resolver(resolve, reject) {
-						setTimeout(resolve, time)
-					})
-				}
-
-				var i, circle = new Circle(),
-					server = new Server(),
-					anchors = document.getElementsByTagName("a")
-
-				function startCalibration(event) {
-					// this is the a element clicked
-					var id = parseInt(event.target.getAttribute("href").slice(1), 10)
-					event.preventDefault()
-					circle.requestFullscreen()
-					window.stuff = event
-					console.log("startCalibration", event)
-
-					delay(1000).then(function() {
-						circle.show()
-						Circle.points.reduce(function(promise, point) {
-							return promise.then(function() {
-								// console.log("Main starting move to", point)
-								return circle.move(point[0], point[1])
-							}).then(function() {
-								// console.log("Main movement complete, starting pulse")
-								return Promise.all([
-									server.wait("calibrate:add", id, point).then(circle.pulse.end.bind(circle.pulse)),
-									circle.pulse.begin()
-								])
-							}).then(function() {
-								// console.log("Main pulse complete")
-							})
-						}, Promise.resolve()).then(function() {
-							// console.log("Main all complete")
-						})
-					})
-				}
-
-				for (i = anchors.length - 1; i >= 0; i--) {
-					anchors[i].addEventListener("click", startCalibration)
-				}
-
-				window.Pulse = Pulse
-				window.Movement = Movement
-				window.Circle = Circle
-				window.circle = circle
-				window.Server = Server
-				window.server = server
 			})
 		</script>
 	</head>
 	<body>
 		<main>
-			<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewPort="0 0 100% 100%">
-				<circle class="hidden" cx="50%" cy="50%" r="1cm">
-					<animate id="pulse"
-						attributeType="XML"
-						attributeName="r"
-						values="1cm; 0.1cm; 1cm"
-          	dur="2s"
-          	begin="indefinite"
-          	repeatCount="indefinite" />
-					<animate id="move-x"
-						attributeType="XML"
-						attributeName="cx"
-						to="50%"
-          	dur="1s"
-          	fill="freeze"
-          	begin="indefinite" />
-					<animate id="move-y"
-						attributeType="XML"
-						attributeName="cy"
-						to="50%"
-          	dur="1s"
-          	fill="freeze"
-          	begin="indefinite" />
-				</circle>
+			<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewPort="0 0 100 100" preserveAspectRatio="none">
+				<svg id="front" x="0" y="0" width="50%" height="100%" viewPort="0 0 50 100" preserveAspectRatio="none">
+					<rect class="screen" x="10%" y="10%" width="80%" height="40%" rx="15" ry="15" />
+					<svg class="tracker" x="40%" y="60%" width="20%" height="10%">
+						<rect x="0" y="0" width="100%" height="100%" />
+						<circle cx="25%" cy="50%" r="10%" />
+						<circle cx="75%" cy="50%" r="10%" />
+					</svg>
+				</svg>
+				<svg id="top" x="50%" y="0" width="50%" height="100%" viewPort="0 0 50 100" preserveAspectRatio="none">
+					<svg class="screen" x="10%" y="35%" width="80%" height="15%" viewPort="0 0 80 10" preserveAspectRatio="none">
+						<rect x="0" y="70%" width="100%" height="30%" />
+						<ellipse cx="50%" cy="100%" rx="10%" ry="100%"/>
+					</svg>
+					<rect class="tracker" x="40%" y="60%" width="20%" height="10%" />
+				</svg>
 			</svg>
-			<ul>
-				{{ range $index, $element := .EyeTrackers }}
-				<li{{ with $element }} class="{{ . }}"{{ end }}>
-					<a href="#{{ $index }}">Calibrate EyeTracker</a>
-				</li>
-				{{ end }}
-			</ul>
+			<form>
+				<input id="x" type="number" max="10" min="-10" value="0" />
+				<input id="y" type="number" max="10" min="-10" value="0" />
+				<input id="z" type="number" max="10" min="-10" value="0" />
+				<input id="diagonal" type="number" max="160" min="3" value="13" />
+				<select id="ratio">
+					<option value="4:3">4:3</option>
+					<option value="5:3">5:3</option>
+					<option value="5:4">5:4</option>
+					<option value="16:9">16:9</option>
+					<option value="16:10">16:10</option>
+				</select>
+			</form>
 		</main>
 	</body>
 </html>
