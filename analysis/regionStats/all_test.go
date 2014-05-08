@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
-
-	//been "github.com/maxnordlund/breamio/beenleigh"
+	"log"
+	"math"
+	"github.com/maxnordlund/breamio/gorgonzola/mock"
+	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
@@ -101,6 +103,82 @@ func TestTimeToString(t *testing.T) {
 		t.Fatal("The float 7 toString should be '07'")
 	}
 }
+
+func TestWithBeenleigh(t *testing.T){
+	bl := been.New(briee.New)
+	re := bl.RootEmitter()
+
+	tracker := mock.New(func(q float64) (x, y float64) {
+		return 0.5 + 0.5*math.Cos(q), 0.5 + 0.5*math.Sin(q)
+	})
+
+	tracker.Connect()
+	tracker.Link(re)
+	//defer tracker.Close()
+
+	go bl.ListenAndServe();
+	pub := re.Publish("new:regionStats", new(Config)).(chan<- *Config)
+	sub := re.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap);
+	// Add new region
+	pub<-&Config{
+		Emitter: 256,
+		Duration: time.Second * 5,
+		Hertz: 1,
+	}
+
+	var dispatchAddRegion = func(Name string ,Type string, X float64, Y float64, Width float64, Height float64){
+		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+			Name: Name,
+			Def: RegionDefinition{
+				Type: Type,
+				X: X,
+				Width: Width,
+				Y: Y,
+				Height: Height,
+			},
+		})
+	}
+
+	// name, type, X, Y, width, height
+	dispatchAddRegion("screen", "rect", 0.0, 0.0, 1.0, 1.0)
+	dispatchAddRegion("top-left", "rect", 0.0, 0.0, 0.5, 0.5)
+	dispatchAddRegion("top-right", "rect", 0.5, 0.0, 0.5, 0.5)
+	dispatchAddRegion("bottom-left", "rect", 0.0, 0.5, 0.5, 0.5)
+	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
+
+	/*
+	re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+		Name: "upper-left",
+		Def: RegionDefinition{
+			Type: "square",
+			Width: 0.5,
+		},
+	})
+
+	re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+		Name: "all",
+		Def: RegionDefinition{
+			Type: "square",
+			Width: 1.0,
+		},
+	})
+	*/
+	timeout := time.After(5000 * time.Millisecond)
+	omgquit := false
+	for !omgquit{
+		select{
+			case regiondata := <-sub:
+				log.Println(regiondata)
+			case <-timeout:
+				omgquit = true
+		}
+	}
+
+	//re.Dispatch("shutdown", struct{}{});
+	log.Println("Done!");
+
+}
+
 /*
 func TestWithBeenleigh(t *testing.T) {
 	bl := been.New(briee.New)
@@ -109,6 +187,7 @@ func TestWithBeenleigh(t *testing.T) {
 
 	ee2 := bl.CreateEmitter(777)
 
+	pub := ee.Publish("new:RegionStats", Config{}).(chan<- Config);
 	//pub := ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	}).(chan<- Config)
 
 	reg := ee2.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
