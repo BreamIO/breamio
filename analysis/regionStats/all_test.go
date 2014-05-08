@@ -10,6 +10,7 @@ import (
 	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
+	//"strconv"
 )
 
 func TestStatisticsGeneration(t *testing.T) {
@@ -140,10 +141,12 @@ func TestWithBeenleigh(t *testing.T){
 	}
 
 	// name, type, X, Y, width, height
-	dispatchAddRegion("screen", "rect", 0.0, 0.0, 1.0, 1.0)
-	dispatchAddRegion("top-left", "rect", 0.0, 0.0, 0.5, 0.5)
-	dispatchAddRegion("top-right", "rect", 0.5, 0.0, 0.5, 0.5)
-	dispatchAddRegion("bottom-left", "rect", 0.0, 0.5, 0.5, 0.5)
+	/*
+	for i:= 0; i<20; i++ {
+		dispatchAddRegion(strconv.Itoa(i),"circle", 0.5, 0.5, 1.0, 1.0)
+	}
+	*/
+
 	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
 
 	/*
@@ -163,7 +166,7 @@ func TestWithBeenleigh(t *testing.T){
 		},
 	})
 	*/
-	timeout := time.After(5000 * time.Millisecond)
+	timeout := time.After(50000 * time.Millisecond)
 	omgquit := false
 	for !omgquit{
 		select{

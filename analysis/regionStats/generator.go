@@ -53,7 +53,6 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 	ee = logic.RootEmitter()
 	newChan = ee.Subscribe("new:regionStats", new(Config)).(<-chan *Config)
 	defer ee.Unsubscribe("new:regionStats", newChan)
-
 	for {
 		select {
 		case rc := <-newChan:
@@ -81,7 +80,6 @@ type RegionStatistics struct {
 	publish     chan<- RegionStatsMap
 	closeChan       chan struct{}
 }
-
 func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
@@ -115,7 +113,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if !ok {
 					return
 				}
-				err := rs.AddRegion(regionDef)
+				err := rs.addRegion(regionDef)
 
 				if err != nil {
 					log.Println(err.Error())
@@ -125,7 +123,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if !ok {
 					return
 				}
-				err := rs.UpdateRegion(regionUpdate)
+				err := rs.updateRegion(regionUpdate)
 
 				if err != nil {
 					log.Println(err.Error())
@@ -135,7 +133,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if !ok {
 					return
 				}
-				err := rs.RemoveRegions(regs)
+				err := rs.removeRegions(regs)
 
 				if err != nil {
 					log.Println(err.Error())
@@ -154,7 +152,7 @@ func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
 	return rs.coordinates.GetCoords()
 }
 
-func (rs *RegionStatistics) AddRegion(pack *RegionDefinitionPackage) error {
+func (rs *RegionStatistics) addRegion(pack *RegionDefinitionPackage) error {
 	if pack == nil {
 		return errors.New("Got nil RegionDefinitionPackage.")
 	}
@@ -184,7 +182,7 @@ func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 	return nil
 }
 
-func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
+func (r *RegionStatistics) updateRegion(pack *RegionUpdatePackage) error {
 	if pack == nil {
 		return errors.New("Got nil RegionUpdatePackage.")
 	}
@@ -199,7 +197,7 @@ func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
 	return errors.New("No such region: " + pack.Name)
 }
 
-func (rs *RegionStatistics) RemoveRegions(regs []string) error {
+func (rs *RegionStatistics) removeRegions(regs []string) error {
 	if regs == nil {
 		return errors.New("Got nil RegionRemovePackage.")
 	}
@@ -227,9 +225,11 @@ func (rs RegionStatistics) Generate() {
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	currentEnterTime := make([]*time.Time, len(stats))
+	log.Printf("Before length = %d\n", len(rs.regions))
 
 	for coord := range rs.getCoords() {
 		for i, r := range rs.regions {
+			log.Printf("length of array = %d, i = %d, len regions = %d\n",len(currentEnterTime), i, len(rs.regions))
 			if currentEnterTime[i] == nil && r.Contains(coord.Filtered) {
 				stats[i].Looks++
 				currentEnterTime[i] = &coord.Timestamp
