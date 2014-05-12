@@ -3,6 +3,8 @@ package heatmap
 import (
 	"image"
 	"image/color"
+	"image/png"
+	"os"
 	"log"
 	"math"
 	"testing"
@@ -46,8 +48,21 @@ func TestHeatmap(t *testing.T) {
 	//hmr := &HeatmapRun{make(chan struct{})}
 	NewGenerator(ee, conf)
 	//heatmap := <-subs
+	//time.Sleep(time.Millisecond * 60000)
 	_ = <-subs
+	heatmapImg := <-subs
+	saveHeatmap("newHeatmap", heatmapImg)
 	log.Printf("Done")
 	//hmr.Run(tracker)
+}
 
+func saveHeatmap(outFilename string, m *image.RGBA) {
+	//outFilename := "blank.png"
+	outFile, err := os.Create(outFilename)
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer outFile.Close()
+	log.Print("Saving image to: ", outFilename)
+	png.Encode(outFile, m)
 }

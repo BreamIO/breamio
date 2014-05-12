@@ -224,19 +224,35 @@ func (rs RegionStatistics) Generate() {
 
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
-	currentEnterTime := make([]*time.Time, len(stats))
-	log.Printf("Before length = %d\n", len(rs.regions))
+	enterTime := make([]*time.Time, len(stats))
+	var lastTimestamp time.Time
+	//lastTimestamp := make([]*time.Time, len(stats))
+	//log.Printf("Before length = %d\n", len(rs.regions))
 
-	for coord := range rs.getCoords() {
-		for i, r := range rs.regions {
-			log.Printf("length of array = %d, i = %d, len regions = %d\n",len(currentEnterTime), i, len(rs.regions))
-			if currentEnterTime[i] == nil && r.Contains(coord.Filtered) {
+	for coord := range rs.getCoords() { // Alot of coords
+		for i, r := range rs.regions { // like one region
+			//log.Printf("length of array = %d, i = %d, len regions = %d\n",len(enterTime), i, len(rs.regions))
+
+			if enterTime[i] == nil && r.Contains(coord.Filtered) {
 				stats[i].Looks++
-				currentEnterTime[i] = &coord.Timestamp
-			} else if currentEnterTime[i] != nil && !r.Contains(coord.Filtered) {
-				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*currentEnterTime[i]))
-				currentEnterTime = nil
+				enterTime[i] = &coord.Timestamp
+
+			} else if enterTime[i] != nil && r.Contains(coord.Filtered){
+				// Wrong here! TODO
+				//stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*enterTime[i]))
+
+			} else if enterTime[i] != nil && !r.Contains(coord.Filtered) {
+				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*enterTime[i]))
+				//enterTime = nil
+				enterTime[i] = nil
 			}
+		}
+		lastTimestamp = coord.Timestamp
+	}
+
+	for i, stat := range stats {
+		if enterTime[i] != nil {
+			stat.TimeInside += InsideTime(lastTimestamp.Sub(*enterTime[i]))
 		}
 	}
 

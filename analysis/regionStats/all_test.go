@@ -123,8 +123,8 @@ func TestWithBeenleigh(t *testing.T){
 	// Add new region
 	pub<-&Config{
 		Emitter: 256,
-		Duration: time.Second * 5,
-		Hertz: 1,
+		Duration: time.Second * 10,
+		Hertz: 40,
 	}
 
 	var dispatchAddRegion = func(Name string ,Type string, X float64, Y float64, Width float64, Height float64){
@@ -172,6 +172,8 @@ func TestWithBeenleigh(t *testing.T){
 		select{
 			case regiondata := <-sub:
 				log.Println(regiondata)
+				bytes, _ := json.Marshal(regiondata)
+				log.Println(string(bytes))
 			case <-timeout:
 				omgquit = true
 		}
