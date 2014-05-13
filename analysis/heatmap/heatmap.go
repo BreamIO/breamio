@@ -148,6 +148,7 @@ func (gen *Generator) generate() {
 
 					if dist <= limSq {
 						heat[py][px] += math.Cos(dist / limSq)
+						//heat[py][px] += 1
 					}
 				}
 			}
@@ -169,14 +170,33 @@ func (gen *Generator) generate() {
 		for y := 0; y < height; y++ {
 			v := heat[y][x] / maxHeat
 
+			alpha := uint8(float64(gen.color.A) * v)
 			heatmap.SetRGBA(x, y, color.RGBA{
 				R: gen.color.R,
 				G: gen.color.G,
 				B: gen.color.B,
-				A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
+				A: uint8(alpha),
+				// I don't know what this previous row did, because it overflowed uint8
+				//A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
 			})
 		}
 	}
+	/*
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			v := heat[y][x] / maxHeat
+
+			alpha := uint8(float64(gen.color.A) * v)
+			heatmap.SetRGBA(x, y, color.RGBA{
+				R: gen.color.R,
+				G: gen.color.G,
+				B: gen.color.B,
+				A: uint8(alpha),
+				// I don't know what this previous row did, because it overflowed uint8
+				//A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
+			})
+		}
+	}*/
 
 	gen.publish <- heatmap
 }

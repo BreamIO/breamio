@@ -41,7 +41,7 @@ func TestHeatmap(t *testing.T) {
 			R: 255,
 			G: 0,
 			B: 0,
-			A: 128,
+			A: 255,
 		},
 	}
 
