@@ -27,9 +27,9 @@ func TestCircle(t *testing.T) {
 	}
 
 	reg.Update(RegionUpdatePackage{
-		Name: "center",
+		Name:    "center",
 		NewName: strAddr("middle"),
-		X: f64Addr(0),
+		X:       f64Addr(0),
 	})
 
 	if reg.Name() != "middle" {

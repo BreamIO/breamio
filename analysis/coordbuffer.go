@@ -39,7 +39,6 @@ func NewCoordBuffer(coordSource <-chan *gr.ETData, interval time.Duration, desir
 // t sorted chronologically
 func (c *CoordBuffer) GetCoords() (coords chan *gr.ETData) {
 	coords = make(chan *gr.ETData)
-
 	c.refresh()
 
 	go func() {
@@ -58,9 +57,9 @@ func (c *CoordBuffer) add(coord *gr.ETData) {
 
 	c.end = (c.end + 1) % len(c.data)
 
-	// if c.end == c.start {
-	// 	c.start = (c.start + 1) % len(c.data)
-	// }
+	if c.end == c.start {
+		c.start = (c.start + 1) % len(c.data)
+	}
 }
 
 // Used to make sure the data you get is always fresh.

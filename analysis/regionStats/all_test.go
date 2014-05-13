@@ -2,14 +2,14 @@ package regionStats
 
 import (
 	"encoding/json"
-	"testing"
-	"time"
-	"log"
-	"math"
-	"github.com/maxnordlund/breamio/gorgonzola/mock"
 	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
+	"github.com/maxnordlund/breamio/gorgonzola/mock"
+	"log"
+	"math"
+	"testing"
+	"time"
 	//"strconv"
 )
 
@@ -105,7 +105,7 @@ func TestTimeToString(t *testing.T) {
 	}
 }
 
-func TestWithBeenleigh(t *testing.T){
+func TestWithBeenleigh(t *testing.T) {
 	bl := been.New(briee.New)
 	re := bl.RootEmitter()
 
@@ -117,24 +117,24 @@ func TestWithBeenleigh(t *testing.T){
 	tracker.Link(re)
 	//defer tracker.Close()
 
-	go bl.ListenAndServe();
+	go bl.ListenAndServe()
 	pub := re.Publish("new:regionStats", new(Config)).(chan<- *Config)
-	sub := re.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap);
+	sub := re.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap)
 	// Add new region
-	pub<-&Config{
-		Emitter: 256,
-		Duration: time.Second * 10,
-		Hertz: 40,
+	pub <- &Config{
+		Emitter:  256,
+		Duration: time.Second * 20,
+		Hertz:    40,
 	}
 
-	var dispatchAddRegion = func(Name string ,Type string, X float64, Y float64, Width float64, Height float64){
+	var dispatchAddRegion = func(Name string, Type string, X float64, Y float64, Width float64, Height float64) {
 		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
 			Name: Name,
 			Def: RegionDefinition{
-				Type: Type,
-				X: X,
-				Width: Width,
-				Y: Y,
+				Type:   Type,
+				X:      X,
+				Width:  Width,
+				Y:      Y,
 				Height: Height,
 			},
 		})
@@ -142,45 +142,45 @@ func TestWithBeenleigh(t *testing.T){
 
 	// name, type, X, Y, width, height
 	/*
-	for i:= 0; i<20; i++ {
-		dispatchAddRegion(strconv.Itoa(i),"circle", 0.5, 0.5, 1.0, 1.0)
-	}
+		for i:= 0; i<20; i++ {
+			dispatchAddRegion(strconv.Itoa(i),"circle", 0.5, 0.5, 1.0, 1.0)
+		}
 	*/
 
 	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
 
 	/*
-	re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
-		Name: "upper-left",
-		Def: RegionDefinition{
-			Type: "square",
-			Width: 0.5,
-		},
-	})
+		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+			Name: "upper-left",
+			Def: RegionDefinition{
+				Type: "square",
+				Width: 0.5,
+			},
+		})
 
-	re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
-		Name: "all",
-		Def: RegionDefinition{
-			Type: "square",
-			Width: 1.0,
-		},
-	})
+		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+			Name: "all",
+			Def: RegionDefinition{
+				Type: "square",
+				Width: 1.0,
+			},
+		})
 	*/
 	timeout := time.After(50000 * time.Millisecond)
 	omgquit := false
-	for !omgquit{
-		select{
-			case regiondata := <-sub:
-				log.Println(regiondata)
-				bytes, _ := json.Marshal(regiondata)
-				log.Println(string(bytes))
-			case <-timeout:
-				omgquit = true
+	for !omgquit {
+		select {
+		case regiondata := <-sub:
+			log.Println(regiondata)
+			bytes, _ := json.Marshal(regiondata)
+			log.Println(string(bytes))
+		case <-timeout:
+			omgquit = true
 		}
 	}
 
 	//re.Dispatch("shutdown", struct{}{});
-	log.Println("Done!");
+	log.Println("Done!")
 
 }
 

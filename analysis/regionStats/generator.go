@@ -43,7 +43,7 @@ func init() {
 // and terminates them once closed.
 type RegionRun struct {
 	generators map[int]*RegionStatistics
-	closeChan      chan struct{}
+	closeChan  chan struct{}
 }
 
 func (r *RegionRun) Run(logic beenleigh.Logic) {
@@ -78,8 +78,9 @@ type RegionStatistics struct {
 	coordinates *analysis.CoordBuffer
 	regions     []Region
 	publish     chan<- RegionStatsMap
-	closeChan       chan struct{}
+	closeChan   chan struct{}
 }
+
 func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
@@ -96,7 +97,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 	}
 
 	go func(rs *RegionStatistics) {
-		defer func(){
+		defer func() {
 			close(rs.publish)
 			ee.Unsubscribe("regionStats:addRegions", addRegionCh)
 			ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
@@ -224,35 +225,22 @@ func (rs RegionStatistics) Generate() {
 
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
-	enterTime := make([]*time.Time, len(stats))
-	var lastTimestamp time.Time
-	//lastTimestamp := make([]*time.Time, len(stats))
-	//log.Printf("Before length = %d\n", len(rs.regions))
-
+	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
 	for coord := range rs.getCoords() { // Alot of coords
 		for i, r := range rs.regions { // like one region
-			//log.Printf("length of array = %d, i = %d, len regions = %d\n",len(enterTime), i, len(rs.regions))
 
-			if enterTime[i] == nil && r.Contains(coord.Filtered) {
+			if prevTime[i] == nil && r.Contains(coord.Filtered) {
 				stats[i].Looks++
-				enterTime[i] = &coord.Timestamp
+				prevTime[i] = &coord.Timestamp
 
-			} else if enterTime[i] != nil && r.Contains(coord.Filtered){
-				// Wrong here! TODO
-				//stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*enterTime[i]))
+			} else if prevTime[i] != nil && r.Contains(coord.Filtered) {
+				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
+				prevTime[i] = &coord.Timestamp
 
-			} else if enterTime[i] != nil && !r.Contains(coord.Filtered) {
-				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*enterTime[i]))
-				//enterTime = nil
-				enterTime[i] = nil
+			} else if prevTime[i] != nil && !r.Contains(coord.Filtered) {
+				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
+				prevTime[i] = nil
 			}
-		}
-		lastTimestamp = coord.Timestamp
-	}
-
-	for i, stat := range stats {
-		if enterTime[i] != nil {
-			stat.TimeInside += InsideTime(lastTimestamp.Sub(*enterTime[i]))
 		}
 	}
 

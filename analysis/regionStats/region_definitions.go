@@ -6,10 +6,10 @@ type RegionDefinitionMap map[string]RegionDefinition
 
 type RegionDefinition struct {
 	// "square", "rectangle", "circle" or "ellipse"
-	Type   string  `json:type`
-	X      float64 `json:x`
-	Width  float64 `json:width`
-	Y      float64 `json:y`
+	Type  string  `json:type`
+	X     float64 `json:x`
+	Width float64 `json:width`
+	Y     float64 `json:y`
 	// optional for "square" and "circle" types
 	Height float64 `json:height`
 }

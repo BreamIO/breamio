@@ -156,9 +156,9 @@ func (e *Rectangle) Update(pack RegionUpdatePackage) {
 
 func (r Rectangle) Contains(coord gr.XYer) bool {
 	return r.point.x < coord.X() &&
-		coord.X() < (r.point.x + r.area.width) &&
+		coord.X() < (r.point.x+r.area.width) &&
 		r.point.y < coord.Y() &&
-		coord.Y() < (r.point.y + r.area.height)
+		coord.Y() < (r.point.y+r.area.height)
 }
 
 // Alias for a rectangle with equal width and height
