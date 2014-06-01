@@ -43,8 +43,7 @@
 			document.addEventListener("DOMContentLoaded", function main(event) {
 				console.log("DOM fully loaded and parsed")
 
-				var minimum,
-				front = {
+				var front = {
 					screen: document.querySelector("#front .screen"),
 					tracker: document.querySelector("#front .tracker")
 				}, top = {
@@ -69,24 +68,26 @@
 						}
 						return map
 					}, {})
-				}, test = {
-					// devicePixelRatio = physical pixels / device-independent pixels
-					width: window.screen.width * window.devicePixelRatio,
-					height: window.screen.height * window.devicePixelRatio
-				}, req = new XMLHttpRequest()
+				}, test = new (function Test() {
+					var dppx = 1, // dppx = physical pixels / device-independent pixels
+					    highPixelDensity = ([
+					    	"(min-resolution: 2dppx)",
+					    	"(-webkit-min-device-pixel-ratio: 1.5)",
+					    	"(-moz-min-device-pixel-ratio: 1.5)",
+					    	"(min-device-pixel-ratio: 1.5)"
+					    ]).join(",")
 
-				test.ratio = test.width / test.height
-				test.diagonal = Math.sqrt(Math.pow(test.width, 2) + Math.pow(test.height, 2))
-
-				req.onreadystatechange = function xhrReadyState() {
-					if(req.readyState !== 4) {
-						return
+					if (window.devicePixelRatio) {
+						dppx = window.devicePixelRatio
+					} else if (window.matchMedia && window.matchMedia(highPixelDensity).matches) {
+						dppx = 2
 					}
-					var screens = JSON.parse(req.responseText)
 
-				}
-				req.open("GET", "https://rawgit.com/LeaVerou/dpi/gh-pages/screens.json")
-				req.send()
+					this.width = window.screen.width * dppx
+					this.height = window.screen.height * dppx
+					this.ratio = this.width / this.height
+					this.diagonal = Math.sqrt(this.width * this.width + this.height * this.height)
+				})(), minimum
 
 				minimum = Object.keys(form.options).reduce(function findMinimum(left, right) {
 					var diff = {
@@ -96,8 +97,6 @@
 					return (diff.left < diff.right) ? left : right
 				})
 				form.ratio.selectedIndex = form.options[minimum].element.index
-
-				console.log("diagonal in px", test.diagonal)
 
 				window.data = {
 					front: front,
