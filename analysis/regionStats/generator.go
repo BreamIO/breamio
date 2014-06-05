@@ -84,9 +84,14 @@ type RegionStatistics struct {
 func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
+	// TODO Add start, stop, restart commands
 	addRegionCh := ee.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
 	updateRegionCh := ee.Subscribe("regionStats:updateRegion", new(RegionUpdatePackage)).(<-chan *RegionUpdatePackage)
 	removeRegionCh := ee.Subscribe("regionStats:removeRegion", make([]string, 0, 0)).(<-chan []string)
+
+	startch := ee.Subscribe("regionStats:start", struct{}{}).(<-chan struct{})
+	stopch := ee.Subscribe("regionStats:stop", struct{}{}).(<-chan struct{})
+	restartch := ee.Subscribe("regionStats:restart", struct{}{}).(<-chan struct{})
 
 	log := log.New(os.Stderr, "[ RegionStats ]", log.LstdFlags)
 
@@ -102,6 +107,9 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 			ee.Unsubscribe("regionStats:addRegions", addRegionCh)
 			ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
 			ee.Unsubscribe("regionStats:removeRegions", removeRegionCh)
+			ee.Unsubscribe("regionStats:start", startch)
+			ee.Unsubscribe("regionStats:stop", stopch)
+			ee.Unsubscribe("regionStats:restart", restartch)
 			ee.Unsubscribe("tracker:etdata", ch)
 		}()
 		for {
@@ -139,6 +147,27 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if err != nil {
 					log.Println(err.Error())
 				}
+
+			// start
+			case _, ok := <-startch:
+				if !ok {
+					return
+				}
+				rs.Start()
+
+			// stop
+			case _, ok := <-stopch:
+				if !ok {
+					return
+				}
+				rs.Stop()
+
+			// flush
+			case _, ok := <-restartch:
+				if !ok {
+					return
+				}
+				rs.Flush()
 
 			case <-time.After(time.Second):
 				rs.Generate()
@@ -226,7 +255,7 @@ func (rs RegionStatistics) Generate() {
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
-	for coord := range rs.getCoords() { // Alot of coords
+	for coord := range rs.getCoords() {        // Alot of coords
 		for i, r := range rs.regions { // like one region
 
 			if prevTime[i] == nil && r.Contains(coord.Filtered) {
@@ -251,6 +280,21 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	}
 
 	return retMap
+}
+
+// Start calls the Start method of coordhandler, enabling the collection of data
+func (rs RegionStatistics) Start() {
+	rs.coordinates.Start()
+}
+
+// Stop calls the Stop method of coordhandler, disabling the collection of data
+func (rs RegionStatistics) Stop() {
+	rs.coordinates.Stop()
+}
+
+// Restart calls the Restart method of coordhandler, flushing the collection of data
+func (rs RegionStatistics) Flush() {
+	rs.coordinates.Flush()
 }
 
 type RegionStatsMap map[string]RegionStatInfo
