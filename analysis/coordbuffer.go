@@ -11,24 +11,27 @@ type CoordBuffer struct {
 	desiredFreq uint
 	data        []gr.ETData
 	start, end  int
+	running     bool
 }
 
 // Create a new CoordBuffer
 // it implements the CoordinateHandler interface
 func NewCoordBuffer(coordSource <-chan *gr.ETData, interval time.Duration, desiredFreq uint) *CoordBuffer {
-	//TODO  start a go routine that adds coords from coordsource
 	c := &CoordBuffer{
 		interval:    interval,
 		desiredFreq: desiredFreq,
 		// One extra data to allow almost overlapping
-		data:  make([]gr.ETData, desiredFreq*uint(interval.Seconds())+1),
-		start: 0,
-		end:   0, //End is not included in the list
+		data:    make([]gr.ETData, desiredFreq*uint(interval.Seconds())+1),
+		start:   0,
+		end:     0, //End is not included in the list
+		running: true,
 	}
 
 	go func() {
 		for d := range coordSource {
-			c.add(d)
+			if c.running {
+				c.add(d)
+			}
 		}
 	}()
 
@@ -82,4 +85,22 @@ func (c *CoordBuffer) SetInterval(interval time.Duration) {
 func (c *CoordBuffer) SetDesiredFreq(desiredFreq uint) {
 	c.desiredFreq = desiredFreq
 	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds()))
+}
+
+//Empties the buffer. That is removing all cords.
+func (c *CoordBuffer) Flush() {
+	c.end = c.start
+}
+
+//Starts the buffer if it is stopped. Does nothing if it is running.
+func (c *CoordBuffer) Start() {
+	c.running = true
+}
+
+//Stops the buffer and flushes the data if the buffer is running. Else it does nothing.
+func (c *CoordBuffer) Stop() {
+	if c.running {
+		c.running = false
+		c.Flush()
+	}
 }
