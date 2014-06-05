@@ -184,48 +184,67 @@ func TestWithBeenleigh(t *testing.T) {
 
 }
 
-/*
-func TestWithBeenleigh(t *testing.T) {
+func TestBLwithBufferCommands(t *testing.T) {
 	bl := been.New(briee.New)
+	re := bl.RootEmitter()
 
-	_ = bl.RootEmitter()
-
-	ee2 := bl.CreateEmitter(777)
-
-	pub := ee.Publish("new:RegionStats", Config{}).(chan<- Config);
-	//pub := ee.Publish("new:RegionStats", Config{	777, time.Second * 5, 1	}).(chan<- Config)
-
-	reg := ee2.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
-
-	// ee2.Dispatch("regionStats:updateRegion", nil)
-
-	ee2.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
-		Name: "upper-left",
-		Def: RegionDefinition{
-			Type: "square",
-			Width: 0.5,
-		},
+	tracker := mock.New(func(q float64) (x, y float64) {
+		return 0.5 + 0.5*math.Cos(q), 0.5 + 0.5*math.Sin(q)
 	})
 
-	// startTime := time.Now()
+	tracker.Connect()
+	tracker.Link(re)
 
-	// ee2.Dispatch("tracker:etdata", &gr.ETData{
-	// 	Filtered:  gr.Point2D{0.1, 0.1},
-	// 	Timestamp: startTime,
-	// })
-
-	// ee2.Dispatch("tracker:etdata", &gr.ETData{
-	// 	Filtered:  gr.Point2D{1, 1},
-	// 	Timestamp: startTime.Add(time.Second),
-	// })
-
-	bytes, err := json.Marshal(<-reg)
-
-	if err != nil {
-		t.Fatal("No error should occur when Marshaling JSON.")
+	go bl.ListenAndServe()
+	pub := re.Publish("new:regionStats", new(Config)).(chan<- *Config)
+	sub := re.Subscribe("regionStats:regions", make(RegionStatsMap)).(<-chan RegionStatsMap)
+	// Add new region
+	pub <- &Config{
+		Emitter:  256, // Emitter ID
+		Duration: time.Second * 20,
+		Hertz:    40,
 	}
 
-	if string(bytes) != `{"upper-left":{"looks":1,"time":"00:01"}}` {
-		t.Fatal("Marshaling to JSON failed")
+	var dispatchAddRegion = func(Name string, Type string, X float64, Y float64, Width float64, Height float64) {
+		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
+			Name: Name,
+			Def: RegionDefinition{
+				Type:   Type,
+				X:      X,
+				Width:  Width,
+				Y:      Y,
+				Height: Height,
+			},
+		})
 	}
-}*/
+
+	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
+
+	// The generator should gathering data as default
+	regiondata := <-sub
+	log.Println(regiondata)
+
+	// Stop the gathering data
+	re.Dispatch("regionStats:stop", struct{}{})
+	timeout := time.After(1 * time.Millisecond)
+	select {
+	case regiondata = <-sub:
+		log.Printf("Error")
+	case <-timeout:
+		// This is the success case
+		break
+	}
+
+	// Start the gathering again
+	re.Dispatch("regionStats:start", struct{}{})
+	regiondata = <-sub
+	log.Println(regiondata)
+
+	// Restart/Flush
+	re.Dispatch("regionStats:restart", struct{}{})
+	regiondata = <-sub
+	log.Println(regiondata)
+
+	//re.Dispatch("shutdown", struct{}{});
+	log.Println("Done!")
+}
