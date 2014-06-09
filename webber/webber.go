@@ -1,6 +1,7 @@
 package webber
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
@@ -12,9 +13,13 @@ import (
 	"strconv"
 )
 
+const (
+	ListenAddress = ":8080"
+)
+
 var Root = "web"
 
-func getInstance() *Webber {
+func GetInstance() *Webber {
 	return webber
 }
 
@@ -80,7 +85,7 @@ func New() *Webber {
 
 func (web *Webber) ListenAndServe() error {
 	var err error
-	web.listener, err = net.Listen("tcp", ":1234")
+	web.listener, err = net.Listen("tcp", ListenAddress)
 	if err != nil {
 		return err
 	}
@@ -109,6 +114,19 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 func (web *Webber) HandleStatic(pattern, file string) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		http.ServeFile(w, req, file)
+	})
+}
+
+func (web *Webber) HandleWebSocket(pattern string, handler websocket.Handler) {
+	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		// Handle websocket requests separately, but still serve static files
+		if r.Header.Get("Upgrade") == "websocket" && r.Header.Get("Connection") == "Upgrade" {
+			web.logger.Printf("Websocket request recieved on %s.", pattern)
+			handler.ServeHTTP(w, r)
+		} else {
+			PublishError(w, Error{405, "Upgrade Required"})
+			return
+		}
 	})
 }
 

@@ -2,8 +2,9 @@ package access
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"github.com/maxnordlund/breamio/webber"
 	"log"
-	"net/http"
+	// "net/http"
 
 	"github.com/maxnordlund/breamio/aioli"
 	//"github.com/maxnordlund/breamio/beenleigh"
@@ -34,23 +35,14 @@ func (s *WSServer) Listen(ioman aioli.IOManager, logger *log.Logger) {
 		s.logger.Printf("Failed to get current working directory: %s\n", err)
 		return
 	}*/
-	wsHandler := websocket.Handler(s.handler)
-	//fileHandler := http.FileServer(http.Dir(path.Join(pwd, "static")))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Handle websocket requests separately, but still serve static files
-		if r.Header.Get("Upgrade") == "websocket" && r.Header.Get("Connection") == "Upgrade" {
-			logger.Println("Websocket request recieved.")
-			wsHandler.ServeHTTP(w, r)
-		} else {
-			logger.Println("Unknown Request type recieved.")
-		}
-	})
-	s.logger.Printf("Listening on %s.", wsJSONaddr)
+
+	webber.GetInstance().HandleWebSocket("/api/json", s.handler)
+	/*s.logger.Printf("Listening on %s.", wsJSONaddr)
 	err := http.ListenAndServe(wsJSONaddr, nil)
 	if err != nil {
 		logger.Printf("Failed to listen on TCP address %s: %s\n", tcpJSONaddr, err)
 		return
-	}
+	}*/
 }
 
 // handler is called for every established connection and will send data to the manager
