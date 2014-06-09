@@ -40,8 +40,10 @@ func init() {
 				log.Println(err)
 				PublishError(w, Error{500, "Template Parse Error"})
 			}
-
-			drawerTmpl.Execute(w, id) //TODO catch any errors.
+			drwr := Drawer{
+				Id: id,
+			}
+			drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 			return nil
 		}))
 		go webber.ListenAndServe()
@@ -113,6 +115,7 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 
 func (web *Webber) HandleStatic(pattern, file string) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
+		web.logger.Printf("Static request for %s.", pattern)
 		http.ServeFile(w, req, file)
 	})
 }

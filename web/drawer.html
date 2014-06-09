@@ -2,10 +2,16 @@
 	<head>
 		<title>Bream IO Eriver Tracker Drawer</title>
 		<script>
-			var size = {
-				x: 1024,
-				y: 600
-			};
+			document.addEventListener("DOMContentLoaded", function(event) {
+				"use strict"; // If you like all your code to be strict
+				window.drawer = document.getElementById("drawer")
+				window.drawer.width  = window.innerWidth*0.97;
+				window.drawer.height = window.innerHeight*0.97;
+				window.ctx = drawer.getContext("2d")
+				listen("ws://localhost:8080/api/json")
+				setInterval(fade, 10)
+			});
+
 			var socket;
 			function listen(addr) {
 				'use strict';
@@ -16,7 +22,7 @@
 					socket.send(JSON.stringify({
 						Event: "tracker:etdata",
 						Subscribe: true,
-						ID: {{.}}
+						ID: {{.Id}}
 						}));
 				};
 
@@ -47,11 +53,11 @@
 
 			function render(etdata) {
 				'use strict';
-				//ctx.clearRect(0,0,drawer.width,drawer.height)
-				
 				ctx.fillStyle = "#FF0000";
 				ctx.beginPath();
-				ctx.arc(size.x*etdata.Filtered.Xf,size.y*etdata.Filtered.Yf,10,0,2*Math.PI);
+				ctx.arc(drawer.width*etdata.Filtered.Xf,
+					drawer.height*etdata.Filtered.Yf,
+					10,0,2*Math.PI);
 				ctx.fill();
 			}
 
@@ -59,7 +65,6 @@
 				'use strict';
 				ctx.fillStyle = "rgba(255,255,255,0.1)"
 				ctx.fillRect(0,0,drawer.width,drawer.height)
-				//ctx.clearRect(0,0,drawer.width,drawer.height)
 			}
 		</script>
 	</head>
@@ -67,14 +72,4 @@
 <canvas id="drawer" width="1024" height="600">
 </canvas>
 </body>
-<script>
-	drawer = document.getElementById("drawer")
-	drawer.width  = window.innerWidth*0.97;
-	drawer.height = window.innerHeight*0.97;
-	size.x = drawer.width;
-	size.y = drawer.height;
-	ctx = drawer.getContext("2d")
-	listen("ws://localhost:8080/api/json")
-	setInterval(fade, 10)
-</script>
 </html>
