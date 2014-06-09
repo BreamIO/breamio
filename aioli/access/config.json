@@ -1,6 +1,6 @@
 {"Event": "test",
 	"Subscribe": false,
 	"ID": 0,
-	"Data": {},
+	"Data": {"Cats":true},
 	"Error": null
 }
