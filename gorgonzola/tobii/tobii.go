@@ -13,13 +13,20 @@ type GazeDriver struct{}
 
 func (GazeDriver) Create() (Tracker, error) {
 	tracker, err := gaze.AnyEyeTracker()
-	return &GazeTracker{tracker, make(chan struct{}), false, 0, 0}, err
+	return &GazeTracker{
+		tracker, 
+		make(chan struct{}),
+		nil,
+		false, 
+		0, 
+		0,
+	}, err
 }
 
 func (g GazeDriver) CreateFromId(id string) (Tracker, error) {
 	url := "tet-usb://" + id
 	tracker, err := gaze.EyeTrackerFromURL(url)
-	return &GazeTracker{tracker, make(chan struct{}), false, 0, 0}, err
+	return &GazeTracker{tracker, make(chan struct{}), nil, false, 0, 0}, err
 }
 
 func (GazeDriver) List() (res []string) {
@@ -37,16 +44,19 @@ func (GazeDriver) List() (res []string) {
 type GazeTracker struct {
 	gaze.EyeTracker
 	closer            chan struct{}
+	etdataCh          chan<- *ETData
 	calibrated        bool
 	calibrationPoints uint
 	validationPoints  uint
+	
 }
 
 func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 	ch := make(chan *ETData)
+	g.etdataCh = (chan<- *ETData)(ch)
 	errs := make(chan error, 1)
 
-	err := g.StartTracking(gobiiOnGazeCallback(ch))
+	err := g.StartTracking(gobiiOnGazeCallback(g.etdataCh))
 
 	if err != nil {
 		errs <- err
@@ -55,9 +65,8 @@ func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
 }
 
 func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
-	etdataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
+	g.etdataCh = ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	defer RemoveTracker(g)
-	defer close(etdataCh)
 
 	go g.setupCalibrationEvents(ee)
 	go func() {
@@ -72,7 +81,7 @@ func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 		close(g.closer)
 	}()
 
-	err := g.StartTracking(gobiiOnGazeCallback(etdataCh))
+	err := g.StartTracking(gobiiOnGazeCallback(g.etdataCh))
 	if err != nil {
 		errorCh := ee.Publish("tracker:error", NewError("")).(chan<- Error)
 		//defer close(errorCh)
@@ -82,6 +91,7 @@ func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 
 func (g *GazeTracker) Close() error {
 	close(g.closer)
+	defer close(g.etdataCh) //We want to do this after closing the tracker, but we want to return the error from closing. This saves on temporary variables.
 	return g.EyeTracker.Close()
 }
 
@@ -104,8 +114,10 @@ func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 			return //Bad data
 		}
 		etdata := new(ETData)
-		etdata.Filtered = ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
 		etdata.Timestamp = data.Timestamp()
+		etdata.Filtered = *ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
+		etdata.LeftGaze = ToPoint2D(data.Left().GazePointOnDisplay())
+		etdata.RightGaze = ToPoint2D(data.Right().GazePointOnDisplay())
 		//log.Println(etdata)
 		ch <- etdata
 	}

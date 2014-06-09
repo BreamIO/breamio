@@ -108,7 +108,10 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 		default:
 		}
 		x, y := m.f(m.t)
-		ch <- &ETData{Point2D{x, y}, t}
+		ch <- &ETData{
+			Filtered: Point2D{x, y}, 
+			Timestamp: t,
+		}
 		m.t += 0.01
 	}
 }
