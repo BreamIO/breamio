@@ -10,5 +10,8 @@ import (
 type CoordinateHandler interface {
 	GetCoords() (coords chan *gr.ETData) //Returns a channel containing all cordinates in the CordinateHandler sorted chronologically
 	SetInterval(interval time.Duration)
-	SetDesiredFreq(desiredFreq int)
+	SetDesiredFreq(desiredFreq uint)
+	FlushBuffer() //Flushes data (coords)
+	StartBuffer() //Makes sure the buffer is running but flushes no data(cords)
+	StopBuffer()  //Makes sure the buffer is stopped and flushes data(coords)
 }

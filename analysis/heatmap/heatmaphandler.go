@@ -1,4 +1,4 @@
-package statistics
+package heatmap
 
 import (
 	"image/color"
@@ -14,12 +14,4 @@ type HeatMapHandler interface {
 	SetResolution(width, height int)
 	SetDesiredFreq(desiredFreq int)
 	SetDuration(duration time.Duration)
-}
-
-//mapOutput is the channel where the heatmap should be delivered when generated
-//duration is the time interval that the heatmap should cover
-//desiredFreq is the upperbound of the frequency that heatmaphandler will accept
-//TODO add some way to tell it where it should listen
-func NewHeatMapHandler(ee /**EventEmitter*/ int, etID string, duration time.Duration, desiredFreq, resX, resY int) HeatMapHandler {
-	return NewHeatmap(ee, etID, duration, desiredFreq, resX, resY)
 }
