@@ -1,6 +1,15 @@
-{"Event": "test",
+{"Events": [
+	{"Event": "testEvent1",
 	"Subscribe": false,
 	"ID": 0,
-	"Data": {"Cats":true},
+	"Data": "{Key:0}",
 	"Error": null
+	},
+	{"Event": "testEvent2",
+		"Subscribe": false,
+		"ID": 0,
+		"Data": "{Key:1}",
+		"Error": null
+	}
+	]
 }
