@@ -14,20 +14,19 @@ func TestLoaderRegistration(t *testing.T) {
 }
 
 type testStruct struct{
-	Key int
+	Key string
 }
 
 func TestLoaderWithBL(t *testing.T) {
-	// This test is broken
 	if _, ok := servers["ConfigLoader"]; !ok {
 		t.Error("Server is not registred.")
 	}
 	bl := been.New(briee.New)
+	defer bl.Close()
 	re := bl.RootEmitter()
 	go bl.ListenAndServe()
 	sub := re.Subscribe("testEvent1", testStruct{}).(<-chan testStruct)
-	//registerLoader()
+	registerLoader()
 	data := <-sub
 	t.Logf("%v\n",data)
-	bl.Close()
 }

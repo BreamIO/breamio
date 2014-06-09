@@ -1,14 +1,14 @@
 {"Events": [
 	{"Event": "testEvent1",
 	"Subscribe": false,
-	"ID": 0,
-	"Data": "{Key:0}",
+	"ID": 256,
+	"Data": "{\"Key\":\"Str\"}",
 	"Error": null
 	},
 	{"Event": "testEvent2",
 		"Subscribe": false,
-		"ID": 0,
-		"Data": "{Key:1}",
+		"ID": 256,
+		"Data": "{Keyasdasd:\"asd\"}",
 		"Error": null
 	}
 	]
