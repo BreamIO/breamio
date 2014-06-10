@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
+	. "github.com/maxnordlund/breamio/aioli/client"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
 	"log"
