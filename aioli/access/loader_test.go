@@ -13,7 +13,7 @@ func TestLoaderRegistration(t *testing.T) {
 	}
 }
 
-type testStruct struct{
+type testStruct struct {
 	Key string
 }
 
@@ -28,5 +28,13 @@ func TestLoaderWithBL(t *testing.T) {
 	sub := re.Subscribe("testEvent1", testStruct{}).(<-chan testStruct)
 	registerLoader()
 	data := <-sub
-	t.Logf("%v\n",data)
+	if data.Key != "First" {
+		t.Fatal("Wrong")
+	}
+	data = <-sub
+	if data.Key != "Second" {
+		t.Fatal("Wrong")
+	}
+
+	//t.Logf("%v\n",data)
 }

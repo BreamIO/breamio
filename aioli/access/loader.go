@@ -1,25 +1,23 @@
 package access
 
 import (
+	"bytes"
 	"encoding/json"
-	"encoding/base64"
 	"github.com/maxnordlund/breamio/aioli"
 	"io/ioutil"
 	"log"
-	//"os"
-	"bytes"
-	//"strings"
 )
 
+// LoaderPkg is a ExtPkg but with readable Data
 type LoaderPkg struct {
-	Event     string // Name of the event
-	Subscribe bool   // Should the handler setup a subscription channel for this event and client.
-	ID        int    // Event Emitter identifier, 0 for broadcast
-	//Data      interface{} `json:",string"` // Encoded data of the underlying struct for the event.
-	Data interface{}
-	Error *aioli.Error // Meta-data to indicate errors in requests.
+	Event     string
+	Subscribe bool
+	ID        int
+	Data      interface{}
+	Error     *aioli.Error
 }
 
+// This is the structure the config file has
 type MultiLoaderPkg struct {
 	Events []LoaderPkg
 }
@@ -35,72 +33,33 @@ func registerLoader() {
 type ConfigLoader struct{}
 
 func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
-	content, _ := ioutil.ReadFile("config.json")
-	//logger.Println(string(content))
+	content, _ := ioutil.ReadFile("config.json") // TODO Constant filename
 
-	// Unmarshal file content
+	// Unmarshal the file content into a MultiLoaderPkg
 	var pkgSlice MultiLoaderPkg
 	json.Unmarshal(content, &pkgSlice)
-	//logger.Println(pkgSlice)
 
-	//events := make([]string, len(pkgSlice.Events))
-	//events := make([][]byte, len(pkgSlice.Events))
 	events := make([]byte, 0)
 
-	// Check the content of the slice, OK!
 	for _, pkgObj := range pkgSlice.Events {
-		//logger.Println(pkgObj)
+		dataField := []byte(pkgObj.Data.(string)) // Parse Data field as a byte
 
-		// Marshal the data field
-		dataFieldRaw, err := json.Marshal(pkgObj.Data)
-		if err != nil {
-			logger.Print(err)
-		}
-		dataField := []byte(base64.StdEncoding.EncodeToString(dataFieldRaw))
-
-		extPkg := aioli.ExtPkg {
-			Event: pkgObj.Event,
+		extPkg := aioli.ExtPkg{
+			Event:     pkgObj.Event,
 			Subscribe: pkgObj.Subscribe,
-			ID: pkgObj.ID,
-			Data: dataField,
-			Error: pkgObj.Error,
+			ID:        pkgObj.ID,
+			Data:      dataField,
+			Error:     pkgObj.Error,
 		}
 
 		byteExtPkg, err := json.Marshal(extPkg)
 		if err != nil {
 			logger.Print(err)
 		}
-		// [TESTING START]
-		logger.Print("Testing start")
-
-		var tmpExtPkg aioli.ExtPkg
-		err = json.Unmarshal(byteExtPkg, &tmpExtPkg)
-		logger.Print(byteExtPkg)
-		logger.Print(tmpExtPkg)
-
-		if err != nil {
-			logger.Print(err)
-		}
-
-		tmpstr, err := base64.StdEncoding.DecodeString(string(tmpExtPkg.Data))
-		// TODO Try to find out what is going wrong!!
-		//tmpdata := make([]byte, 256)
-		err = json.Unmarshal(tmpExtPkg.Data, &tmpdata)
-		if err != nil {
-			logger.Print(err)
-		}
-
-		logger.Print(tmpdata)
-
-		logger.Print("Testing end")
-		// [TESTING END]
-		//events[i] = byteExtPkg
-		events = append(events, byteExtPkg...)
+		events = append(events, byteExtPkg...) // Appending the encoded ExtPkgs
 	}
 
-	//buf := bytes.NewBuffer([]byte(strings.Join(events, "")))
 	buf := bytes.NewBuffer(events)
-	logger.Println(buf.String())
 	codec := aioli.NewCodec(buf)
 	go ioman.Listen(codec, logger)
 }

@@ -2,13 +2,13 @@
 	{"Event": "testEvent1",
 	"Subscribe": false,
 	"ID": 256,
-	"Data": "{\"Key\":\"Str\"}",
+	"Data": "{\"Key\":\"First\"}",
 	"Error": null
 	},
-	{"Event": "testEvent2",
+	{"Event": "testEvent1",
 		"Subscribe": false,
 		"ID": 256,
-		"Data": "{Keyasdasd:\"asd\"}",
+		"Data": "{\"Key\":\"Second\"}",
 		"Error": null
 	}
 	]
