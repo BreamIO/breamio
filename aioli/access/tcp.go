@@ -2,6 +2,7 @@ package access
 
 import (
 	"encoding/gob"
+	"io"
 	"log"
 	"net"
 
@@ -53,7 +54,6 @@ func (t TCPServer) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			return
 		}
 
-		codec := aioli.NewCodec(in)
 		go ioman.Listen(t.codecConstructor(in), logger)
 	}
 }

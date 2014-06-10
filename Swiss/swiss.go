@@ -1,7 +1,10 @@
 package main
 
 import (
-	_ "github.com/maxnordlund/breamio/aioli/access"
+	"log"
+	"os"
+	"os/signal"
+
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
@@ -9,7 +12,9 @@ import (
 )
 
 func main() {
+	log.Println("Bream IO EyeStream ETFastForward Server \"Swiss Cheese\"")
 	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt)
 
 	l := beenleigh.New(briee.New)
 	go func() {
@@ -18,4 +23,5 @@ func main() {
 	}()
 
 	l.ListenAndServe()
+	log.Println("Thanks to be of service!")
 }
