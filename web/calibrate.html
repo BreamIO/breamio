@@ -13,6 +13,13 @@
 		<style>
 			/* Main style for calibration application */
 
+			html, body, main {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
 			main {
 				position: relative;
 			}
@@ -188,7 +195,12 @@
 				}
 
 				function Server() {
-					this.socket = new WebSocket("ws:" + window.location.host)
+					this.socket = new WebSocket(([
+						(window.location.protocol === "http:") ? "ws": "wss",
+						"://",
+						window.location.host,
+						"/api/json"
+					]).join(""))
 					this.socket.onerror   = this._error.bind(this)
 					this.socket.onmessage = this._message.bind(this)
 					this.socket.onopen    = this._open.bind(this)

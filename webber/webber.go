@@ -5,6 +5,7 @@ import (
 	"fmt"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -139,7 +140,7 @@ func (web *Webber) addServings() {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {
 			log.Println(err)
-			PublishError(w, Error{500, "Template Parse Error"})
+			return PublishError(w, Error{500, "Template Parse Error"})
 		}
 		drwr := drawer{
 			Id: id,
@@ -160,8 +161,34 @@ func (web *Webber) addServings() {
 		return nil
 	}))
 	// web.HandleStatic("/stats", path.Join(Root, "stats.html"))
+	web.Handle("/calibrate", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
+		calibrateTmpl, err := template.ParseFiles(path.Join(Root, calibrate))
+		if err != nil {
+			log.Println(err)
+			return PublishError(w, Error{500, "Template Parse Error"})
+		}
+		normalizeSource, err := ioutil.ReadFile(path.Join(Root, normalize))
+		if err != nil {
+			log.Println(err)
+			return PublishError(w, Error{500, "File Read Error"})
+		}
+		cali := Calibrate{
+			Id: id,
+			EyeTrackers: map[int]string{
+				1: "done",
+				2: "",
+				3: "in-progress",
+				4: "",
+				5: "",
+			},
+			Normalize: template.CSS(string(normalizeSource)),
+		}
+		calibrateTmpl.Execute(w, cali)
+		return nil
+	}))
 }
 
-func PublishError(w http.ResponseWriter, e Error) {
+func PublishError(w http.ResponseWriter, e Error) *Error {
 	http.Error(w, e.Cause, e.StatusCode)
+	return &e
 }
