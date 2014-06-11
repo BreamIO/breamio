@@ -10,7 +10,7 @@ import (
 	"github.com/maxnordlund/breamio/briee"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
 	//_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
-	"github.com/maxnordlund/breamio/swiss/spreader"
+	"github.com/maxnordlund/breamio/swiss/proxy"
 )
 
 func main() {
