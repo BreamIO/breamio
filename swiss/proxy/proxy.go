@@ -43,8 +43,10 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 		defer logic.RootEmitter().Unsubscribe("new:etlistener", newListenerChan)
 		select {
 		case <-closer:
+			logger.Printf("Shutting down")
 			return
 		case event := <-newListenerChan:
+			logger.Printf("Starting a listener to emitter:", event.Emitter)
 			newListener(event.Emitter, logic.CreateEmitter(event.Emitter), c, closer)
 		}
 	}
