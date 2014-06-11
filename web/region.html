@@ -1,0 +1,25 @@
+<html>
+	<head>
+		<style>
+			.stats {
+				background: #000;
+				text: #FFF;
+			}
+		</style>
+	</head>
+	<body>
+	<table class="stats">
+		<thead>
+			<tr><th>{{.Player}}</th></tr>
+		</thead>
+		<tbody>
+			{{range .Regions}}
+			<tr>
+				<th>{{.Name}}</th>
+				<td>{{.Value}}</td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+	</body>
+</html>
