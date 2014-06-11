@@ -63,7 +63,8 @@ func (f PublisherFunc) WebPublish(id int, w http.ResponseWriter, req *http.Reque
 }
 
 type Webber struct {
-	mux      *http.ServeMux
+	mux *http.ServeMux
+
 	logger   *log.Logger
 	listener net.Listener
 }
@@ -133,18 +134,19 @@ func (web *Webber) Close() error {
 func (web *Webber) addServings() {
 	web.HandleStatic("/control", path.Join(Root, "control.html"))
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
-	web.Handle("/drawer", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
-		drawerTmpl, err := template.ParseFiles(path.Join(Root, drawer))
+	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
+		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {
 			log.Println(err)
 			PublishError(w, Error{500, "Template Parse Error"})
 		}
-		drwr := Drawer{
+		drwr := drawer{
 			Id: id,
 		}
 		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
+	web.Handle("/stats", path.Join(Root, "stats.html"))
 }
 
 func PublishError(w http.ResponseWriter, e Error) {
