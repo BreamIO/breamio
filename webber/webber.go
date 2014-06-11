@@ -34,18 +34,8 @@ func init() {
 		webber.logger.Println("Initializing Webserver subsystem.")
 		//drawerTmpl := template.Must(template.ParseFiles(path.Join(Root, drawer)))
 
-		webber.Handle("/drawer", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
-			drawerTmpl, err := template.ParseFiles(path.Join(Root, drawer))
-			if err != nil {
-				log.Println(err)
-				PublishError(w, Error{500, "Template Parse Error"})
-			}
-			drwr := Drawer{
-				Id: id,
-			}
-			drawerTmpl.Execute(w, drwr) //TODO catch any errors.
-			return nil
-		}))
+		webber.addServings()
+
 		go webber.ListenAndServe()
 		<-closer
 		webber.logger.Println("Stopping Webserver subsystem")
@@ -138,6 +128,23 @@ func (web *Webber) Close() error {
 		return web.listener.Close()
 	}
 	return nil
+}
+
+func (web *Webber) addServings() {
+	web.HandleStatic("/control", path.Join(Root, "control.html"))
+	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
+	web.Handle("/drawer", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
+		drawerTmpl, err := template.ParseFiles(path.Join(Root, drawer))
+		if err != nil {
+			log.Println(err)
+			PublishError(w, Error{500, "Template Parse Error"})
+		}
+		drwr := Drawer{
+			Id: id,
+		}
+		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
+		return nil
+	}))
 }
 
 func PublishError(w http.ResponseWriter, e Error) {
