@@ -25,15 +25,16 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 	MainServer := fmt.Sprintf("%s:%d",*mainServerAddr, *mainServerPort)
 	logger := log.New(os.Stdout, "[Distributor] ", log.LstdFlags)
 	conn, err := net.Dial("tcp", MainServer)
-	defer func() {
-		conn.Close()
-		logger.Println("Shutting down.")
-	}()
 
 	if err != nil {
 		logger.Printf("Unable to dial %s.", MainServer)
 		return
 	}
+
+	defer func() {
+		conn.Close()
+		logger.Println("Shutting down.")
+	}()
 
 	c := client.NewClient(conn)
 	newListenerChan := logic.RootEmitter().Subscribe("new:etlistener", bl.Spec{}).(<-chan bl.Spec)
