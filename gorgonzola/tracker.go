@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/maxnordlund/breamio/briee"
 )
@@ -69,11 +68,6 @@ type Tracker interface {
 
 	//Closes the tracker connection and performs any other clean up necessary in the driver.
 	io.Closer
-}
-
-type ETData struct {
-	Filtered  XYer
-	Timestamp time.Time
 }
 
 //Lists all trackers reported by all trackers

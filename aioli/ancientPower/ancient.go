@@ -2,16 +2,56 @@ package ancientPower
 
 import (
 	"encoding/binary"
-	"log"
-	"net"
-	"os"
-	"io"
-	"math"
+	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/gorgonzola"
+	"io"
+	"log"
+	"math"
+	"net"
+	"os"
 )
 
 var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
+
+func init() {
+	bl.Register(&AncientRun{make(chan struct{})})
+}
+
+type AncientRun struct {
+	closing chan struct{}
+}
+
+func (ar *AncientRun) Run(logic bl.Logic) {
+	logger.Println("Initializing AncientPower")
+	ar.closing = make(chan struct{})
+	newCh := logic.RootEmitter().Subscribe("new:ancientpower", bl.Spec{}).(<-chan bl.Spec)
+	defer logic.RootEmitter().Unsubscribe("new:ancientpower", newCh)
+
+	for {
+		select {
+		case event := <-newCh:
+			New(logic, event)
+		case <-ar.closing:
+			return
+		}
+	}
+
+}
+
+func (ar *AncientRun) Close() error {
+	close(ar.closing)
+	return nil
+}
+
+func New(logic bl.Logic, spec bl.Spec) {
+	ee := logic.CreateEmitter(spec.Emitter)
+	//addr := ":303" + strconv.Itoa(spec.Emitter)
+	addr := spec.Data
+	go ListenAndServe(ee, byte(spec.Emitter), addr)
+	logger.Printf("Created a new AncientPower Server address %s on EE %d.\n", addr, spec.Emitter)
+	return
+}
 
 func ListenAndServe(ee briee.EventEmitter, id byte, addr string) {
 	ln, err := net.Listen("tcp", addr)
@@ -35,23 +75,23 @@ var bufferQueue = make(chan []byte, 10)
 
 func take() (buffer []byte) {
 	select {
-		case buffer = <-bufferQueue:
-		default:
-			buffer = make([]byte, 64) //Make new one.
+	case buffer = <-bufferQueue:
+	default:
+		buffer = make([]byte, 64) //Make new one.
 	}
 	return
 }
 
 func giveBack(buffer []byte) {
 	select {
-		case bufferQueue <- buffer[:cap(buffer)]: //Return for recycling.
-		default: // Drop it.
+	case bufferQueue <- buffer[:cap(buffer)]: //Return for recycling.
+	default: // Drop it.
 	}
 }
 
 func (c *client) handle() {
 	defer c.Close() //Make sure connection is closed before leaving.
-	
+
 	go func() {
 		etCh := c.ee.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData)
 		defer c.ee.Unsubscribe("tracker:etdata", etCh)
@@ -64,27 +104,32 @@ func (c *client) handle() {
 				binary.BigEndian.PutUint64(buffer[9:17], math.Float64bits(data.Filtered.Y()))
 				binary.BigEndian.PutUint64(buffer[17:25], uint64(data.Timestamp.Unix()))
 				if _, err := c.Write(buffer[:25]); err != nil {
-					return;
+					return
 				}
 			}
 		}
-		c.Close(); // Basically signal client that it is done.
+		c.Close() // Basically signal client that it is done.
 	}()
 	for {
 		buffer := take()
 		defer giveBack(buffer)
-		
+
 		//Use buffer
 		_, err := c.Read(buffer[:1])
 		if err != nil {
 			return
 		}
 		switch buffer[0] {
-			case 1: c.getPoints() //Request ETData
-			case 7: c.name() //Name
-			case 8: c.fps() //FPS
-			case 9: c.keepalive() //KeepAlive
-			default: return //Invalid package. Drop client.
+		case 1:
+			c.getPoints() //Request ETData
+		case 7:
+			c.name() //Name
+		case 8:
+			c.fps() //FPS
+		case 9:
+			c.keepalive() //KeepAlive
+		default:
+			return //Invalid package. Drop client.
 		}
 	}
 }
@@ -124,7 +169,7 @@ func (c *client) keepalive() {
 
 type client struct {
 	io.ReadWriteCloser
-	ee briee.EventEmitter
+	ee          briee.EventEmitter
 	subscribing bool
-	id byte
+	id          byte
 }

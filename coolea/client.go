@@ -25,14 +25,16 @@ func main() {
 }*/
 
 type Client struct {
-	ch chan aioli.ExtPkg
+	out chan aioli.ExtPkg
+	in chan aioli.ExtPkg
 	wg sync.WaitGroup
-	io.WriteCloser
+	io.ReadWriteCloser
 }
 
-func NewClient(conn io.WriteCloser) *Client {
-	ch := make(chan aioli.ExtPkg)
-	c := &Client{ch, sync.WaitGroup{}, conn}
+func NewClient(conn io.ReadWriteCloser) *Client {
+	out := make(chan aioli.ExtPkg)
+	in := make(chan aioli.ExtPkg)
+	c := &Client{out, in, sync.WaitGroup{}, conn}
 	go c.run()
 	return c
 }
@@ -40,9 +42,22 @@ func NewClient(conn io.WriteCloser) *Client {
 func (c *Client) run() {
 	defer c.Close()
 	enc := json.NewEncoder(c)
-	for pkg := range c.ch {
+	dec := json.NewDecoder(c)
+	go func() {
+		for {
+			var pkg aioli.ExtPkg
+			err := dec.Decode(pkg)
+			if err != nil {
+				return
+			}
+			c.in <- pkg
+		}
+	}()
+	
+	for pkg := range c.out {
 		if err := enc.Encode(pkg); err != nil {
 			log.Println("Error writing package to Writer:", err)
+			return
 		}
 		c.wg.Done()
 	}
@@ -50,7 +65,11 @@ func (c *Client) run() {
 
 func (c *Client) Send(pkg aioli.ExtPkg) {
 	c.wg.Add(1)
-	c.ch <- pkg
+	c.out <- pkg
+}
+
+func (c *Client) Recieve() (pkg aioli.ExtPkg) {
+	return <-c.in
 }
 
 func (c *Client) Wait() {

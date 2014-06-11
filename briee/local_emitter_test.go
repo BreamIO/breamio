@@ -250,7 +250,7 @@ func TestCloseEE(t *testing.T) {
 	}
 }
 
-func TestOnOff(t *testing.T){
+func TestOnOff(t *testing.T) {
 	ee := New()
 	// Will start a subscriber + OH
 	subs := ee.Subscribe("A", A{}).(<-chan A)
@@ -281,4 +281,31 @@ func TestOnOff(t *testing.T){
 	}
 
 	ee.Wait()
+}
+
+func BenchmarkSubUnsub(b *testing.B){
+	ee := New()
+	subs := ee.Subscribe("event", struct{}{}).(<-chan struct{})
+	publ := ee.Publish("event", struct{}{}).(chan<- struct{})
+	done := make(chan bool)
+
+	sendPing := func(){
+		publ<-struct{}{}
+		done<-true
+	}
+
+	recvPing := func(){
+		<-done
+		<-subs
+	}
+
+	go sendPing()
+	recvPing()
+
+	for i := 0; i<b.N; i++ {
+		ee.Unsubscribe("event", subs)
+		subs = ee.Subscribe("event", struct{}{}).(<-chan struct{})
+		go sendPing()
+		recvPing()
+	}
 }

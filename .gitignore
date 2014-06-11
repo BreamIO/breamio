@@ -24,4 +24,10 @@ _testmain.go
 # Vim swap files
 *.swp
 
+*sublime*
+
 /statistics statistics
+
+# On-file databases
+*.db
+*.sqlite3

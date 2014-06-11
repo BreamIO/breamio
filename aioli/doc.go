@@ -3,19 +3,17 @@ Package aioli declares and implements the IOManager interface. The package is us
 
 Uses the event emitter package briee:
 		import "github.com/maxnordlund/breamio/briee"
+		import "github.com/maxnordlund/breamio/beenleigh"
 
 Example use:
 		ee := briee.New()
 		go ee.Run()
 
-		ioman := New()
-		go ioman.Run()
+		bl := beenleigh.New(briee.New) //Something to keep track of emitters.
+		bl.ListenAndServe()
 
-		// Add event emitter
-		err := ioman.AddEE(&ee, 1)
-		if err != nil {
-			fmt.Printf("Unable to add event emitter")
-		}
+		ioman := New(bl)
+		go ioman.Run()
 
 		// Create decoder of io.Reader
 		var network bytes.Buffer
