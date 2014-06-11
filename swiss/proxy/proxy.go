@@ -44,8 +44,7 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 		case <-closer:
 			return
 		case event := <-newListenerChan:
-			l := newListener(event.Emitter, logic.CreateEmitter(event.Emitter), c, closer)
-
+			newListener(event.Emitter, logic.CreateEmitter(event.Emitter), c, closer)
 		}
 	}
 }
