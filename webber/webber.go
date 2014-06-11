@@ -31,14 +31,14 @@ func init() {
 	}
 
 	bl.Register(bl.NewRunHandler(func(logic bl.Logic, closer <-chan struct{}) {
-		webber.logger.Println("Initializing Webserver subsystem.")
+		webber.logger.Println("Initializing Webserver")
 		//drawerTmpl := template.Must(template.ParseFiles(path.Join(Root, drawer)))
 
 		webber.addServings()
 
 		go webber.ListenAndServe()
 		<-closer
-		webber.logger.Println("Stopping Webserver subsystem")
+		webber.logger.Println("Stopping Webserver")
 		webber.Close()
 	}))
 }
@@ -81,6 +81,7 @@ func (web *Webber) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
+	web.logger.Printf("Listening on %s", ListenAddress)
 	http.Serve(web.listener, web.mux)
 	return nil
 }

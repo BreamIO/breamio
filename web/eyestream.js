@@ -1,69 +1,75 @@
-EyeStream = function() {
-	var socket
-	var events = {}
-
-	var onmessage = function (message) {
-		'use strict';
-		var event = JSON.parse(message.data);
-		// console.log(event);
-		if (event.Error !== undefined && event.Error !== null) {
-			console.log(event.Error);
-			return;
-		}
-		
-		var data = JSON.parse(atob(event.Data));
-		if (events[event.Event] !== undefined) {
-			events[event.Event](event)
-		}
-	};
-
-	var onopen = function() {
-		'use strict';
-		console.log("EyeStream socket opened.");
+(function(exports, undefined) {
+	"use strict";
+	var EyeStream = function EyeStream(addr) {
+		this.events = {}
+		this.socket = new WebSocket(addr)
+		this.socket.onerror = this.error.bind(this)
+		this.socket.onopen = this.opened.bind(this)
+		this.socket.onmessage = this.received.bind(this)
+		this.socket.onclose = this.closed.bind(this)
 	}
 
-	return {
-		ROOT: 256,
-		connect: function(addr) {
-			'use strict';
-			socket = new WebSocket(addr);
-			socket.onopen = onopen
+	EyeStream.ROOT = 256
 
-			socket.onmessage = onmessage
+	EyeStream.prototype.error = function error(event) {
+		console.error("WebSocket error:", event)
+		this.socket.close(4000, event.message)
+	}
 
-			socket.onclose = function() {
-				'use strict';
-				console.log("EyeStream socket closed.")
-			};
-		},
+	EyeStream.prototype.opened = function opened(event) {
+		console.info("WebSocket opened:", event)
+	}
 
-		subscribe: function(event) {
-			if (socket === undefined) {
-				console.log("Socket is not initialized. Did you forget to connect first?")
-			}
+	EyeStream.prototype.closed = function closed(event) {
+		console.warn("WebSocket closed:", event)
+	}
 
-			socket.send(JSON.stringify({
-				Event: event,
-				Subscribe: true,
-				ID: emitter
-			}));
-		},
+	EyeStream.prototype.received = function received(event) {
+		var data, handler, message = JSON.parse(event.data)
+		if (message.Error !== undefined && message.Error !== null) {
+			console.error("Received server error:", event.Error)
+			return
+		}
 
-		command: function(event, emitter, data) {
-			if (socket === undefined) {
-				console.log("Socket is not initialized. Did you forget to connect first?")
-			}
+		try {
+			data = JSON.parse(atob(message.Data))
+		} catch (err) {
+			console.error("Received parse error:", err)
+			return
+		}
 
-			console.log({
-				raw: JSON.stringify(data),
-				btoa: atob(btoa(JSON.stringify(data))),
-			})
-
-			socket.send(JSON.stringify({
-				Event: event,
-				ID: emitter,
-				Data: btoa(JSON.stringify(data))
-			}));
+		handler = this.events[message.Event]
+		if (typeof handler === "function") {
+			handler(data)
 		}
 	}
-}()
+
+	EyeStream.prototype.subscribe = function subscribe(event, emitter, handler) {
+		console.info("Subscribe to:", event, "@", emitter)
+		this.events[event] = handler
+		socket.send(JSON.stringify({
+			Event: event,
+			Subscribe: true,
+			ID: emitter
+		}));
+	}
+
+	EyeStream.prototype.command = function command(event, emitter, data) {
+		var pkg = {
+			Event: event,
+			ID: emitter,
+			Data: data
+		}
+		console.info("Sending command:", pkg)
+		pkg.Data = btoa(JSON.stringify(data))
+		socket.send(JSON.stringify(pkg));
+	}
+
+	// ws://localhost:8080/api/json
+	exports.EyeStream = new EyeStream(([
+		(exports.location.protocol === "http:") ? "ws": "wss",
+		"://",
+		exports.location.host,
+		"/api/json"
+	]).join(""))
+})(window)

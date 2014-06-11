@@ -24,7 +24,7 @@ func init() {
 
 func accessRun(logic beenleigh.Logic, closeCh <-chan struct{}) {
 	ioman := aioli.New(logic)
-	log.Println("Starting ExternalAccessService subsystem.")
+	log.Println("Starting ExternalAccessService")
 	go ioman.Run()
 	go func() {
 		<-closeCh
