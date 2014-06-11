@@ -1,14 +1,6 @@
 (function(exports, undefined) {
 	"use strict";
-	var ROOT = 256
-	var EyeStream = function EyeStream() {
-		// ws://localhost:8080/api/json
-		var addr = ([
-			(exports.location.protocol === "http:") ? "ws": "wss",
-			"://",
-			exports.location.host,
-			"/api/json"
-		]).join("")
+	var EyeStream = function EyeStream(addr) {
 		this.events = {}
 		this.socket = new WebSocket(addr)
 		this.socket.onerror = this.error.bind(this)
@@ -16,6 +8,8 @@
 		this.socket.onmessage = this.received.bind(this)
 		this.socket.onclose = this.closed.bind(this)
 	}
+
+	EyeStream.ROOT = 256
 
 	EyeStream.prototype.error = function error(event) {
 		console.error("WebSocket error:", event)
@@ -71,5 +65,11 @@
 		socket.send(JSON.stringify(pkg));
 	}
 
-	exports.EyeStream = new EyeStream()
+	// ws://localhost:8080/api/json
+	exports.EyeStream = new EyeStream(([
+		(exports.location.protocol === "http:") ? "ws": "wss",
+		"://",
+		exports.location.host,
+		"/api/json"
+	]).join(""))
 })(window)
