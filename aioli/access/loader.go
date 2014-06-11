@@ -6,6 +6,8 @@ import (
 	"github.com/maxnordlund/breamio/aioli"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 )
 
 // LoaderPkg is a ExtPkg but with readable Data
