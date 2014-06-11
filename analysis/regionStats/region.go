@@ -65,7 +65,7 @@ func newRegion(name string, rd RegionDefinition) (Region, error) {
 	switch rd.Type {
 	case "square":
 		return newSquare(name, rd.X, rd.Y, rd.Width), nil
-	case "rect":
+	case "rectangle":
 		return newRectangle(name, rd.X, rd.Y, rd.Width, rd.Height), nil
 	case "ellipse":
 		return newEllipse(name, rd.X, rd.Y, rd.Width, rd.Height), nil
