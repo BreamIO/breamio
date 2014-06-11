@@ -4,7 +4,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"flag"
 
+	"github.com/maxnordlund/breamio/swiss/spreader"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
@@ -13,6 +15,9 @@ import (
 
 func main() {
 	log.Println("Bream IO EyeStream ETFastForward Server \"Swiss Cheese\"")
+
+	flag.Parse()
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt)
 

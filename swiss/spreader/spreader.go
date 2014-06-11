@@ -10,17 +10,18 @@ import (
 	"log"
 	"net"
 	"os"
+	"flag"
 )
 
-const (
-	MainServer = "localhost:4041"
-)
+var mainServerAddr = flag.String("ip", "localhost", "This is the ip that the main server is located on.")
+var mainServerPort = flag.Int("port", 4041, "This is the port that the main server is listening to.")
 
 func init() {
 	bl.Register(bl.NewRunHandler(startup))
 }
 
 func startup(logic bl.Logic, closer <-chan struct{}) {
+	MainServer := fmt.Sprintf("%s:%ds",mainServerAddr, mainServerPort)
 	logger := log.New(os.Stdout, "[Distributor] ", log.LstdFlags)
 	conn, err := net.Dial("tcp", MainServer)
 	defer func() {
