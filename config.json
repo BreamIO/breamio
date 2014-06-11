@@ -1,15 +1,62 @@
 {"Events": [
+	
+	{
+		"Event": "new:tracker",
+	 	"ID": 256,
+	 	"Data": {
+	 		"Emitter": 1,
+	 		"Data": "tobii://REXDL-010103247001"
+	 	}
+	},
+	{
+		"Event": "new:tracker",
+	 	"ID": 256,
+	 	"Data": {
+	 		"Emitter": 2,
+	 		"Data": "tobii://REXDL-010104627253"
+	 	}
+	},
+
 	{
 		"Event": "new:regionStats",
 		"ID": 256,
 		"Data": {
-			"Emitter":0, 
-			"Duration": 30000000000, 
-			"Hertz": 40
+			"Emitter": 1, 
+			"Duration": "60s", 
+			"Hertz": 40,
+			"GenerationInterval": "10s"
 		}
 	},
-	{"Event": "regionStats:addRegions",
+
+	{
+		"Event": "new:regionStats",
 		"ID": 256,
+		"Data": {
+			"Emitter": 2, 
+			"Duration": "60s", 
+			"Hertz": 40,
+			"GenerationInterval": "10s"
+		}
+	},
+
+
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"screen", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 1.0,
+				"Y": 0.0,
+				"Height": 1.0
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
 		"Data": {
 			"Name":"top-left-rectangle", 
 			"Def":{
@@ -21,8 +68,52 @@
 			}
 		}
 	},
-	{"Event": "regionStats:addRegions",
-		"ID": 256,
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"bottom-right-circle",
+			"Def":{
+				"Type":"circle",
+				"X": 0.5,
+				"Width": 0.5,
+				"Y": 0.5,
+				"Height": 0.5
+			}
+		}
+	},
+
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 2,
+		"Data": {
+			"Name":"screen", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 1.0,
+				"Y": 0.0,
+				"Height": 1.0
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 2,
+		"Data": {
+			"Name":"top-left-rectangle", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 0.5,
+				"Y": 0.0,
+				"Height": 0.5
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 2,
 		"Data": {
 			"Name":"bottom-right-circle",
 			"Def":{

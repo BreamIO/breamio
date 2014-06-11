@@ -17,7 +17,7 @@ func TestStatisticsGeneration(t *testing.T) {
 	ee := briee.New()
 	defer ee.Close()
 
-	rs := New(ee, 5*time.Second, 1)
+	rs := New(ee, "5s", 1, "1s")
 
 	err := rs.AddRegions(RegionDefinitionMap{
 		"middle": RegionDefinition{
@@ -123,7 +123,7 @@ func TestWithBeenleigh(t *testing.T) {
 	// Add new region
 	pub <- &Config{
 		Emitter:  256,
-		Duration: time.Second * 20,
+		Duration: "20s",
 		Hertz:    40,
 	}
 
@@ -201,7 +201,7 @@ func TestBLwithBufferCommands(t *testing.T) {
 	// Add new region
 	pub <- &Config{
 		Emitter:  256, // Emitter ID
-		Duration: time.Second * 20,
+		Duration: "20s",
 		Hertz:    40,
 	}
 
