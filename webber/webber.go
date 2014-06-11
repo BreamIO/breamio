@@ -146,7 +146,7 @@ func (web *Webber) addServings() {
 		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
-	web.Handle("/stats", path.Join(Root, "stats.html"))
+	web.HandleStatic("/stats", path.Join(Root, "stats.html"))
 }
 
 func PublishError(w http.ResponseWriter, e Error) {
