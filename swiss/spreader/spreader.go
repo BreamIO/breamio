@@ -39,7 +39,7 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 	newListenerChan := logic.RootEmitter().Subscribe("new:etlistener", bl.Spec{}).(<-chan bl.Spec)
 
 	for {
-		defer listener.ee.Unsubscribe("new:etlistener", newListenerChan)
+		defer logic.RootEmitter().Unsubscribe("new:etlistener", newListenerChan)
 		select {
 		case <-closer:
 			return
