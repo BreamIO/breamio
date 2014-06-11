@@ -1,15 +1,11 @@
 {"Events": [
 	{"Event": "testEvent1",
-	"Subscribe": false,
 	"ID": 256,
-	"Data": "{\"Key\":\"First\"}",
-	"Error": null
+	"Data": "{\"Key\":\"First\"}"
 	},
 	{"Event": "testEvent1",
-		"Subscribe": false,
 		"ID": 256,
-		"Data": "{\"Key\":\"Second\"}",
-		"Error": null
+		"Data": "{\"Key\":\"Second\"}"
 	}
 	]
 }

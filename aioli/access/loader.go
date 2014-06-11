@@ -11,10 +11,8 @@ import (
 // LoaderPkg is a ExtPkg but with readable Data
 type LoaderPkg struct {
 	Event     string
-	Subscribe bool
 	ID        int
 	Data      interface{}
-	Error     *aioli.Error
 }
 
 // This is the structure the config file has
@@ -46,10 +44,8 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 
 		extPkg := aioli.ExtPkg{
 			Event:     pkgObj.Event,
-			Subscribe: pkgObj.Subscribe,
 			ID:        pkgObj.ID,
 			Data:      dataField,
-			Error:     pkgObj.Error,
 		}
 
 		byteExtPkg, err := json.Marshal(extPkg)
