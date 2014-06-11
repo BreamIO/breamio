@@ -42,12 +42,15 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 
 	// Unmarshal the file content into a MultiLoaderPkg
 	var pkgSlice MultiLoaderPkg
-	json.Unmarshal(content, &pkgSlice)
+	err := json.Unmarshal(content, &pkgSlice)
+	if err != nil {
+		logger.Println(err)
+	}
 
 	for _, pkgObj := range pkgSlice.Events {
 		dataField, err := json.Marshal(pkgObj.Data)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Println(err)
 		}
 
 		extPkg := aioli.ExtPkg{
