@@ -47,6 +47,8 @@ type RegionRun struct {
 }
 
 func (r *RegionRun) Run(logic beenleigh.Logic) {
+	log := log.New(os.Stderr, "[ RegionRun ]", log.LstdFlags)
+	log.Println("Registering in EE")
 	var newChan <-chan *Config
 	var ee briee.EventEmitter
 
@@ -56,9 +58,11 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 	for {
 		select {
 		case rc := <-newChan:
+			log.Println("Starting a new generator for emitter:", rc.Emitter)
 			r.generators[rc.Emitter] =
 				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz)
 		case <-r.closeChan:
+			log.Println("Shutting down")
 			break
 		}
 	}
@@ -98,6 +102,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 		coordinates: analysis.NewCoordBuffer(ch, duration, hertz),
 		regions:     make([]Region, 0),
 		publish:     ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
+		closeChan:   make(chan struct{}),
 	}
 
 	go func(rs *RegionStatistics) {
