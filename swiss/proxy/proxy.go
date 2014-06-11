@@ -22,7 +22,7 @@ func init() {
 }
 
 func startup(logic bl.Logic, closer <-chan struct{}) {
-	MainServer := fmt.Sprintf("%s:%ds",mainServerAddr, mainServerPort)
+	MainServer := fmt.Sprintf("%s:%d",*mainServerAddr, *mainServerPort)
 	logger := log.New(os.Stdout, "[Distributor] ", log.LstdFlags)
 	conn, err := net.Dial("tcp", MainServer)
 	defer func() {
