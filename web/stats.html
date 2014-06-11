@@ -3,22 +3,27 @@
 		<style>
 			.stats {
 				background: #000;
-				text: #FFF;
+				color: #FFF;
 			}
 		</style>
+		<script src="/api/eyestream.js"></script>
+		<script>
+			var id={{.Id}}
+			EyeStream.socket.onopen = function() {
+				EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
+					console.log(regionsMap)
+					for (var region in regionsMap) {
+						var regionInfo = regionsMap[region];
+						//render table or whatever
+					}
+				})
+			}
+		</script>
 	</head>
 	<body>
 	<table class="stats">
-		<thead>
-			<tr><th>{{.Player}}</th></tr>
-		</thead>
 		<tbody>
-			{{range .Regions}}
-			<tr>
-				<th>{{.Name}}</th>
-				<td>{{.Value}}</td>
-			</tr>
-			{{end}}
+			
 		</tbody>
 	</table>
 	</body>
