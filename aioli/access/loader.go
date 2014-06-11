@@ -20,7 +20,12 @@ type MultiLoaderPkg struct {
 	Events []LoaderPkg
 }
 
+var Configfile = "config.json"
+
 func init() {
+	if filepath := os.Getenv("EYESTREAM"); filepath != "" {
+		Configfile = path.Join(filepath, Configfile)
+	}
 	registerLoader()
 }
 
@@ -31,7 +36,7 @@ func registerLoader() {
 type ConfigLoader struct{}
 
 func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
-	content, _ := ioutil.ReadFile("config.json") // TODO Constant filename
+	content, _ := ioutil.ReadFile(Configfile) // TODO Constant filename
 
 	// Unmarshal the file content into a MultiLoaderPkg
 	var pkgSlice MultiLoaderPkg
