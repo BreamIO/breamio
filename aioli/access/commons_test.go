@@ -4,10 +4,10 @@ import (
 	"log"
 	"testing"
 	"time"
-	
+
 	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/briee"
 )
 
 func TestRegister(t *testing.T) {
