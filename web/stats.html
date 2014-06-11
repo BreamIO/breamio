@@ -1,0 +1,30 @@
+<html>
+	<head>
+		<style>
+			.stats {
+				background: #000;
+				color: #FFF;
+			}
+		</style>
+		<script src="/api/eyestream.js"></script>
+		<script>
+			var id={{.Id}}
+			EyeStream.socket.onopen = function() {
+				EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
+					console.log(regionsMap)
+					for (var region in regionsMap) {
+						var regionInfo = regionsMap[region];
+						//render table or whatever
+					}
+				})
+			}
+		</script>
+	</head>
+	<body>
+	<table class="stats">
+		<tbody>
+			
+		</tbody>
+	</table>
+	</body>
+</html>
