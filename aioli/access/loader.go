@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"time"
 )
 
 // LoaderPkg is a ExtPkg but with readable Data
@@ -59,8 +60,8 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			Data:      dataField,
 			Error:     nil,
 		}
-
 		ioman.Dispatch(extPkg)
+		time.Sleep(1000 * time.Millisecond)
 
 		/*
 		byteExtPkg, err := json.Marshal(extPkg)
