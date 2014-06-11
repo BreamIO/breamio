@@ -60,7 +60,7 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			Error:     nil,
 		}
 
-		ioman.Handle(extPkg)
+		ioman.Dispatch(extPkg)
 
 		/*
 		byteExtPkg, err := json.Marshal(extPkg)

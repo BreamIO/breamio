@@ -66,13 +66,13 @@ func (biom *BasicIOManager) Run() {
 	for !biom.IsClosed() {
 		select {
 		case recvData := (<-biom.dataChan):
-			biom.Handle(recvData)
+			biom.handle(recvData)
 		}
 	}
 }
 
 // Handle tries to decode and send the provided ExtPkg on one or more event emitters
-func (biom *BasicIOManager) Handle(recvData ExtPkg) {
+func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	// TODO Add broadcast functionality
 	if ee, err := biom.lookuper.EmitterLookup(recvData.ID); err == nil {
 
@@ -179,4 +179,8 @@ func (biom *BasicIOManager) Close() error {
 // Call Run method to open.
 func (biom *BasicIOManager) IsClosed() bool {
 	return biom.closed
+}
+
+func (biom *BasicIOManager) Dispatch(ep ExtPkg) {
+	biom.dataChan <- ep
 }
