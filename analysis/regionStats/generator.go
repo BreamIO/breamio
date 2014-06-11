@@ -26,9 +26,10 @@ type Generator interface {
 }
 
 type Config struct {
-	Emitter  int
-	Duration time.Duration
-	Hertz    uint
+	Emitter            int
+	Duration           string //The time given parsable bu time.ParseDuration(string), e.g. 2h34m2s3ms
+	Hertz              uint
+	GenerationInterval string //Works the same as duration
 }
 
 // Register in Logic
@@ -60,7 +61,7 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 		case rc := <-newChan:
 			log.Println("Starting a new generator for emitter:", rc.Emitter)
 			r.generators[rc.Emitter] =
-				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz)
+				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz, rc.GenerationInterval)
 		case <-r.closeChan:
 			log.Println("Shutting down")
 			break
@@ -79,16 +80,28 @@ func (r *RegionRun) Close() error {
 }
 
 type RegionStatistics struct {
-	coordinates *analysis.CoordBuffer
-	regions     []Region
-	publish     chan<- RegionStatsMap
-	closeChan   chan struct{}
+	coordinates        *analysis.CoordBuffer
+	regions            []Region
+	publish            chan<- RegionStatsMap
+	closeChan          chan struct{}
+	generationInterval time.Duration
 }
 
-func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
-	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
-
+func New(ee briee.PublishSubscriber, dur string, hertz uint, genIntv string) *RegionStatistics {
 	log := log.New(os.Stderr, "[ RegionStats ]", log.LstdFlags)
+
+	duration, err := time.ParseDuration(dur)
+	if err != nil {
+		log.Println(err, "Defaulting duration to 60 seconds")
+		duration = time.Minute
+	}
+	generationInterval, err := time.ParseDuration(genIntv)
+	if err != nil {
+		log.Println(err, "Defaulting generation interval to 60 seconds")
+		duration = time.Minute
+	}
+
+	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
 	addRegionCh := ee.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
 	updateRegionCh := ee.Subscribe("regionStats:updateRegion", new(RegionUpdatePackage)).(<-chan *RegionUpdatePackage)
@@ -99,18 +112,19 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 	restartch := ee.Subscribe("regionStats:restart", struct{}{}).(<-chan struct{})
 
 	rs := &RegionStatistics{
-		coordinates: analysis.NewCoordBuffer(ch, duration, hertz),
-		regions:     make([]Region, 0),
-		publish:     ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
-		closeChan:   make(chan struct{}),
+		coordinates:        analysis.NewCoordBuffer(ch, duration, hertz),
+		regions:            make([]Region, 0),
+		publish:            ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
+		closeChan:          make(chan struct{}),
+		generationInterval: generationInterval,
 	}
 
 	go func(rs *RegionStatistics) {
 		defer func() {
 			close(rs.publish)
-			ee.Unsubscribe("regionStats:addRegions", addRegionCh)
-			ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
-			ee.Unsubscribe("regionStats:removeRegions", removeRegionCh)
+			ee.Unsubscribe("regionStats:addRegion", addRegionCh)
+			ee.Unsubscribe("regionStats:updateRegion", updateRegionCh)
+			ee.Unsubscribe("regionStats:removeRegion", removeRegionCh)
 			ee.Unsubscribe("regionStats:start", startch)
 			ee.Unsubscribe("regionStats:stop", stopch)
 			ee.Unsubscribe("regionStats:restart", restartch)
@@ -180,7 +194,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				rs.Flush()
 				log.Println("Flushing region stats buffer")
 
-			case <-time.After(time.Second):
+			case <-time.After(rs.generationInterval):
 				rs.Generate()
 			}
 		}

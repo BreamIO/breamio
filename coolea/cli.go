@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/analysis/regionStats"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
 	"log"
@@ -98,6 +99,10 @@ func startParse(tokens []string) (string, handlerFunc, []string) {
 			return "", parseStart, tokens[1:]
 		case "stop":
 			return "", parseStop, tokens[1:]
+		case "create":
+			return "", parseCreate, tokens[1:]
+		case "update":
+			return "", parseUpdate, tokens[1:]
 		}
 	}
 	//default
@@ -113,6 +118,10 @@ func parseError(token string) (string, handlerFunc, []string) {
 	return "", startParse, nil
 }
 
+<<<<<<< HEAD
+func str2float(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+=======
 //Parse the subtree of list
 func parseList(tokens []string) (string, handlerFunc, []string) {
 	return tokens[0], startParse, tokens[1:]
@@ -169,11 +178,15 @@ func parseStop(tokens []string) (string, handlerFunc, []string) {
 
 func stopET(tokens []string) (string, handlerFunc, []string) {
 	id, err := strconv.Atoi(tokens[0])
+>>>>>>> master
 	if err != nil {
-		fmt.Println(err)
-		return parseError(tokens[0])
+		return parseError(s)
 	}
+<<<<<<< HEAD
+	return f
+=======
 	payload, err := json.Marshal(struct{}{})
 	client.Send(aioli.ExtPkg{"tracker:shutdown", false, id, payload, nil})
 	return "Sent request to stop ET " + tokens[0], startParse, tokens[1:]
+>>>>>>> master
 }
