@@ -98,7 +98,7 @@ func (m *MockTracker) Connect() error {
 }
 
 func (m *MockTracker) generate(ch chan<- *ETData) {
-	ticker := time.NewTicker(25 * time.Millisecond)
+	ticker := time.NewTicker(REFRESH * time.Millisecond)
 	defer ticker.Stop()
 	for t := range ticker.C {
 		select {
@@ -108,7 +108,10 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 		default:
 		}
 		x, y := m.f(m.t)
-		ch <- &ETData{Point2D{x, y}, t}
+		ch <- &ETData{
+			Filtered:  Point2D{x, y},
+			Timestamp: t,
+		}
 		m.t += 0.01
 	}
 }

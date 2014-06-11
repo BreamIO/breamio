@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	bl "github.com/maxnordlund/breamio/beenleigh"
 )
@@ -100,13 +101,31 @@ type XYer interface {
 	Y() float64
 }
 
-func ToPoint2D(in XYer) (out Point2D) {
-	out, ok := in.(Point2D)
+type XYZer interface {
+	XYer
+	Z() float64
+}
+
+func ToPoint2D(in XYer) (out *Point2D) {
+	out, ok := in.(*Point2D)
 	if ok {
 		return
 	}
+	out = new(Point2D)
 	out.Xf = in.X()
 	out.Yf = in.Y()
+	return
+}
+
+func ToPoint3D(in XYZer) (out *Point3D) {
+	out, ok := in.(*Point3D)
+	if ok {
+		return
+	}
+	out = new(Point3D)
+	out.Xf = in.X()
+	out.Yf = in.Y()
+	out.Zf = in.Z()
 	return
 }
 
@@ -126,8 +145,36 @@ func (p Point2D) Y() float64 {
 	return p.Yf
 }
 
+type Point3D struct {
+	Xf, Yf, Zf float64
+}
+
+// Returns the X part of the Point3D
+func (p Point3D) X() float64 {
+	return p.Xf
+}
+
+// Returns the Y part of the Point3D
+func (p Point3D) Y() float64 {
+	return p.Yf
+}
+
+// Returns the Z part of the Point3D
+func (p Point3D) Z() float64 {
+	return p.Zf
+}
+
 func Filter(left, right XYer) XYer {
 	return Point2D{(left.X() + right.X()) / 2, (left.Y() + right.Y()) / 2}
+}
+
+type ETData struct {
+	Filtered  Point2D
+	LeftGaze  *Point2D `json:",omitempty"`
+	RightGaze *Point2D `json:",omitempty"`
+	LeftEye   *Point3D `json:",omitempty"`
+	RightEye  *Point3D `json:",omitempty"`
+	Timestamp time.Time
 }
 
 type Metadata struct {

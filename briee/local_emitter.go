@@ -163,6 +163,9 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 //
 // Unsubscribe will return an error if the event string identifier is not existing. Will also return an error if provided channel is not registered on that event.
 func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
+	if(!ee.IsOpen()){
+		return errors.New("Event emitter is already closed")
+	}
 	// Check if event exisits
 	if event, ok := ee.eventMap[eventID]; ok {
 		recvChan := reflect.ValueOf(ch)
