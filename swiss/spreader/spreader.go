@@ -44,37 +44,43 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 		case <-closer:
 			return
 		case event := <-newListenerChan:
-			l := newListener(logic.CreateEmitter(event.Emitter), c, closer)
+			l := newListener(event.Emitter, logic.CreateEmitter(event.Emitter), c, closer)
 
 		}
 	}
 }
 
-type listener struct {
+type proxy struct {
 	subs     briee.Subscriber
 	closer   <-chan struct{}
 	dataChan <-chan *gorgonzola.ETData
 }
 
-func newListener(id int, subs briee.Subscriber, c *client.Client, closer <-chan struct{}) *listener {
-	listener := &listener{
+func newListener(id int, subs briee.Subscriber, c *client.Client, closer <-chan struct{}) *proxy {
+	listener := &proxy{
 		closer:   closer,
 		subs:     subs,
 		dataChan: subs.Subscribe("tracker:etdata", &gorgonzola.ETData{}).(<-chan *gorgonzola.ETData),
 	}
 	go func() {
-		defer listener.ee.Unsubscribe("tracker:etdata", listener.dataChan)
+		defer listener.subs.Unsubscribe("tracker:etdata", listener.dataChan)
 		for {
 			select {
 			case <-listener.closer:
 				return
 			case data := <-listener.dataChan:
-				c.Send(aioli.ExtPkg{
-					Event: "tracker:etdata",
-					ID:    id,
-					Data:  json.Marshal(data),
-				})
+				dat, err := json.Marshal(data)
+				if err != nil {
+					fmt.Println(err)
+				} else {
+					c.Send(aioli.ExtPkg{
+						Event: "tracker:etdata",
+						ID:    id,
+						Data:  dat,
+					})
+				}
 			}
 		}
 	}()
+	return listener
 }
