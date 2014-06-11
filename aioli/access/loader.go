@@ -1,7 +1,7 @@
 package access
 
 import (
-	"bytes"
+	//"bytes"
 	"encoding/json"
 	"github.com/maxnordlund/breamio/aioli"
 	"io/ioutil"
@@ -44,7 +44,7 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 	var pkgSlice MultiLoaderPkg
 	json.Unmarshal(content, &pkgSlice)
 
-	events := make([]byte, 0)
+	//events := make([]byte, 0)
 
 	for _, pkgObj := range pkgSlice.Events {
 		dataField, err := json.Marshal(pkgObj.Data)
@@ -60,14 +60,20 @@ func (cl ConfigLoader) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			Error:     nil,
 		}
 
+		ioman.Handle(extPkg)
+
+		/*
 		byteExtPkg, err := json.Marshal(extPkg)
 		if err != nil {
 			logger.Print(err)
 		}
-		events = append(events, byteExtPkg...) // Appending the encoded ExtPkgs
-	}
 
+		events = append(events, byteExtPkg...) // Appending the encoded ExtPkgs
+		*/
+	}
+	/*
 	buf := bytes.NewBuffer(events)
 	codec := aioli.NewCodec(buf)
 	go ioman.Listen(codec, logger)
+	*/
 }
