@@ -100,7 +100,7 @@ func TestSquare(t *testing.T) {
 
 func TestRectangle(t *testing.T) {
 	reg, _ := newRegion("center", RegionDefinition{
-		Type:   "rect",
+		Type:   "rectangle",
 		X:      0.25,
 		Y:      0.25,
 		Width:  0.5,

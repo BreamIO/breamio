@@ -147,7 +147,7 @@ func TestWithBeenleigh(t *testing.T) {
 		}
 	*/
 
-	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
+	dispatchAddRegion("bottom-right", "rectangle", 0.5, 0.5, 0.5, 0.5)
 
 	/*
 		re.Dispatch("regionStats:addRegion", &RegionDefinitionPackage{
@@ -218,7 +218,7 @@ func TestBLwithBufferCommands(t *testing.T) {
 		})
 	}
 
-	dispatchAddRegion("bottom-right", "rect", 0.5, 0.5, 0.5, 0.5)
+	dispatchAddRegion("bottom-right", "rectangle", 0.5, 0.5, 0.5, 0.5)
 
 	// The generator should gathering data as default
 	regiondata := <-sub
