@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"flag"
+	"fmt"
 )
 
 var mainServerAddr = flag.String("ip", "localhost", "This is the ip that the main server is located on.")

@@ -1,16 +1,16 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/signal"
-	"flag"
 
-	"github.com/maxnordlund/breamio/swiss/spreader"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
 	_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
+	"github.com/maxnordlund/breamio/swiss/spreader"
 )
 
 func main() {
