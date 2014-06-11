@@ -27,8 +27,8 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 	conn, err := net.Dial("tcp", MainServer)
 
 	if err != nil {
-		logger.Printf("Unable to dial %s.", MainServer)
-		return
+		logger.Printf("Unable to dial %s. Shutting down.", MainServer)
+		os.Exit(1)
 	}
 
 	defer func() {
