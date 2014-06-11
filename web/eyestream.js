@@ -47,7 +47,7 @@
 	EyeStream.prototype.subscribe = function subscribe(event, emitter, handler) {
 		console.info("Subscribe to:", event, "@", emitter)
 		this.events[event] = handler
-		socket.send(JSON.stringify({
+		this.socket.send(JSON.stringify({
 			Event: event,
 			Subscribe: true,
 			ID: emitter
@@ -62,7 +62,7 @@
 		}
 		console.info("Sending command:", pkg)
 		pkg.Data = btoa(JSON.stringify(data))
-		socket.send(JSON.stringify(pkg));
+		this.socket.send(JSON.stringify(pkg));
 	}
 
 	// ws://localhost:8080/api/json
