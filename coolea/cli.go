@@ -6,8 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/analysis/regionStats"
-	"github.com/maxnordlund/breamio/beenleigh"
+	. "github.com/maxnordlund/breamio/aioli/client"
 	"io"
 	"log"
 	"net"
@@ -118,75 +117,13 @@ func parseError(token string) (string, handlerFunc, []string) {
 	return "", startParse, nil
 }
 
-<<<<<<< HEAD
 func str2float(s string) float64 {
 	f, err := strconv.ParseFloat(s, 64)
-=======
-//Parse the subtree of list
-func parseList(tokens []string) (string, handlerFunc, []string) {
-	return tokens[0], startParse, tokens[1:]
-}
-
-//Parse the subtree of start
-func parseStart(tokens []string) (string, handlerFunc, []string) {
-	if len(tokens) > 1 {
-		switch tokens[0] {
-		case "et":
-			return startET(tokens[1:])
-		case "ancient":
-			return startAncient(tokens[1:])
-		}
-	}
-	return parseError(tokens[0])
-}
-
-//Sends a start et message
-func startET(tokens []string) (string, handlerFunc, []string) {
-	id, err := strconv.Atoi(tokens[0])
-	if err != nil {
-		fmt.Println(err)
-		return parseError(tokens[0])
-	}
-	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
-	client.Send(aioli.ExtPkg{"new:tracker", false, 256, payload, nil})
-	return "Sent request to start new ET", startParse, tokens[2:]
-}
-
-func startAncient(tokens []string) (string, handlerFunc, []string) {
-	id, err := strconv.Atoi(tokens[0])
-	if err != nil {
-		fmt.Println(err)
-		return parseError(tokens[0])
-	}
-	payload, err := json.Marshal(beenleigh.Spec{id, tokens[1]})
-	client.Send(aioli.ExtPkg{"new:ancientpower", false, 256, payload, nil})
-	return "Sent request to start new AncientPower adapter", startParse, tokens[2:]
-}
-
-//Parse the subtree of stop
-func parseStop(tokens []string) (string, handlerFunc, []string) {
-
-	if len(tokens) > 1 {
-		switch tokens[0] {
-		case "et":
-			return stopET(tokens[1:])
-		}
-	}
-
-	return parseError(tokens[0])
-}
-
-func stopET(tokens []string) (string, handlerFunc, []string) {
-	id, err := strconv.Atoi(tokens[0])
->>>>>>> master
 	if err != nil {
 		return parseError(s)
 	}
-<<<<<<< HEAD
 	return f
-=======
 	payload, err := json.Marshal(struct{}{})
 	client.Send(aioli.ExtPkg{"tracker:shutdown", false, id, payload, nil})
 	return "Sent request to stop ET " + tokens[0], startParse, tokens[1:]
->>>>>>> master
 }

@@ -1,7 +1,6 @@
-package main
+package client
 
 import (
-	"encoding/json"
 	"github.com/maxnordlund/breamio/aioli"
 	//	"github.com/maxnordlund/breamio/beenleigh"
 	"io"
@@ -25,37 +24,37 @@ func main() {
 }*/
 
 type Client struct {
-	out chan aioli.ExtPkg
-	in chan aioli.ExtPkg
-	wg sync.WaitGroup
+	out    chan aioli.ExtPkg
+	in     chan aioli.ExtPkg
+	encdec aioli.EncodeDecoder
+	wg     sync.WaitGroup
 	io.ReadWriteCloser
 }
 
 func NewClient(conn io.ReadWriteCloser) *Client {
 	out := make(chan aioli.ExtPkg)
 	in := make(chan aioli.ExtPkg)
-	c := &Client{out, in, sync.WaitGroup{}, conn}
+	c := &Client{out, in, aioli.NewCodec(conn), sync.WaitGroup{}, conn}
 	go c.run()
 	return c
 }
 
 func (c *Client) run() {
 	defer c.Close()
-	enc := json.NewEncoder(c)
-	dec := json.NewDecoder(c)
+
 	go func() {
 		for {
 			var pkg aioli.ExtPkg
-			err := dec.Decode(pkg)
+			err := c.encdec.Decode(pkg)
 			if err != nil {
 				return
 			}
 			c.in <- pkg
 		}
 	}()
-	
+
 	for pkg := range c.out {
-		if err := enc.Encode(pkg); err != nil {
+		if err := c.encdec.Encode(pkg); err != nil {
 			log.Println("Error writing package to Writer:", err)
 			return
 		}

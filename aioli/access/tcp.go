@@ -1,6 +1,8 @@
 package access
 
 import (
+	"encoding/gob"
+	"io"
 	"log"
 	"net"
 
@@ -12,13 +14,24 @@ const tcpJSONaddr = ":4041"
 
 func init() {
 	registerTCPJSON()
+	registerTCPGOB()
 }
 
 func registerTCPJSON() {
-	Register("TCP(JSON)", TCPServer{})
+	Register("TCP(JSON)", TCPServer{func(conn io.ReadWriteCloser) aioli.EncodeDecoder {
+		return aioli.NewCodec(conn)
+	}})
 }
 
-type TCPServer struct{}
+func registerTCPGOB() {
+	Register("TCP(GOB)", TCPServer{func(conn io.ReadWriteCloser) aioli.EncodeDecoder {
+		return aioli.Codec{gob.NewEncoder(conn), gob.NewDecoder(conn)}
+	}})
+}
+
+type TCPServer struct {
+	codecConstructor func(io.ReadWriteCloser) aioli.EncodeDecoder
+}
 
 // Listen starts the TCP server, listening for incoming connections.
 //
@@ -41,7 +54,6 @@ func (t TCPServer) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			return
 		}
 
-		codec := aioli.NewCodec(in)
-		go ioman.Listen(codec, logger)
+		go ioman.Listen(t.codecConstructor(in), logger)
 	}
 }
