@@ -147,7 +147,19 @@ func (web *Webber) addServings() {
 		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
-	web.HandleStatic("/stats", path.Join(Root, "stats.html"))
+	web.Handle("/stats", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
+		tmpl, err := template.ParseFiles(path.Join(Root, "stats.html"))
+		if err != nil {
+			log.Println(err)
+			PublishError(w, Error{500, "Template Parse Error"})
+		}
+		drwr := drawer{
+			Id: id,
+		}
+		tmpl.Execute(w, drwr) //TODO catch any errors.
+		return nil
+	}))
+	// web.HandleStatic("/stats", path.Join(Root, "stats.html"))
 }
 
 func PublishError(w http.ResponseWriter, e Error) {
