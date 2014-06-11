@@ -108,9 +108,9 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 	go func(rs *RegionStatistics) {
 		defer func() {
 			close(rs.publish)
-			ee.Unsubscribe("regionStats:addRegions", addRegionCh)
-			ee.Unsubscribe("regionStats:updateRegions", updateRegionCh)
-			ee.Unsubscribe("regionStats:removeRegions", removeRegionCh)
+			ee.Unsubscribe("regionStats:addRegion", addRegionCh)
+			ee.Unsubscribe("regionStats:updateRegion", updateRegionCh)
+			ee.Unsubscribe("regionStats:removeRegion", removeRegionCh)
 			ee.Unsubscribe("regionStats:start", startch)
 			ee.Unsubscribe("regionStats:stop", stopch)
 			ee.Unsubscribe("regionStats:restart", restartch)

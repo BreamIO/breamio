@@ -180,3 +180,7 @@ func (biom *BasicIOManager) Close() error {
 func (biom *BasicIOManager) IsClosed() bool {
 	return biom.closed
 }
+
+func (biom *BasicIOManager) Dispatch(ep ExtPkg) {
+	biom.dataChan <- ep
+}
