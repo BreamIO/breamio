@@ -1,0 +1,38 @@
+{"Events": [
+	{
+		"Event": "new:regionStats",
+		"ID": 256,
+		"Data": {
+			"Emitter":0, 
+			"Duration": 30000000000, 
+			"Hertz": 40
+		}
+	},
+	{"Event": "regionStats:addRegions",
+		"ID": 256,
+		"Data": {
+			"Name":"top-left-rectangle", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 0.5,
+				"Y": 0.0,
+				"Height": 0.5
+			}
+		}
+	},
+	{"Event": "regionStats:addRegions",
+		"ID": 256,
+		"Data": {
+			"Name":"bottom-right-circle",
+			"Def":{
+				"Type":"circle",
+				"X": 0.5,
+				"Width": 0.5,
+				"Y": 0.5,
+				"Height": 0.5
+			}
+		}
+	}
+	]
+}
