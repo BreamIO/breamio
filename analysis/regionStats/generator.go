@@ -47,6 +47,8 @@ type RegionRun struct {
 }
 
 func (r *RegionRun) Run(logic beenleigh.Logic) {
+	log := log.New(os.Stderr, "[ RegionRun ]", log.LstdFlags)
+	log.Println("Registering in EE")
 	var newChan <-chan *Config
 	var ee briee.EventEmitter
 
@@ -56,9 +58,11 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 	for {
 		select {
 		case rc := <-newChan:
+			log.Println("Starting a new generator for emitter:", rc.Emitter)
 			r.generators[rc.Emitter] =
 				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz)
 		case <-r.closeChan:
+			log.Println("Shutting down")
 			break
 		}
 	}
@@ -84,6 +88,8 @@ type RegionStatistics struct {
 func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *RegionStatistics {
 	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
 
+	log := log.New(os.Stderr, "[ RegionStats ]", log.LstdFlags)
+
 	addRegionCh := ee.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
 	updateRegionCh := ee.Subscribe("regionStats:updateRegion", new(RegionUpdatePackage)).(<-chan *RegionUpdatePackage)
 	removeRegionCh := ee.Subscribe("regionStats:removeRegion", make([]string, 0, 0)).(<-chan []string)
@@ -92,12 +98,11 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 	stopch := ee.Subscribe("regionStats:stop", struct{}{}).(<-chan struct{})
 	restartch := ee.Subscribe("regionStats:restart", struct{}{}).(<-chan struct{})
 
-	log := log.New(os.Stderr, "[ RegionStats ]", log.LstdFlags)
-
 	rs := &RegionStatistics{
 		coordinates: analysis.NewCoordBuffer(ch, duration, hertz),
 		regions:     make([]Region, 0),
 		publish:     ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
+		closeChan:   make(chan struct{}),
 	}
 
 	go func(rs *RegionStatistics) {
@@ -114,14 +119,16 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 		for {
 			select {
 			case <-rs.closeChan:
+				log.Println("Closing down regionStatistics")
 				return
 
 			// TODO refactor select case structure
-			case regionDef, ok := <-addRegionCh:
+			case regionDefPak, ok := <-addRegionCh:
 				if !ok {
 					return
 				}
-				err := rs.addRegion(regionDef)
+				log.Println("Adding region: ", regionDefPak.Name)
+				err := rs.addRegion(regionDefPak)
 
 				if err != nil {
 					log.Println(err.Error())
@@ -131,6 +138,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if !ok {
 					return
 				}
+				log.Println("Updating region: ", regionUpdate.Name)
 				err := rs.updateRegion(regionUpdate)
 
 				if err != nil {
@@ -141,6 +149,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 				if !ok {
 					return
 				}
+				log.Println("Removing region(s):", regs)
 				err := rs.removeRegions(regs)
 
 				if err != nil {
@@ -153,6 +162,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 					return
 				}
 				rs.Start()
+				log.Println("Starting region stats buffer")
 
 			// stop
 			case _, ok := <-stopch:
@@ -160,6 +170,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 					return
 				}
 				rs.Stop()
+				log.Println("Stopping region stats buffer")
 
 			// flush
 			case _, ok := <-restartch:
@@ -167,6 +178,7 @@ func New(ee briee.PublishSubscriber, duration time.Duration, hertz uint) *Region
 					return
 				}
 				rs.Flush()
+				log.Println("Flushing region stats buffer")
 
 			case <-time.After(time.Second):
 				rs.Generate()
