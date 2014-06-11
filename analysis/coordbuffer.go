@@ -78,13 +78,13 @@ func (c *CoordBuffer) refresh() {
 //Currently removes all data collected if duration updates
 func (c *CoordBuffer) SetInterval(interval time.Duration) {
 	c.interval = interval
-	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds()))
+	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds())+1)
 }
 
 //Currently removes all data if desiredFreq updates
 func (c *CoordBuffer) SetDesiredFreq(desiredFreq uint) {
 	c.desiredFreq = desiredFreq
-	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds()))
+	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds())+1)
 }
 
 //Empties the buffer. That is removing all cords.
