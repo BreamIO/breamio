@@ -84,10 +84,10 @@ func newListener(id int, subs briee.Subscriber, c *client.Client, closer <-chan 
 	}
 	go func() {
 		defer listener.subs.Unsubscribe("tracker:etdata", listener.dataChan)
-		defer listener.subs.Unsubscribe("tracker:calibrate:next", listener.dataChan)
-		defer listener.subs.Unsubscribe("tracker:calibrate:end", listener.dataChan)
-		defer listener.subs.Unsubscribe("tracker:validate:next", listener.dataChan)
-		defer listener.subs.Unsubscribe("tracker:validate:end", listener.dataChan)
+		defer listener.subs.Unsubscribe("tracker:calibrate:next", listener.calNextChan)
+		defer listener.subs.Unsubscribe("tracker:calibrate:end", listener.calEndChan)
+		defer listener.subs.Unsubscribe("tracker:validate:next", listener.valNextChan)
+		defer listener.subs.Unsubscribe("tracker:validate:end", listener.valEndChan)
 		for {
 			select {
 			case <-listener.closer:
