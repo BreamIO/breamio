@@ -5,6 +5,7 @@ import (
 	"fmt"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -62,6 +63,11 @@ func (f PublisherFunc) WebPublish(id int, w http.ResponseWriter, req *http.Reque
 	return f(id, w, req)
 }
 
+func PublishError(w http.ResponseWriter, e Error) *Error {
+	http.Error(w, e.Cause, e.StatusCode)
+	return &e
+}
+
 type Webber struct {
 	mux *http.ServeMux
 
@@ -91,12 +97,14 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		formId := req.FormValue("id")
 		if formId == "" {
+			web.logger.Println("Requires id parameter.")
 			PublishError(w, Error{406, "Requires id parameter."})
 			return
 		}
 
 		id, err := strconv.Atoi(formId)
 		if err != nil {
+			log.Println("id parameter should contain integer.")
 			PublishError(w, Error{400, "id parameter should contain integer."})
 			return
 		}
@@ -138,8 +146,8 @@ func (web *Webber) addServings() {
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {
-			log.Println(err)
-			PublishError(w, Error{500, "Template Parse Error"})
+			web.logger.Println("Template parse error:", err)
+			return PublishError(w, Error{500, "Template parse error"})
 		}
 		drwr := drawer{
 			Id: id,
@@ -150,8 +158,8 @@ func (web *Webber) addServings() {
 	web.Handle("/stats", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		tmpl, err := template.ParseFiles(path.Join(Root, "stats.html"))
 		if err != nil {
-			log.Println(err)
-			PublishError(w, Error{500, "Template Parse Error"})
+			web.logger.Println("Template parse error:", err)
+			PublishError(w, Error{500, "Template parse error"})
 		}
 		drwr := drawer{
 			Id: id,
@@ -160,8 +168,29 @@ func (web *Webber) addServings() {
 		return nil
 	}))
 	// web.HandleStatic("/stats", path.Join(Root, "stats.html"))
-}
-
-func PublishError(w http.ResponseWriter, e Error) {
-	http.Error(w, e.Cause, e.StatusCode)
+	web.mux.HandleFunc("/calibrate", func(w http.ResponseWriter, req *http.Request) {
+		calibrateTmpl, err := template.ParseFiles(path.Join(Root, calibrate))
+		if err != nil {
+			web.logger.Println("Template parse error:", err)
+			PublishError(w, Error{500, "Template parse error"})
+		}
+		normalizeSource, err := ioutil.ReadFile(path.Join(Root, normalize))
+		if err != nil {
+			web.logger.Println("File read error:", err)
+			PublishError(w, Error{500, "File read error"})
+		}
+		cali := Calibrate{
+			Id: 1,
+			EyeTrackers: map[int]string{
+				1: "", // done
+				2: "", // in-progress
+				3: "",
+				4: "",
+				5: "",
+			},
+			Normalize: template.CSS(string(normalizeSource)),
+		}
+		web.logger.Println("Serving request for calibrate")
+		err = calibrateTmpl.Execute(w, cali)
+	})
 }
