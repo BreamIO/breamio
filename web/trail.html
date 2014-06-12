@@ -22,18 +22,18 @@
 				Trail.alpha = 0.9
 				Trail.color = "255,0,0" // RGB notation, adds opacity later
 				Trail.thickness = 1.0
-				Trail.maxLength = 16
+				Trail.maxLength = 20
 
 				Trail.prototype.receive = function receive(data) {
 					this.buffer.push({
-						x: data.Filtered.Xf * this.width,
-						y: data.Filtered.Yf * this.height
+						x: data.Filtered.Xf * 0.97 * this.width,
+						y: data.Filtered.Yf * 0.97 * this.height
 					})
 				}
 
 				Trail.prototype.render = function render(timestamp) {
 					// Cache frequently used variables
-					var i, j, angle, distance, point, step,
+					var i, j, distance, factor, point, step,
 					    width   = this.width,
 					    height  = this.height,
 					    image   = this.image,
@@ -41,6 +41,7 @@
 					    buffer  = [],
 					    length  = 0,
 					    last    = this.last,
+					    angle   = { start: 0, end: 0 },
 					    delta   = { x: 0, y: 0 }
 
 					// Setup next iteration and truncate buffer
@@ -87,27 +88,27 @@
 
 					for (i = length - 2; i >= 0; --i) {
 						point = buffer[i]
-						angle = Math.atan2(point.y - last.y, point.x - last.x) - Math.PI/2
+						factor = (i+1) / length
+						angle.start = Math.atan2(point.y - last.y, point.x - last.x) - Math.PI/2 + (1 - factor) * Math.PI/3
+						angle.end = angle.start  + Math.PI - (1 - factor) * Math.PI/3
 
 						// Draw the current point
-						context.fillStyle = "rgba(" + Trail.color + "," + 0.5 * (i+1) / length + ")"
+						context.fillStyle = "rgba(" + Trail.color + "," + 0.5 * factor + ")"
 						context.beginPath()
-						context.arc(point.x, point.y, Trail.radius, angle, angle + Math.PI)
+						context.arc(point.x, point.y, Trail.radius, angle.start, angle.end)
 						context.lineTo(
-							last.x + Trail.radius * Math.cos(angle + Math.PI),
-							last.y + Trail.radius * Math.sin(angle + Math.PI)
+							last.x + Trail.radius * Math.cos(angle.end),
+							last.y + Trail.radius * Math.sin(angle.end)
 						)
-						context.arc(last.x, last.y, Trail.radius, angle + Math.PI, angle, true)
+						context.arc(last.x, last.y, Trail.radius, angle.end, angle.start, true)
 						context.closePath()
 						context.fill()
-
-						if (this.counter % 128 === 0) console.log("draw", point.x - last.x, point.y - last.y)
 
 						last = point
 					}
 
 					last = buffer[length - 1]
-					context.strokeStyle = "#000" // "rgba(" + Trail.color + ")"
+					context.strokeStyle = "rgb(" + Trail.color + ")"
 					context.beginPath()
 					context.arc(last.x, last.y, Trail.radius, 0, Trail.tau)
 					context.stroke()
@@ -133,7 +134,7 @@
 						return
 					}
 					exports.trail = new Trail(document.getElementById("trail"))
-					exports.trail.stopAfter()
+					exports.trail.render()
 				}
 
 				document.addEventListener("DOMContentLoaded", init)
