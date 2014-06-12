@@ -2,6 +2,8 @@ package tobii
 
 import (
 	"fmt"
+	"log"
+
 	//"log"
 	"github.com/maxnordlund/breamio/briee"
 	. "github.com/maxnordlund/breamio/gorgonzola"
@@ -14,11 +16,11 @@ type GazeDriver struct{}
 func (GazeDriver) Create() (Tracker, error) {
 	tracker, err := gaze.AnyEyeTracker()
 	return &GazeTracker{
-		tracker, 
+		tracker,
 		make(chan struct{}),
 		nil,
-		false, 
-		0, 
+		false,
+		0,
 		0,
 	}, err
 }
@@ -48,7 +50,6 @@ type GazeTracker struct {
 	calibrated        bool
 	calibrationPoints uint
 	validationPoints  uint
-	
 }
 
 func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
@@ -108,6 +109,7 @@ func (g GazeTracker) String() string {
 }
 
 func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
+	backlog := Point2D{-1, -1}
 	return func(data *gaze.GazeData) {
 		ts := data.TrackingStatus()
 		if ts < gaze.BothEyesTracked || ts == gaze.OneEyeTrackedUnknownWhich {
@@ -118,6 +120,15 @@ func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 		etdata.Filtered = *ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
 		etdata.LeftGaze = ToPoint2D(data.Left().GazePointOnDisplay())
 		etdata.RightGaze = ToPoint2D(data.Right().GazePointOnDisplay())
+
+		if distSq(etdata.Filtered, backlog) < 0.05*0.05 {
+			etdata.Filtered, backlog = Point2D{
+				Xf: etdata.Filtered.Xf*0.4 + backlog.Xf*0.6,
+				Yf: etdata.Filtered.Yf*0.4 + backlog.Yf*0.6,
+			}, etdata.Filtered
+		} else {
+			backlog = etdata.Filtered
+		}
 		//log.Println(etdata)
 		ch <- etdata
 	}
@@ -143,6 +154,7 @@ func (g *GazeTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case <-inCh:
+			log.Println("GazeTracker#calibrateStartHandler", "Calibration Start event recieved.")
 			g.StartCalibration(handleError(errorCh, func() {
 				g.calibrationPoints = 0
 				outCh <- struct{}{}
@@ -172,6 +184,7 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case p := <-inCh:
+			log.Println("GazeTracker#calibrateStartHandler", "Calibration Start event recieved.")
 			g.calibrationPoints++
 			//println("calubration points:", g.calibrationPoints)
 			if g.calibrationPoints >= 5 {
@@ -234,6 +247,12 @@ func (g *GazeTracker) validateAddHandler(ee briee.PublishSubscriber) {
 			return
 		}
 	}
+}
+
+func distSq(p1, p2 Point2D) float64 {
+	dx := (p1.Xf - p2.Xf)
+	dy := (p1.Yf - p2.Yf)
+	return dx*dx + dy*dy
 }
 
 func init() {
