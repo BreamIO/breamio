@@ -1,0 +1,59 @@
+{
+	"Trackers": [
+	{
+		"Event": "new:tracker", 
+		"ID": 256, 
+		"Data": {
+			"Emitter": 1, 
+			"Data": "tobii://REXDL-010103247001"
+		}
+	},
+	{
+		"Event": "new:tracker", 
+		"ID": 256, 
+		"Data": {
+			"Emitter": 2, 
+			"Data": "tobii://REXDL-010104627253"
+		}
+	}],
+	"RegionStatsTemplate" : [
+	{
+		"Event": "new:regionStats",
+		"ID": 256, 
+		"Data": {
+			"Emitter": 0, 
+			"Duration": "60s", 
+			"Hertz": 40,
+			"GenerationInterval": "10s"
+		}
+	}],
+	"RegionDefinitions" : [
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"screen", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 1.0,
+				"Y": 0.0,
+				"Height": 1.0
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"top-left-rectangle", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.0,
+				"Width": 0.5,
+				"Y": 0.0,
+				"Height": 0.5
+			}
+		}
+	}]
+}
