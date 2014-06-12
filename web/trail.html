@@ -7,30 +7,22 @@
 				"use strict";
 				var Trail = function Trail(canvas) {
 					var rect = canvas.getBoundingClientRect()
-					this.width  = canvas.width  = rect.width
-					this.height = canvas.height = rect.height
-					this.lastPoint = null
-					this.buffer = []
+					this.width   = canvas.width  = rect.width
+					this.height  = canvas.height = rect.height
+					this.buffer  = []
+					this.last    = null
+					this.counter = 0
 					this.context = canvas.getContext("2d")
-					this.context.strokeStyle = Trail.color
-					this.context.lineWidth = Trail.thickness
-					this.image = new Image()
-					this.image.src = canvas.toDataURL("image/png")
+					this.context.lineWidth = 0
 					EyeStream.subscribe("tracker:etdata", 1, this.receive.bind(this))
-					this.stats = {
-						counter: 0,
-						diff: 0,
-						step: 0,
-			    	x: 0,
-			    	y: 0
-					}
 				}
 
 				Trail.tau = 2 * Math.PI
-				Trail.radius = 10
+				Trail.radius = 20
 				Trail.alpha = 0.9
-				Trail.color = "#FF0000"
+				Trail.color = "255,0,0" // RGB notation, adds opacity later
 				Trail.thickness = 1.0
+				Trail.maxLength = 16
 
 				Trail.prototype.receive = function receive(data) {
 					this.buffer.push({
@@ -41,96 +33,95 @@
 
 				Trail.prototype.render = function render(timestamp) {
 					// Cache frequently used variables
-					var i, j, distance, point, step,
-					    buffer  = [],
+					var i, j, angle, distance, point, step,
 					    width   = this.width,
 					    height  = this.height,
 					    image   = this.image,
 					    context = this.context,
-					    last    = this.lastPoint,
-					    length  = this.buffer.length,
-					    delta   = {
-					    	x: 0,
-					    	y: 0
-					    }
+					    buffer  = [],
+					    length  = 0,
+					    last    = this.last,
+					    delta   = { x: 0, y: 0 }
 
-					if (last === null) {
-						if (length === 0) {
-							return
-						}
-						this.lastPoint = last = this.buffer[0]
-					}
+					// Setup next iteration and truncate buffer
+					this.requestID = window.requestAnimationFrame(this.render.bind(this))
+			    this.buffer = this.buffer.slice(-Trail.maxLength)
+			    length      = this.buffer.length
 
-					if (length === 0) {
-						this.buffer.push(last)
-						length = 1
-					}
+			    if (last === null) {
+			    	if (length === 0) return
+			    	last = this.buffer[length - 1]
+			    }
 
+			    if (this.buffer.length === 0) {
+			    	this.buffer[0] = last
+			    	length = 1
+			    }
 
 					for (i = 0; i < length; ++i) {
 						point = this.buffer[i]
-						delta.x = point.x - last.x
-						delta.y = point.y - last.y
+						// delta.x = point.x - last.x
+						// delta.y = point.y - last.y
 
-						distance = Math.sqrt(delta.x * delta.x + delta.y * delta.y)
-						if (distance !== 0) {
-							step = Trail.thickness / distance
+						// distance = Math.sqrt(delta.x * delta.x + delta.y * delta.y)
+						// if (distance !== 0) {
+						// 	step = distance / Trail.thickness
 
-							this.stats.x       += Math.abs(delta.x)
-							this.stats.y       += Math.abs(delta.y)
-							delta.x /= step
-							delta.y /= step
+						// 	delta.x /= step
+						// 	delta.y /= step
 
-							for (j = step; j < distance; j += step) {
-								buffer.push({
-									x: last.x + delta.x,
-									y: last.y + delta.y
-								})
-							}
-							this.stats.diff    += distance
-							this.stats.step    += step
-							this.stats.counter += 1
-						}
+						// 	for (j = 0; j < distance; j += step) {
+						// 		buffer.push({
+						// 			x: last.x + delta.x,
+						// 			y: last.y + delta.y
+						// 		})
+						// 	}
+						// }
 						buffer.push(point)
 						last = point
 					}
 
-
 					length = buffer.length
-
-					// Clear the canvas and draw cached image
 					context.clearRect(0, 0, width, height)
-					context.globalAlpha = Trail.alpha
-					context.drawImage(image, 0, 0)
-					context.globalAlpha = 1.0
+					last = buffer[length - 1]
 
-					for (i = 0; i < length; ++i) {
+					for (i = length - 2; i >= 0; --i) {
 						point = buffer[i]
+						angle = Math.atan2(point.y - last.y, point.x - last.x) - Math.PI/2
 
 						// Draw the current point
+						context.fillStyle = "rgba(" + Trail.color + "," + 0.5 * (i+1) / length + ")"
 						context.beginPath()
-						context.arc(point.x, point.y, Trail.radius, 0, Trail.tau)
-						context.stroke()
+						context.arc(point.x, point.y, Trail.radius, angle, angle + Math.PI)
+						context.lineTo(
+							last.x + Trail.radius * Math.cos(angle + Math.PI),
+							last.y + Trail.radius * Math.sin(angle + Math.PI)
+						)
+						context.arc(last.x, last.y, Trail.radius, angle + Math.PI, angle, true)
+						context.closePath()
+						context.fill()
 
+						if (this.counter % 128 === 0) console.log("draw", point.x - last.x, point.y - last.y)
+
+						last = point
 					}
 
-					// Cache the image for next iteration
-					image.src = context.canvas.toDataURL("image/png")
+					last = buffer[length - 1]
+					context.strokeStyle = "#000" // "rgba(" + Trail.color + ")"
+					context.beginPath()
+					context.arc(last.x, last.y, Trail.radius, 0, Trail.tau)
+					context.stroke()
 
-					this.buffer = []
-					this.lastPoint = buffer[length - 1]
-					this.requestID = window.requestAnimationFrame(this.render.bind(this))
+			    this.last = buffer[length - 1]
+					this.counter++
 				}
 
 				Trail.prototype.stopAfter = function stopAfter(time) {
-					var key, self = this
-					this.render()
+					var self = this
+					// console.profile("Rendering")
+					if (!this.requestID) this.render()
 					setTimeout(function stop() {
-						console.info("Stopping animation and websocket")
-						for (key in self.stats) {
-							if (key === "counter") continue
-							console.log(key, self.stats[key], self.stats[key] / self.stats.counter)
-						}
+						// console.profileEnd("Rendering")
 						window.cancelAnimationFrame(self.requestID)
 						EyeStream.socket.close()
 					}, time || 12000)
@@ -142,6 +133,7 @@
 						return
 					}
 					exports.trail = new Trail(document.getElementById("trail"))
+					exports.trail.stopAfter()
 				}
 
 				document.addEventListener("DOMContentLoaded", init)
