@@ -2,6 +2,7 @@ package mock
 
 import (
 	"errors"
+	"log"
 	"math"
 	"time"
 
@@ -124,6 +125,7 @@ func (m *MockTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case <-inCh:
+			log.Println("MockTracker#calibrateStartHandler", "tracker:calibrate:start")
 			m.calibrating = true
 			m.calibrationPoints = 0
 			outCh <- struct{}{}
@@ -149,6 +151,7 @@ func (m *MockTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case <-inCh:
+			log.Println("MockTracker#calibrateAddHandler", "tracker:calibrate:add")
 			m.calibrationPoints++
 			if m.calibrationPoints >= 5 {
 				endCh <- struct{}{}
@@ -171,6 +174,7 @@ func (m *MockTracker) validateStartHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case <-inCh:
+			log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
 			m.calibrating = true
 			m.validationPoints = 0
 			nextCh <- struct{}{}
@@ -193,6 +197,7 @@ func (m *MockTracker) validateAddHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case <-inCh:
+			log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
 			m.validationPoints++
 			if m.validationPoints >= 5 {
 				qualityCh <- float64(0.05)

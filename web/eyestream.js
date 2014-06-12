@@ -1,6 +1,7 @@
 (function(exports, undefined) {
 	"use strict";
 	var EyeStream = function EyeStream(addr) {
+		this.connected = false
 		this.events = {}
 		this.socket = new WebSocket(addr)
 		this.socket.onerror = this.error.bind(this)
@@ -18,10 +19,12 @@
 
 	EyeStream.prototype.opened = function opened(event) {
 		console.info("WebSocket opened:", event)
+		this.connected = true
 	}
 
 	EyeStream.prototype.closed = function closed(event) {
 		console.warn("WebSocket closed:", event)
+		this.connected = false
 	}
 
 	EyeStream.prototype.received = function received(event) {

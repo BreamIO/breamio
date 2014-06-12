@@ -1,11 +1,12 @@
 {"Events": [
-	
+
 	{
 		"Event": "new:tracker",
 	 	"ID": 256,
 	 	"Data": {
 	 		"Emitter": 1,
-	 		"Data": "tobii://REXDL-010103247001"
+	 		"Data": "mock://standard",
+	 		"_Data": "tobii://REXDL-010103247001"
 	 	}
 	},
 	{
@@ -13,7 +14,8 @@
 	 	"ID": 256,
 	 	"Data": {
 	 		"Emitter": 2,
-	 		"Data": "tobii://REXDL-010104627253"
+	 		"Data": "mock://standard",
+	 		"_Data": "tobii://REXDL-010104627253"
 	 	}
 	},
 
@@ -21,8 +23,8 @@
 		"Event": "new:regionStats",
 		"ID": 256,
 		"Data": {
-			"Emitter": 1, 
-			"Duration": "60s", 
+			"Emitter": 1,
+			"Duration": "60s",
 			"Hertz": 40,
 			"GenerationInterval": "10s"
 		}
@@ -32,8 +34,8 @@
 		"Event": "new:regionStats",
 		"ID": 256,
 		"Data": {
-			"Emitter": 2, 
-			"Duration": "60s", 
+			"Emitter": 2,
+			"Duration": "60s",
 			"Hertz": 40,
 			"GenerationInterval": "10s"
 		}
@@ -44,7 +46,7 @@
 		"Event": "regionStats:addRegion",
 		"ID": 1,
 		"Data": {
-			"Name":"screen", 
+			"Name":"screen",
 			"Def":{
 				"Type":"rectangle",
 				"X": 0.0,
@@ -58,7 +60,7 @@
 		"Event": "regionStats:addRegion",
 		"ID": 1,
 		"Data": {
-			"Name":"top-left-rectangle", 
+			"Name":"top-left-rectangle",
 			"Def":{
 				"Type":"rectangle",
 				"X": 0.0,
@@ -87,7 +89,7 @@
 		"Event": "regionStats:addRegion",
 		"ID": 2,
 		"Data": {
-			"Name":"screen", 
+			"Name":"screen",
 			"Def":{
 				"Type":"rectangle",
 				"X": 0.0,
@@ -101,7 +103,7 @@
 		"Event": "regionStats:addRegion",
 		"ID": 2,
 		"Data": {
-			"Name":"top-left-rectangle", 
+			"Name":"top-left-rectangle",
 			"Def":{
 				"Type":"rectangle",
 				"X": 0.0,

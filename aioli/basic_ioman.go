@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"os"
 	"reflect"
 	"time"
 )
@@ -15,6 +16,7 @@ type BasicIOManager struct {
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
 	closed   bool
+	logger   *log.Logger
 }
 
 // newBasicIOManager creates a new BasicIOManager.
@@ -24,6 +26,7 @@ func newBasicIOManager(lookuper EmitterLookuper) *BasicIOManager {
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 		closed:   true,
+		logger:   log.New(os.Stderr, "[Aioli]", log.LstdFlags),
 	}
 }
 
@@ -36,6 +39,7 @@ type publMapEntry struct {
 //
 // Requires that the IOManager Run method is running.
 func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
+	biom.logger = logger
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := codec.Decode(&ep)
@@ -80,27 +84,24 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 		rtype, err := ee.TypeOf(recvData.Event) // Note ee ptr
 
 		if err != nil {
-			log.Println(err)
-
+			biom.logger.Println("TypeOf error:", err)
 		} else {
-
 			// Decode data as json according to rtype reflect.Type from event emitter
 			buf := recvData.Data      // buf is of encoded json format
 			ptr := reflect.New(rtype) // New value of that wanted type
 
 			// TODO Replace json.Unmarshal with provided decoder
 			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
-			//log.Println(reflect.Indirect(ptr).Interface())
+			//biom.logger.Println(reflect.Indirect(ptr).Interface())
 			if err != nil {
-				log.Println(err)
+				biom.logger.Println("JSON error:", err)
 			}
 
 			ee.Dispatch(recvData.Event, ptr.Elem().Interface())
-
 		}
 	} else {
-		log.Printf("No match for packet: %v", recvData)
 		time.Sleep(time.Millisecond * 500)
+		biom.logger.Printf("No match for packet: %v", recvData)
 	}
 }
 

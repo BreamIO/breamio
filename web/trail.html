@@ -1,7 +1,106 @@
 <html>
 	<head>
 		<title>Bream IO Eriver Tracker Drawer</title>
+		<script src="/api/eyestream.js"></script>
 		<script>
+			(function(exports, undefined) {
+				"use strict";
+				var Drawer = function Drawer(canvas) {
+					var rect = canvas.getBoundingClientRect()
+					this.width  = canvas.width  = rect.width
+					this.height = canvas.height = rect.height
+					this.lastPoint = {
+						x: 0.5 * this.width,
+						y: 0.5 * this.height
+					}
+					this.buffer = []
+					this.context = canvas.getContext("2d")
+					this.context.strokeStyle = Drawer.color
+					this.context.lineWidth = Drawer.thickness
+					this.image = new Image()
+					this.image.src = canvas.toDataURL("image/png")
+					EyeStream.subscribe("tracker:etdata", 1, this.receive.bind(this))
+				}
+
+				Drawer.tau = 2 * Math.PI
+				Drawer.radius = 10
+				Drawer.alpha = 0.8
+				Drawer.color = "#FF0000"
+				Drawer.thickness = 1.0
+
+				Drawer.prototype.receive = function receive(data) {
+					this.buffer.push({
+						x: data.Filtered.Xf * this.width,
+						y: data.Filtered.Yf * this.height
+					})
+				}
+
+				Drawer.prototype.render = function render(timestamp) {
+					// Cache frequently used variables
+					var i, point,
+					    width   = this.width,
+					    height  = this.height,
+					    image   = this.image,
+					    context = this.context,
+					    buffer  = this.buffer,
+					    length  = buffer.length
+
+					if (length === 0) {
+						buffer.push(this.lastPoint)
+						length = 1
+					}
+
+					for (i = 0; i < length; ++i) {
+						point = buffer[i]
+						// Clear the canvas and draw cached image
+						context.clearRect(0, 0, width, height)
+						context.globalAlpha = Drawer.alpha
+						context.drawImage(image, 0, 0)
+						context.globalAlpha = 1.0
+
+						// Draw the current point
+						context.beginPath()
+						context.arc(point.x, point.y, Drawer.radius, 0, Drawer.tau)
+						context.stroke()
+
+						// Cache the image for next iteration
+						image.src = context.canvas.toDataURL("image/png")
+					}
+
+					this.buffer = []
+					this.image = image
+					this.lastPoint = buffer[length - 1]
+					this.requestID = window.requestAnimationFrame(this.render.bind(this))
+				}
+
+				Drawer.prototype.stop = function stop() {
+					console.info("Stopping animation and websocket")
+					window.cancelAnimationFrame(this.requestID)
+					EyeStream.socket.close()
+				}
+
+				var init = function init(event) {
+					if (!EyeStream.connected) {
+						setTimeout(init, 100)
+						return
+					}
+					exports.drawer = new Drawer(document.getElementById("drawer"))
+					setTimeout(exports.drawer.stop.bind(exports.drawer), 12000)
+					exports.drawer.render()
+				}
+
+				document.addEventListener("DOMContentLoaded", init)
+			})(window)
+		</script>
+		<style>
+			html, body, canvas {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+		</style>
+		<!-- <script>
 			document.addEventListener("DOMContentLoaded", function(event) {
 				"use strict"; // If you like all your code to be strict
 				window.drawer = document.getElementById("drawer")
@@ -66,10 +165,9 @@
 				ctx.fillStyle = "rgba(255,255,255,0.1)"
 				ctx.fillRect(0,0,drawer.width,drawer.height)
 			}
-		</script>
+		</script> -->
 	</head>
-<body>
-<canvas id="drawer" width="1024" height="600">
-</canvas>
-</body>
+	<body>
+		<canvas id="drawer"></canvas>
+	</body>
 </html>
