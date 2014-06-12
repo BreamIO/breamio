@@ -173,7 +173,7 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 		select {
 		case p := <-inCh:
 			g.calibrationPoints++
-			//println("calubration points:", g.calibrationPoints)
+			//println("calibration points:", g.calibrationPoints)
 			if g.calibrationPoints >= 5 {
 				g.StopCalibration(handleError(errorCh, func() {
 					endCh <- struct{}{}
