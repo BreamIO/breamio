@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"flag"
 )
 
 type LoaderPkg struct {
@@ -36,22 +37,27 @@ type MultiLoaderPkg struct {
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		log.Println("Wrong number of arguments, expected 4, got:", len(os.Args))
-		os.Exit(1)
-	}
-	inputfile := os.Args[1]
-	outputfile := os.Args[2]
+	// Parse input flags
+	inputfilePtr := flag.String("input", "cfm_input.json", "Config File Maker input file, example use see \"cfm_example_input.json\"")
+	outputfilePtr := flag.String("output", "config_output.json", "Config File Maker output file, example use see \"cfm_example_output.json\"")
+	flag.Parse()
+	inputfile := *inputfilePtr
+	outputfile := *outputfilePtr
+
 	if inputfile == outputfile {
-		log.Println("Cant use the same input file as output file")
+		log.Println("Cant use the same input file as output file.")
 		os.Exit(1)
 	}
 	// Read content
-	content, _ := ioutil.ReadFile(inputfile)
+	content, err := ioutil.ReadFile(inputfile)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
 	// Unmarshal into a map[string]interface{}
 	var segments map[string]interface{}
-	err := json.Unmarshal(content, &segments)
+	err = json.Unmarshal(content, &segments)
 	if err != nil {
 		log.Println(err)
 	}
