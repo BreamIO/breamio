@@ -13,6 +13,7 @@ type AccessServer interface {
 }
 
 var servers = make(map[string]AccessServer)
+var ioman aioli.IOManager
 
 func Register(name string, as AccessServer) {
 	servers[name] = as
@@ -22,8 +23,12 @@ func init() {
 	beenleigh.Register(beenleigh.NewRunHandler(accessRun))
 }
 
+func GetIOManager() aioli.IOManager {
+	return ioman
+}
+
 func accessRun(logic beenleigh.Logic, closeCh <-chan struct{}) {
-	ioman := aioli.New(logic)
+	ioman = aioli.New(logic)
 	log.Println("Starting ExternalAccessService")
 	go ioman.Run()
 	go func() {
