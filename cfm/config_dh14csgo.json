@@ -1,0 +1,180 @@
+{
+  "Events": [
+    {
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Data": "tobii://REXDL-010103247001",
+        "Emitter": 1
+      }
+    },
+    {
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Data": "tobii://REXDL-010104627253",
+        "Emitter": 2
+      }
+    },
+    {
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Duration": "60s",
+        "Emitter": 1,
+        "GenerationInterval": "10s",
+        "Hertz": 40
+      }
+    },
+    {
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Duration": "60s",
+        "Emitter": 2,
+        "GenerationInterval": "10s",
+        "Hertz": 40
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.05,
+          "Type": "rectangle",
+          "Width": 0.15,
+          "X": 0.04,
+          "Y": 0.38
+        },
+        "Name": "cash"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.06,
+          "Type": "rectangle",
+          "Width": 0.24,
+          "X": 0.04,
+          "Y": 0.91
+        },
+        "Name": "health"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.06,
+          "Type": "rectangle",
+          "Width": 0.16,
+          "X": 0.81,
+          "Y": 0.9
+        },
+        "Name": "ammo"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.05,
+          "Type": "rectangle",
+          "Width": 0.05,
+          "X": 0.48,
+          "Y": 0.04
+        },
+        "Name": "scoretime"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.12,
+          "Type": "ellipse",
+          "Width": 0.07,
+          "X": 0.11,
+          "Y": 0.22
+        },
+        "Name": "minimap"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.05,
+          "Type": "rectangle",
+          "Width": 0.15,
+          "X": 0.04,
+          "Y": 0.38
+        },
+        "Name": "cash"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.06,
+          "Type": "rectangle",
+          "Width": 0.24,
+          "X": 0.04,
+          "Y": 0.91
+        },
+        "Name": "health"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.06,
+          "Type": "rectangle",
+          "Width": 0.16,
+          "X": 0.81,
+          "Y": 0.9
+        },
+        "Name": "ammo"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.05,
+          "Type": "rectangle",
+          "Width": 0.05,
+          "X": 0.48,
+          "Y": 0.04
+        },
+        "Name": "scoretime"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.12,
+          "Type": "ellipse",
+          "Width": 0.07,
+          "X": 0.11,
+          "Y": 0.22
+        },
+        "Name": "minimap"
+      }
+    }
+  ]
+}
