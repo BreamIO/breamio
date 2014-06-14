@@ -5,7 +5,7 @@
 	 	"ID": 256,
 	 	"Data": {
 	 		"Emitter": 1,
-	 		"Data": "mock://standard",
+	 		"Data": "mock://sporadic",
 	 		"_Data": "tobii://REXDL-010103247001"
 	 	}
 	},
