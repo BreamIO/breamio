@@ -223,9 +223,10 @@
 				}
 
 				Server.prototype.send = function send(pkg) {
-					return this.opened.then(
-						this.socket.send.bind(this.socket, JSON.stringify(pkg))
-					)
+					var self = this
+					return this.opened.then(function() {
+						self.socket.send(JSON.stringify(pkg))
+					})
 				}
 
 				Server.prototype.recieve = function recieve() {

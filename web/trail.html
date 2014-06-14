@@ -5,78 +5,127 @@
 		<script>
 			(function(exports, undefined) {
 				"use strict";
-				var Drawer = function Drawer(canvas) {
+				var Trail = function Trail(canvas) {
 					var rect = canvas.getBoundingClientRect()
-					this.width  = canvas.width  = rect.width
-					this.height = canvas.height = rect.height
-					this.lastPoint = {
-						x: 0.5 * this.width,
-						y: 0.5 * this.height
-					}
-					this.buffer = []
+					this.width   = canvas.width  = rect.width
+					this.height  = canvas.height = rect.height
+					this.buffer  = []
+					this.last    = null
+					this.counter = 0
 					this.context = canvas.getContext("2d")
-					this.context.strokeStyle = Drawer.color
-					this.context.lineWidth = Drawer.thickness
-					this.image = new Image()
-					this.image.src = canvas.toDataURL("image/png")
+					this.context.lineWidth = 0
 					EyeStream.subscribe("tracker:etdata", 1, this.receive.bind(this))
 				}
 
-				Drawer.tau = 2 * Math.PI
-				Drawer.radius = 10
-				Drawer.alpha = 0.8
-				Drawer.color = "#FF0000"
-				Drawer.thickness = 1.0
+				Trail.tau = 2 * Math.PI
+				Trail.radius = 20
+				Trail.alpha = 0.9
+				Trail.color = "255,0,0" // RGB notation, adds opacity later
+				Trail.thickness = 1.0
+				Trail.maxLength = 20
 
-				Drawer.prototype.receive = function receive(data) {
+				Trail.prototype.receive = function receive(data) {
 					this.buffer.push({
-						x: data.Filtered.Xf * this.width,
-						y: data.Filtered.Yf * this.height
+						x: data.Filtered.Xf * 0.97 * this.width,
+						y: data.Filtered.Yf * 0.97 * this.height
 					})
 				}
 
-				Drawer.prototype.render = function render(timestamp) {
+				Trail.prototype.render = function render(timestamp) {
 					// Cache frequently used variables
-					var i, point,
+					var i, j, distance, factor, point, step,
 					    width   = this.width,
 					    height  = this.height,
 					    image   = this.image,
 					    context = this.context,
-					    buffer  = this.buffer,
-					    length  = buffer.length
+					    buffer  = [],
+					    length  = 0,
+					    last    = this.last,
+					    angle   = { start: 0, end: 0 },
+					    delta   = { x: 0, y: 0 }
 
-					if (length === 0) {
-						buffer.push(this.lastPoint)
-						length = 1
-					}
+					// Setup next iteration and truncate buffer
+					this.requestID = window.requestAnimationFrame(this.render.bind(this))
+			    this.buffer = this.buffer.slice(-Trail.maxLength)
+			    length      = this.buffer.length
+
+			    if (last === null) {
+			    	if (length === 0) return
+			    	last = this.buffer[length - 1]
+			    }
+
+			    if (this.buffer.length === 0) {
+			    	this.buffer[0] = last
+			    	length = 1
+			    }
 
 					for (i = 0; i < length; ++i) {
-						point = buffer[i]
-						// Clear the canvas and draw cached image
-						context.clearRect(0, 0, width, height)
-						context.globalAlpha = Drawer.alpha
-						context.drawImage(image, 0, 0)
-						context.globalAlpha = 1.0
+						point = this.buffer[i]
+						// delta.x = point.x - last.x
+						// delta.y = point.y - last.y
 
-						// Draw the current point
-						context.beginPath()
-						context.arc(point.x, point.y, Drawer.radius, 0, Drawer.tau)
-						context.stroke()
+						// distance = Math.sqrt(delta.x * delta.x + delta.y * delta.y)
+						// if (distance !== 0) {
+						// 	step = distance / Trail.thickness
 
-						// Cache the image for next iteration
-						image.src = context.canvas.toDataURL("image/png")
+						// 	delta.x /= step
+						// 	delta.y /= step
+
+						// 	for (j = 0; j < distance; j += step) {
+						// 		buffer.push({
+						// 			x: last.x + delta.x,
+						// 			y: last.y + delta.y
+						// 		})
+						// 	}
+						// }
+						buffer.push(point)
+						last = point
 					}
 
-					this.buffer = []
-					this.image = image
-					this.lastPoint = buffer[length - 1]
-					this.requestID = window.requestAnimationFrame(this.render.bind(this))
+					length = buffer.length
+					context.clearRect(0, 0, width, height)
+					last = buffer[length - 1]
+
+					for (i = length - 2; i >= 0; --i) {
+						point = buffer[i]
+						factor = (i+1) / length
+						angle.start = Math.atan2(point.y - last.y, point.x - last.x) - Math.PI/2 + (1 - factor) * Math.PI/3
+						angle.end = angle.start  + Math.PI - (1 - factor) * Math.PI/3
+
+						// Draw the current point
+						context.fillStyle = "rgba(" + Trail.color + "," + 0.5 * factor + ")"
+						context.beginPath()
+						context.arc(point.x, point.y, Trail.radius, angle.start, angle.end)
+						context.lineTo(
+							last.x + Trail.radius * Math.cos(angle.end),
+							last.y + Trail.radius * Math.sin(angle.end)
+						)
+						context.arc(last.x, last.y, Trail.radius, angle.end, angle.start, true)
+						context.closePath()
+						context.fill()
+
+						last = point
+					}
+
+					last = buffer[length - 1]
+					context.strokeStyle = "rgb(" + Trail.color + ")"
+					context.beginPath()
+					context.arc(last.x, last.y, Trail.radius, 0, Trail.tau)
+					context.stroke()
+
+			    this.last = buffer[length - 1]
+					this.counter++
 				}
 
-				Drawer.prototype.stop = function stop() {
-					console.info("Stopping animation and websocket")
-					window.cancelAnimationFrame(this.requestID)
-					EyeStream.socket.close()
+				Trail.prototype.stopAfter = function stopAfter(time) {
+					var self = this
+					// console.profile("Rendering")
+					if (!this.requestID) this.render()
+					setTimeout(function stop() {
+						// console.profileEnd("Rendering")
+						window.cancelAnimationFrame(self.requestID)
+						EyeStream.socket.close()
+					}, time || 12000)
 				}
 
 				var init = function init(event) {
@@ -84,9 +133,8 @@
 						setTimeout(init, 100)
 						return
 					}
-					exports.drawer = new Drawer(document.getElementById("drawer"))
-					setTimeout(exports.drawer.stop.bind(exports.drawer), 12000)
-					exports.drawer.render()
+					exports.trail = new Trail(document.getElementById("trail"))
+					exports.trail.render()
 				}
 
 				document.addEventListener("DOMContentLoaded", init)
@@ -103,10 +151,10 @@
 		<!-- <script>
 			document.addEventListener("DOMContentLoaded", function(event) {
 				"use strict"; // If you like all your code to be strict
-				window.drawer = document.getElementById("drawer")
-				window.drawer.width  = window.innerWidth*0.97;
-				window.drawer.height = window.innerHeight*0.97;
-				window.ctx = drawer.getContext("2d")
+				window.trail = document.getElementById("trail")
+				window.trail.width  = window.innerWidth*0.97;
+				window.trail.height = window.innerHeight*0.97;
+				window.ctx = trail.getContext("2d")
 				listen("ws://localhost:8080/api/json")
 				setInterval(fade, 10)
 			});
@@ -154,8 +202,8 @@
 				'use strict';
 				ctx.fillStyle = "#FF0000";
 				ctx.beginPath();
-				ctx.arc(drawer.width*etdata.Filtered.Xf,
-					drawer.height*etdata.Filtered.Yf,
+				ctx.arc(trail.width*etdata.Filtered.Xf,
+					trail.height*etdata.Filtered.Yf,
 					10,0,2*Math.PI);
 				ctx.fill();
 			}
@@ -163,11 +211,11 @@
 			function fade() {
 				'use strict';
 				ctx.fillStyle = "rgba(255,255,255,0.1)"
-				ctx.fillRect(0,0,drawer.width,drawer.height)
+				ctx.fillRect(0,0,trail.width,trail.height)
 			}
 		</script> -->
 	</head>
 	<body>
-		<canvas id="drawer"></canvas>
+		<canvas id="trail"></canvas>
 	</body>
 </html>

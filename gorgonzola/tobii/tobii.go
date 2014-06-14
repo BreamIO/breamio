@@ -186,12 +186,20 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 		case p := <-inCh:
 			log.Println("GazeTracker#calibrateStartHandler", "Calibration Start event recieved.")
 			g.calibrationPoints++
-			//println("calubration points:", g.calibrationPoints)
+			//println("calibration points:", g.calibrationPoints)
 			if g.calibrationPoints >= 5 {
+				computed := make(chan struct{})
+				g.ComputeAndSetCalibration(handleError(errorCh, func() {
+					close(computed)
+				}))
+
+				<-computed
+
 				g.StopCalibration(handleError(errorCh, func() {
 					endCh <- struct{}{}
 					vstartCh <- struct{}{}
 				}))
+
 			} else {
 				g.AddPointToCalibration(gaze.NewPoint2D(p.X(), p.Y()),
 					handleError(errorCh, func() {
