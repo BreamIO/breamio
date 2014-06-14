@@ -1,0 +1,96 @@
+{
+  "Events": [
+    {
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Data": "tobii://REXDL-010103247001",
+        "Emitter": 1
+      }
+    },
+    {
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Data": "tobii://REXDL-010104627253",
+        "Emitter": 2
+      }
+    },
+    {
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Duration": "60s",
+        "Emitter": 1,
+        "GenerationInterval": "10s",
+        "Hertz": 40
+      }
+    },
+    {
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Duration": "60s",
+        "Emitter": 2,
+        "GenerationInterval": "10s",
+        "Hertz": 40
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 1,
+          "Type": "rectangle",
+          "Width": 1,
+          "X": 0,
+          "Y": 0
+        },
+        "Name": "screen"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Def": {
+          "Height": 0.5,
+          "Type": "rectangle",
+          "Width": 0.5,
+          "X": 0,
+          "Y": 0
+        },
+        "Name": "top-left-rectangle"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 1,
+          "Type": "rectangle",
+          "Width": 1,
+          "X": 0,
+          "Y": 0
+        },
+        "Name": "screen"
+      }
+    },
+    {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Def": {
+          "Height": 0.5,
+          "Type": "rectangle",
+          "Width": 0.5,
+          "X": 0,
+          "Y": 0
+        },
+        "Name": "top-left-rectangle"
+      }
+    }
+  ]
+}
