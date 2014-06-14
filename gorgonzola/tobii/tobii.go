@@ -14,11 +14,11 @@ type GazeDriver struct{}
 func (GazeDriver) Create() (Tracker, error) {
 	tracker, err := gaze.AnyEyeTracker()
 	return &GazeTracker{
-		tracker, 
+		tracker,
 		make(chan struct{}),
 		nil,
-		false, 
-		0, 
+		false,
+		0,
 		0,
 	}, err
 }
@@ -48,7 +48,6 @@ type GazeTracker struct {
 	calibrated        bool
 	calibrationPoints uint
 	validationPoints  uint
-	
 }
 
 func (g GazeTracker) Stream() (<-chan *ETData, <-chan error) {
@@ -175,10 +174,18 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 			g.calibrationPoints++
 			//println("calibration points:", g.calibrationPoints)
 			if g.calibrationPoints >= 5 {
+				computed := make(chan struct{})
+				g.ComputeAndSetCalibration(handleError(errorCh, func() {
+					close(computed)
+				}))
+
+				<-computed
+
 				g.StopCalibration(handleError(errorCh, func() {
 					endCh <- struct{}{}
 					vstartCh <- struct{}{}
 				}))
+
 			} else {
 				g.AddPointToCalibration(gaze.NewPoint2D(p.X(), p.Y()),
 					handleError(errorCh, func() {
