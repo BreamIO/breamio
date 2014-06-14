@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log"
 	"math"
-	"time"
 	"math/rand"
+	"time"
 
 	"github.com/maxnordlund/breamio/briee"
 	. "github.com/maxnordlund/breamio/gorgonzola"
@@ -20,7 +20,7 @@ func mockConstant(t float64) (float64, float64) {
 }
 
 func mockSporadic(t float64) (float64, float64) {
-	return 0.5 + 0.5*math.Cos(t)+rand.Float64()/50, 0.5 + 0.5*math.Sin(t*t) + rand.Float64()/50
+	return 0.5 + 0.5*math.Cos(t) + rand.Float64()/50, 0.5 + 0.5*math.Sin(10*t) + rand.Float64()/50
 }
 
 type MockDriver struct{}
