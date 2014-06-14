@@ -86,7 +86,7 @@
 						factor = (i+1) / length
 						context.globalAlpha = factor
 						context.beginPath()
-						context.arc(point.x, point.y, 0.7 * Trail.radius * factor, 0, Trail.tau)
+						context.arc(point.x, point.y, 0.8 * Trail.radius * factor, 0, Trail.tau)
 						context.fill()
 						context.lineTo(
 							last.x + Trail.radius * Math.cos(angle.end),
