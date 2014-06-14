@@ -298,9 +298,9 @@
 							}
 						].map(server.send.bind(server))
 					).then(function() {
-						Promise.all([
+						return Promise.all([
 							server.wait("tracker:calibrate:start", id, {}),
-							delay(1000)
+							delay(3000)
 						])
 					}).then(function() {
 						circle.show()
