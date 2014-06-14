@@ -109,25 +109,39 @@ func (g GazeTracker) String() string {
 }
 
 func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
-	backlog := Point2D{-1, -1}
+	backlog := ETData{
+		Filtered:  Point2D{-1, -1},
+		LeftGaze:  &Point2D{-1, -1},
+		RightGaze: &Point2D{-1, -1},
+	}
 	return func(data *gaze.GazeData) {
 		ts := data.TrackingStatus()
 		if ts < gaze.BothEyesTracked || ts == gaze.OneEyeTrackedUnknownWhich {
 			return //Bad data
 		}
+
 		etdata := new(ETData)
 		etdata.Timestamp = data.Timestamp()
-		etdata.Filtered = *ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
+		if ts == gaze.OnlyLeftEyeTracked {
+			etdata.Filtered = *ToPoint2D(Filter(data.Left().GazePointOnDisplay(), backlog.RightGaze))
+			backlog.LeftGaze = ToPoint2D(data.Left().GazePointOnDisplay())
+		} else if ts == gaze.OnlyRightEye_Tracked {
+			etdata.Filtered = *ToPoint2D(Filter(backlog.LeftGaze, data.Right().GazePointOnDisplay()))
+			backlog.RightGaze = ToPoint2D(data.Right().GazePointOnDisplay())
+		} else {
+			etdata.Filtered = *ToPoint2D(Filter(data.Left().GazePointOnDisplay(), data.Right().GazePointOnDisplay()))
+		}
+
 		etdata.LeftGaze = ToPoint2D(data.Left().GazePointOnDisplay())
 		etdata.RightGaze = ToPoint2D(data.Right().GazePointOnDisplay())
 
-		if distSq(etdata.Filtered, backlog) < 0.05*0.05 {
-			etdata.Filtered, backlog = Point2D{
-				Xf: etdata.Filtered.Xf*0.4 + backlog.Xf*0.6,
-				Yf: etdata.Filtered.Yf*0.4 + backlog.Yf*0.6,
+		if distSq(etdata.Filtered, backlog.Filtered) < 0.05*0.05 {
+			etdata.Filtered, backlog.Filtered = Point2D{
+				Xf: etdata.Filtered.Xf*0.4 + backlog.Filtered.Xf*0.6,
+				Yf: etdata.Filtered.Yf*0.4 + backlog.Filtered.Yf*0.6,
 			}, etdata.Filtered
 		} else {
-			backlog = etdata.Filtered
+			backlog.Filtered = etdata.Filtered
 		}
 		//log.Println(etdata)
 		ch <- etdata
