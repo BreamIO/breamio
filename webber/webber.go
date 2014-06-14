@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	ListenAddress = ":8080"
+	ListenAddress = ":80"
 )
 
 var Root = "web"
@@ -143,6 +143,7 @@ func (web *Webber) Close() error {
 func (web *Webber) addServings() {
 	web.HandleStatic("/control", path.Join(Root, "control.html"))
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
+	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {

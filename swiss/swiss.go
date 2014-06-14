@@ -6,10 +6,11 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/maxnordlund/breamio/aioli/access"
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
-	//_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
+	_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
 	_ "github.com/maxnordlund/breamio/swiss/proxy"
 )
 
