@@ -1,0 +1,101 @@
+{
+	"Trackers": [
+	{
+		"Event": "new:tracker", 
+		"ID": 256, 
+		"Data": {
+			"Emitter": 1, 
+			"Data": "tobii://REXDL-010103247001"
+		}
+	},
+	{
+		"Event": "new:tracker", 
+		"ID": 256, 
+		"Data": {
+			"Emitter": 2, 
+			"Data": "tobii://REXDL-010104627253"
+		}
+	}],
+	"RegionStatsTemplate" : [
+	{
+		"Event": "new:regionStats",
+		"ID": 256, 
+		"Data": {
+			"Emitter": 0, 
+			"Duration": "60s", 
+			"Hertz": 40,
+			"GenerationInterval": "10s"
+		}
+	}],
+	"RegionDefinitions" : [
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"cash", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.04,
+				"Width": 0.15,
+				"Y": 0.38,
+				"Height": 0.05
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"health", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.04,
+				"Width": 0.24,
+				"Y": 0.91,
+				"Height": 0.06
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"ammo", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.81,
+				"Width": 0.16,
+				"Y": 0.90,
+				"Height": 0.06
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"scoretime", 
+			"Def":{
+				"Type":"rectangle",
+				"X": 0.48,
+				"Width": 0.05,
+				"Y": 0.04,
+				"Height": 0.05
+			}
+		}
+	},
+	{
+		"Event": "regionStats:addRegion",
+		"ID": 1,
+		"Data": {
+			"Name":"minimap", 
+			"Def":{
+				"Type":"circle",
+				"X": 0.11,
+				"Width": 0.12,
+				"Y": 0.22,
+				"Height": 0.0
+			}
+		}
+	}]
+}
