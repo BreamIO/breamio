@@ -27,14 +27,14 @@ type SyncReadWriter struct {
 }
 
 func (srw *SyncReadWriter) Read(p []byte) (n int, err error) {
-	defer srw.lock.Unlock()
-	srw.lock.Lock()
+	// defer srw.lock.Unlock()
+	// srw.lock.Lock()
 	return srw.RW.Read(p)
 }
 
 func (srw *SyncReadWriter) Write(p []byte) (n int, err error) {
-	defer srw.lock.Unlock()
-	srw.lock.Lock()
+	// defer srw.lock.Unlock()
+	// srw.lock.Lock()
 	return srw.RW.Write(p)
 }
 
