@@ -37,6 +37,7 @@
 				Trail.prototype.render = function render(timestamp) {
 					// Cache frequently used variables
 					var i, j, distance, factor, point, step,
+					    ttl     = Date.now() - EyeStream.ttl,
 					    width   = this.width,
 					    height  = this.height,
 					    image   = this.image,
@@ -49,24 +50,22 @@
 
 					// Setup next iteration and truncate buffer
 					this.requestID = window.requestAnimationFrame(this.render.bind(this))
-			    this.buffer = this.buffer.slice(-Trail.maxLength)
-			    length      = this.buffer.length
+					this.buffer    = buffer = this.buffer.slice(-Trail.maxLength)
+					length         = buffer.length
 
-			    if (last === null) {
-			    	if (length === 0) return
-			    	last = this.buffer[length - 1]
-			    }
-
-			    if (this.buffer.length === 0) {
-			    	this.buffer[0] = last
-			    	length = 1
-			    }
-
-			    buffer = this.buffer
-
-					length = buffer.length
 					context.clearRect(0, 0, width, height)
-					last = buffer[length - 1]
+
+					if (length === 0) {
+						return
+					}
+
+					if (ttl/100 - (Trail.maxLength - buffer.length) > 1.0) {
+						this.buffer = buffer.slice(1)
+					}
+
+					if (last === null) {
+						last = buffer[buffer.length - 1]
+					}
 
 					// Gaze-Circle
 					context.globalAlpha = 1.0
@@ -98,16 +97,16 @@
 						last = point
 					}
 
-			    this.last = buffer[length - 1]
+					this.last = buffer[length - 1]
 					this.counter++
 				}
 
 				Trail.prototype.stopAfter = function stopAfter(time) {
 					var self = this
-					// console.profile("Rendering")
+					console.profile("Rendering")
 					if (!this.requestID) this.render()
 					setTimeout(function stop() {
-						// console.profileEnd("Rendering")
+						console.profileEnd("Rendering")
 						window.cancelAnimationFrame(self.requestID)
 						EyeStream.socket.close()
 					}, time || 12000)
@@ -120,6 +119,7 @@
 					}
 					exports.trail = new Trail(document.getElementById("trail"))
 					exports.trail.render()
+					// exports.trail.stopAfter()
 				}
 
 				document.addEventListener("DOMContentLoaded", init)

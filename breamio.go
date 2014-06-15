@@ -33,5 +33,5 @@ func main() {
 }
 
 func init() {
-	runtime.GOMAXPROCS(2)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
