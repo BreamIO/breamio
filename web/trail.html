@@ -14,7 +14,7 @@
 					this.counter = 0
 					this.context = canvas.getContext("2d")
 					this.context.lineWidth = Trail.thickness
-					EyeStream.subscribe("tracker:etdata", 1, this.receive.bind(this))
+					EyeStream.subscribe("tracker:etdata", {{.Id}}, this.receive.bind(this))
 				}
 
 				Trail.tau = 2 * Math.PI
