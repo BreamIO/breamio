@@ -3,6 +3,7 @@
 	var EyeStream = function EyeStream(addr) {
 		this.connected = false
 		this.events = {}
+		this.ttl    = 0
 		this.socket = new WebSocket(addr)
 		this.socket.onerror = this.error.bind(this)
 		this.socket.onopen = this.opened.bind(this)
@@ -29,6 +30,7 @@
 
 	EyeStream.prototype.received = function received(event) {
 		var data, handler, message = JSON.parse(event.data)
+		this.ttl = Date.now()
 		if (message.Error !== undefined && message.Error !== null) {
 			console.error("Received server error:", event.Error)
 			return
