@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,8 +16,8 @@ type BasicIOManager struct {
 	lookuper EmitterLookuper
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
-	closed   bool
 	logger   *log.Logger
+	closed   int32
 }
 
 // newBasicIOManager creates a new BasicIOManager.
@@ -25,8 +26,8 @@ func newBasicIOManager(lookuper EmitterLookuper) *BasicIOManager {
 		lookuper: lookuper,
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
-		closed:   true,
 		logger:   log.New(os.Stderr, "[Aioli] ", log.LstdFlags),
+		closed:   1,
 	}
 }
 
@@ -65,7 +66,7 @@ func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 
 // Run listens on the internal channel of ExtPkg data on which all listerners send data on.
 func (biom *BasicIOManager) Run() {
-	biom.closed = false
+	biom.setClosed(false)
 	for !biom.IsClosed() {
 		select {
 		case recvData := (<-biom.dataChan):
@@ -169,15 +170,23 @@ func (biom *BasicIOManager) Close() error {
 	if biom.IsClosed() {
 		return errors.New("Can not close already closed IOManager")
 	}
-	biom.closed = true
+	biom.setClosed(true)
 	return nil
+}
+
+func (biom *BasicIOManager) setClosed(closed bool) {
+	if closed {
+		atomic.StoreInt32(&biom.closed, 1)
+	} else {
+		atomic.StoreInt32(&biom.closed, 0)
+	}
 }
 
 // IsClosed returns true if IOManager is currently closed.
 //
 // Call Run method to open.
 func (biom *BasicIOManager) IsClosed() bool {
-	return biom.closed
+	return biom.closed == 1
 }
 
 func (biom *BasicIOManager) Dispatch(ep ExtPkg) {

@@ -3,6 +3,7 @@ package aioli
 import (
 	"encoding/json"
 	"io"
+	"sync"
 )
 
 // ReadWriter is the interface that groups the Encode and Decode methods.
@@ -20,10 +21,28 @@ type Codec struct {
 	Decoder
 }
 
-// NewDecoder returns the default implemenation JSONDecoder
+type SyncReadWriter struct {
+	RW   io.ReadWriter
+	lock sync.Mutex
+}
+
+func (srw *SyncReadWriter) Read(p []byte) (n int, err error) {
+	defer srw.lock.Unlock()
+	srw.lock.Lock()
+	return srw.RW.Read(p)
+}
+
+func (srw *SyncReadWriter) Write(p []byte) (n int, err error) {
+	defer srw.lock.Unlock()
+	srw.lock.Lock()
+	return srw.RW.Write(p)
+}
+
+// NewDecoder returns the default implementation JSONDecoder
 func NewCodec(r io.ReadWriter) Codec {
 	//return NewJSONDecoder(r)
-	return Codec{json.NewEncoder(r), json.NewDecoder(r)}
+	srw := &SyncReadWriter{RW: r}
+	return Codec{json.NewEncoder(srw), json.NewDecoder(srw)}
 }
 
 // Decoder interface to be used with I/O manager Listen method.
