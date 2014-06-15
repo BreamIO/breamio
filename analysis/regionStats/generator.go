@@ -48,7 +48,7 @@ type RegionRun struct {
 }
 
 func (r *RegionRun) Run(logic beenleigh.Logic) {
-	log := log.New(os.Stderr, "[ RegionRun ]", log.LstdFlags)
+	log := log.New(os.Stderr, "[ RegionRun ] ", log.LstdFlags)
 	log.Println("Registering in EE")
 	var newChan <-chan *Config
 	var ee briee.EventEmitter
@@ -88,7 +88,7 @@ type RegionStatistics struct {
 }
 
 func New(ee briee.PublishSubscriber, dur string, hertz uint, genIntv string) *RegionStatistics {
-	log := log.New(os.Stderr, "[ RegionStats ]", log.LstdFlags)
+	log := log.New(os.Stderr, "[ RegionStats ] ", log.LstdFlags)
 
 	duration, err := time.ParseDuration(dur)
 	if err != nil {

@@ -26,7 +26,7 @@ func newBasicIOManager(lookuper EmitterLookuper) *BasicIOManager {
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
 		closed:   true,
-		logger:   log.New(os.Stderr, "[Aioli]", log.LstdFlags),
+		logger:   log.New(os.Stderr, "[Aioli] ", log.LstdFlags),
 	}
 }
 
@@ -39,7 +39,6 @@ type publMapEntry struct {
 //
 // Requires that the IOManager Run method is running.
 func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
-	biom.logger = logger
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := codec.Decode(&ep)
@@ -92,7 +91,6 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 			// TODO Replace json.Unmarshal with provided decoder
 			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
-			//biom.logger.Println(reflect.Indirect(ptr).Interface())
 			if err != nil {
 				biom.logger.Println("JSON error:", err)
 			}
@@ -132,7 +130,7 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 
 	template := reflect.New(rtype).Elem().Interface()
 	dataCh := reflect.ValueOf(ee.Subscribe(recvData.Event, template)) //Reflected channel.
-	// No we do not care about exact type.
+	// Now we do not care about exact type.
 
 	logger.Printf("Subscription for event \"%s\" on emitter %d started.\n", recvData.Event, recvData.ID)
 	for !biom.IsClosed() {

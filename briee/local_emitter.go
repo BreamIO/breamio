@@ -2,6 +2,7 @@ package briee
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -155,7 +156,7 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
 	} else {
-		return nil, errors.New("No event with that identifier is registred")
+		return nil, errors.New(fmt.Sprintf("No event with '%s' identifier is registered", eventID))
 	}
 }
 

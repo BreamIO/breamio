@@ -12,7 +12,6 @@ import (
 	"os"
 )
 
-var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
 
 func init() {
 	bl.Register(&AncientRun{make(chan struct{})})
@@ -43,6 +42,7 @@ func (ar *AncientRun) Close() error {
 	close(ar.closing)
 	return nil
 }
+var logger = log.New(os.Stdout, "[AncientPower] ", log.LstdFlags)
 
 func New(logic bl.Logic, spec bl.Spec) {
 	ee := logic.CreateEmitter(spec.Emitter)

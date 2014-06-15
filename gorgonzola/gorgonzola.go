@@ -75,7 +75,7 @@ func init() {
 	bl.Register(&GorgonzolaRun{make(chan struct{})})
 }
 
-var logger = log.New(os.Stdout, "[Gorgonzola]", log.LstdFlags)
+var logger = log.New(os.Stdout, "[Gorgonzola] ", log.LstdFlags)
 
 // Creates a tracker using a URI.
 // The URI is on the form <driver>://<id>.

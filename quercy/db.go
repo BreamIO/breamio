@@ -13,7 +13,7 @@ import (
 	"github.com/maxnordlund/breamio/gorgonzola"
 )
 
-var logger = log.New(os.Stdout, "[Quercy]", log.LstdFlags)
+var logger = log.New(os.Stdout, "[Quercy] ", log.LstdFlags)
 
 func init() {
 	beenleigh.Register(&sqlRun{make(chan struct{})})
