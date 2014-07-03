@@ -12,8 +12,8 @@ import (
 
 const (
 	Company = "Bream IO"
-	Product = "Eriver"
-	Version = "v2.0"
+	Product = "EyeStream"
+	Version = "v3.0"
 )
 
 func main() {
