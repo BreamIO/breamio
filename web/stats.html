@@ -8,18 +8,75 @@
 		</style>
 		<script src="/api/eyestream.js"></script>
 		<script>
-			var id={{.Id}}
-			EyeStream.socket.onopen = function() {
-				EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
-					console.log(regionsMap)
-					for (var region in regionsMap) {
-						var regionInfo = regionsMap[region];
-						//render table or whatever
-					}
-				})
-			}
+			var init = function init(event) {
+				console.log("DOM fully loaded and parsed")
+			
+
+				var id={{.Id}}
+				EyeStream.socket.onopen = function() {
+					EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
+						console.log(regionsMap)
+
+						var mytable = document.getElementById("stats_table");
+						var mytbody = document.getElementById("stats_tbody");
+						var myNewtbody = document.createElement("tbody");
+						myNewtbody.id = "stats_tbody";
+						var docFragment = document.createDocumentFragment();
+						var trElem, tdElem, txtNode;
+
+						// Add the description box
+
+						for (var region in regionsMap) {
+							var regionInfo = regionsMap[region];
+							//render table or whatever
+							console.log(regionInfo);
+
+							// Create a tr element
+							trElem = document.createElement("tr");
+							trElem.className = region;
+
+							tdElem = document.createElement("td");
+							tdElem.className = "col0"
+							txtNode = document.createTextNode(region);
+							tdElem.appendChild(txtNode);
+							trElem.appendChild(tdElem);
+
+							tdElem = document.createElement("td");
+							tdElem.className = "col1"
+							txtNode = document.createTextNode(regionInfo.looks);
+							tdElem.appendChild(txtNode);
+							trElem.appendChild(tdElem);
+
+							tdElem = document.createElement("td");
+							tdElem.className = "col2"
+							txtNode = document.createTextNode(regionInfo.time);
+							tdElem.appendChild(txtNode);
+							trElem.appendChild(tdElem);
+							/*
+							var textnode = document.createTextNode("My Text");
+							var elem = document.createElement("td");
+							var row = document.createElement("tr");
+							elem.appendChild(textnode);
+							row.appendChild(elem);
+							*/
+
+							docFragment.appendChild(trElem);
+							//document.getElementById("stats_table").appendChild(displayNode);
+							//document.getElementById("myp").innerText = regionInfo.looks
+						}
+						myNewtbody.appendChild(docFragment);
+						mytable.replaceChild(myNewtbody, mytbody);
+					})
+				};
+			};
+			document.addEventListener("DOMContentLoaded", init)
 		</script>
 	</head>
 	<body>
+		<table id="stats_table" border>
+			<tbody id="stats_tbody">
+			</tbody>
+		</table>
+		<!--<p id="myp">-->
 	</body>
 </html>
