@@ -3,14 +3,12 @@ package aioli_test
 import (
 	"bytes"
 	"encoding/json"
-	"log"
-	"sync"
-	//"time"
 	"io"
-	"net"
+	"log"
 	"os"
+	"runtime/pprof"
+	"sync"
 	"testing"
-	//"reflect"
 
 	. "github.com/maxnordlund/breamio/aioli"
 	bl "github.com/maxnordlund/breamio/beenleigh"
@@ -55,13 +53,14 @@ func TestIOman(t *testing.T) {
 	logic := bl.New(briee.New)
 	// Set up IO manager
 	ioman := New(logic)
+	defer ioman.Close()
 
 	// Set up emitter
 	ee := logic.CreateEmitter(1)
 	subscriber := ee.Subscribe("event data", Payload{}).(<-chan Payload)
 	defer ee.Unsubscribe("event data", subscriber)
 
-	var network bytes.Buffer // Stand-in for the network
+	network := SyncReadWriter{RW: &bytes.Buffer{}} // Stand-in for the network
 	dec := NewCodec(&network)
 
 	// Example data from an external source
@@ -106,14 +105,13 @@ func TestIOman(t *testing.T) {
 	if plSend != plRecv {
 		t.Errorf("Got %v, want %v\n", plRecv, plSend)
 	}
-
-	ioman.Close()
 }
 
 func TestSubscriptions(t *testing.T) {
 	logic := bl.New(briee.New)
 	// Set up IO manager
 	ioman := New(logic)
+	defer ioman.Close()
 
 	ee := logic.CreateEmitter(1)
 	pub := ee.Publish("data", string("")).(chan<- string)
@@ -123,22 +121,17 @@ func TestSubscriptions(t *testing.T) {
 
 	go ioman.Run()
 
-	sync := make(chan struct{})
-	server, err := net.Listen("tcp", "localhost:4042")
-	if err != nil {
-		t.Fatal(err)
-	}
+	barrier := make(chan struct{})
+	network := &SyncReadWriter{RW: &bytes.Buffer{}} // Stand-in for the network
 
 	go func() {
-		serverSocket, _ := server.Accept()
-		serverCodec := NewCodec(serverSocket)
+		serverCodec := NewCodec(network)
 		go ioman.Listen(serverCodec, logger)
-		<-sync
+		<-barrier
 		pub <- "Foo"
 	}()
 
-	clientSocket, _ := net.Dial("tcp", "localhost:4042")
-	clientCodec := NewCodec(clientSocket)
+	clientCodec := NewCodec(network)
 
 	//Write various packages to network.
 	clientCodec.Encode(ExtPkg{
@@ -148,7 +141,7 @@ func TestSubscriptions(t *testing.T) {
 		Data:      []byte(""),
 	})
 
-	sync <- struct{}{}
+	barrier <- struct{}{}
 
 	var ans struct{ S string }
 	clientCodec.Decode(&ans)

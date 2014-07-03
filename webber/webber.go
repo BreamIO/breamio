@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"path"
 	"strconv"
@@ -94,6 +95,9 @@ func (web *Webber) ListenAndServe() error {
 		return err
 	}
 	web.logger.Printf("Listening on %s", ListenAddress)
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	http.Serve(web.listener, web.mux)
 	return nil
 }

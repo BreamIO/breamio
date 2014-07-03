@@ -2,7 +2,9 @@ package briee
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
+	"sync"
 )
 
 // Event is the internal representation of an event on the event emitter.
@@ -35,6 +37,7 @@ type LocalEventEmitter struct {
 	eventMap map[string]*Event
 	open     bool
 	done     chan struct{}
+	mapLock  sync.Mutex
 }
 
 // newLocalEventEmitter is the constructor for the LocalEventEmitter.
@@ -152,10 +155,12 @@ func (ee *LocalEventEmitter) Dispatch(eventID string, v interface{}) {
 //			fmt.Println(err)
 //		}
 func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
+	defer ee.mapLock.Unlock()
+	ee.mapLock.Lock()
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
 	} else {
-		return nil, errors.New("No event with that identifier is registred")
+		return nil, errors.New(fmt.Sprintf("No event with '%s' identifier is registered", eventID))
 	}
 }
 
@@ -163,7 +168,9 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 //
 // Unsubscribe will return an error if the event string identifier is not existing. Will also return an error if provided channel is not registered on that event.
 func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
-	if(!ee.IsOpen()){
+	defer ee.mapLock.Unlock()
+	ee.mapLock.Lock()
+	if !ee.IsOpen() {
 		return errors.New("Event emitter is already closed")
 	}
 	// Check if event exisits
@@ -189,6 +196,8 @@ func (ee *LocalEventEmitter) Unsubscribe(eventID string, ch interface{}) error {
 //
 // Will return an error if Close is called on an already closed event emitter.
 func (ee *LocalEventEmitter) Close() error {
+	defer ee.mapLock.Unlock()
+	ee.mapLock.Lock()
 	select {
 	case <-ee.done:
 		return errors.New("Emitter already closed")
@@ -218,6 +227,8 @@ func (ee *LocalEventEmitter) IsOpen() bool {
 
 // event returns the registered Event in the Event map. Will create a new event if no event is present.
 func (ee *LocalEventEmitter) event(eventID string, v interface{}) *Event {
+	defer ee.mapLock.Unlock()
+	ee.mapLock.Lock()
 	vtype := reflect.TypeOf(v)
 	event, ok := ee.eventMap[eventID]
 	if ok {

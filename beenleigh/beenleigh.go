@@ -51,6 +51,7 @@ type breamLogic struct {
 	wg                      sync.WaitGroup
 	eventEmitterConstructor func() briee.EventEmitter
 	emitters                map[int]briee.EventEmitter
+	lock                    sync.RWMutex
 }
 
 func newBL(eef func() briee.EventEmitter) *breamLogic {
@@ -102,6 +103,8 @@ func (bl *breamLogic) ListenAndServe() {
 }
 
 func (bl *breamLogic) Close() error {
+	defer bl.lock.Unlock()
+	bl.lock.Lock()
 	close(bl.closer)
 	bl.wg.Wait()
 	return nil
@@ -110,19 +113,25 @@ func (bl *breamLogic) Close() error {
 // Creates a new emitter on the specified id if no such emitter exists.
 // Regardless of pre-existence status, the emitter of that id is returned.
 func (bl *breamLogic) CreateEmitter(id int) briee.EventEmitter {
-	if _, ok := bl.emitters[id]; !ok {
+	defer bl.lock.Unlock()
+	bl.lock.Lock()
+	emitter, ok := bl.emitters[id]
+	if !ok {
+		emitter = bl.eventEmitterConstructor()
 		bl.wg.Add(1)
-		bl.emitters[id] = bl.eventEmitterConstructor()
-		go func() {
-			bl.emitters[id].Wait()
+		bl.emitters[id] = emitter
+		go func(emitter briee.EventEmitter) {
+			emitter.Wait()
 			bl.wg.Done()
-		}()
+		}(emitter)
 
 	}
-	return bl.emitters[id]
+	return emitter
 }
 
 func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
+	defer bl.lock.RUnlock()
+	bl.lock.RLock()
 	if v, ok := bl.emitters[id]; ok {
 		return v, nil
 	}

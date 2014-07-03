@@ -12,37 +12,7 @@ import (
 	"os"
 )
 
-var logger = log.New(os.Stdout, "[AncientPower]", log.LstdFlags)
-
-func init() {
-	bl.Register(&AncientRun{make(chan struct{})})
-}
-
-type AncientRun struct {
-	closing chan struct{}
-}
-
-func (ar *AncientRun) Run(logic bl.Logic) {
-	logger.Println("Initializing AncientPower")
-	ar.closing = make(chan struct{})
-	newCh := logic.RootEmitter().Subscribe("new:ancientpower", bl.Spec{}).(<-chan bl.Spec)
-	defer logic.RootEmitter().Unsubscribe("new:ancientpower", newCh)
-
-	for {
-		select {
-		case event := <-newCh:
-			New(logic, event)
-		case <-ar.closing:
-			return
-		}
-	}
-
-}
-
-func (ar *AncientRun) Close() error {
-	close(ar.closing)
-	return nil
-}
+var logger = log.New(os.Stdout, "[AncientPower] ", log.LstdFlags)
 
 func New(logic bl.Logic, spec bl.Spec) {
 	ee := logic.CreateEmitter(spec.Emitter)

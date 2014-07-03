@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,8 +16,8 @@ type BasicIOManager struct {
 	lookuper EmitterLookuper
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
-	closed   bool
 	logger   *log.Logger
+	closed   int32
 }
 
 // newBasicIOManager creates a new BasicIOManager.
@@ -25,8 +26,8 @@ func newBasicIOManager(lookuper EmitterLookuper) *BasicIOManager {
 		lookuper: lookuper,
 		dataChan: make(chan ExtPkg),
 		publMap:  make(map[publMapEntry]*reflect.Value),
-		closed:   true,
-		logger:   log.New(os.Stderr, "[Aioli]", log.LstdFlags),
+		logger:   log.New(os.Stderr, "[Aioli] ", log.LstdFlags),
+		closed:   1,
 	}
 }
 
@@ -39,7 +40,6 @@ type publMapEntry struct {
 //
 // Requires that the IOManager Run method is running.
 func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
-	biom.logger = logger
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := codec.Decode(&ep)
@@ -66,7 +66,7 @@ func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger *log.Logger) {
 
 // Run listens on the internal channel of ExtPkg data on which all listerners send data on.
 func (biom *BasicIOManager) Run() {
-	biom.closed = false
+	biom.setClosed(false)
 	for !biom.IsClosed() {
 		select {
 		case recvData := (<-biom.dataChan):
@@ -92,7 +92,6 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 
 			// TODO Replace json.Unmarshal with provided decoder
 			err := json.Unmarshal(buf, ptr.Interface()) // Unmarshal into the interface of the pointer
-			//biom.logger.Println(reflect.Indirect(ptr).Interface())
 			if err != nil {
 				biom.logger.Println("JSON error:", err)
 			}
@@ -132,7 +131,7 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 
 	template := reflect.New(rtype).Elem().Interface()
 	dataCh := reflect.ValueOf(ee.Subscribe(recvData.Event, template)) //Reflected channel.
-	// No we do not care about exact type.
+	// Now we do not care about exact type.
 
 	logger.Printf("Subscription for event \"%s\" on emitter %d started.\n", recvData.Event, recvData.ID)
 	for !biom.IsClosed() {
@@ -171,15 +170,23 @@ func (biom *BasicIOManager) Close() error {
 	if biom.IsClosed() {
 		return errors.New("Can not close already closed IOManager")
 	}
-	biom.closed = true
+	biom.setClosed(true)
 	return nil
+}
+
+func (biom *BasicIOManager) setClosed(closed bool) {
+	if closed {
+		atomic.StoreInt32(&biom.closed, 1)
+	} else {
+		atomic.StoreInt32(&biom.closed, 0)
+	}
 }
 
 // IsClosed returns true if IOManager is currently closed.
 //
 // Call Run method to open.
 func (biom *BasicIOManager) IsClosed() bool {
-	return biom.closed
+	return biom.closed == 1
 }
 
 func (biom *BasicIOManager) Dispatch(ep ExtPkg) {
