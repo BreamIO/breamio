@@ -37,7 +37,12 @@ func init() {
 
 		webber.addServings()
 
-		go webber.ListenAndServe()
+		go func() {
+			err := webber.ListenAndServe()
+			if err != nil {
+				webber.logger(err)
+			}
+		}()
 		<-closer
 		webber.logger.Println("Stopping Webserver")
 		webber.Close()
