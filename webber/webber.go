@@ -42,7 +42,7 @@ func init() {
 		go func() {
 			err := webber.ListenAndServe()
 			if err != nil {
-				webber.logger(err)
+				webber.logger.Println("Listen and Serve error:", err)
 			}
 		}()
 		<-closer
