@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <title>Consumer GUI</title>
+    <style>
+      .wheel {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background-image: radial-gradient(circle at 100%                50%, rgba(255, 0, 0, 1) 0, rgba(255, 0, 0, 0) 45%),
+                          radial-gradient(circle at  25%  6.69872981077808%, rgba(0, 255, 0, 1) 0, rgba(0, 255, 0, 0) 50%),
+                          radial-gradient(circle at  25% 93.30127018922192%, rgba(0, 0, 255, 1) 0, rgba(0, 0, 255, 0) 50%);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <dl>
+        <dt>Home</dt>
+        <dd>
+          <form>
+            <header>Load configuration</header>
+            <input name="load" placeholder="Search stored configurations" list="configurations" />
+            <datalist id="configurations">
+              <option value="LoL">LoL</option>
+              <option value="StarCraftII">StarCraftII</option>
+            </datalist>
+          </form>
+          <details>
+            <summary>Create new configuration</summary>
+            <form>
+              <input name="name" placeholder="Name of the configuration" />
+              <input name="preset" placeholder="Optionally select a preset" list="presets" />
+              <datalist>
+                <option value="lol">League of Legends</option>
+                <option value="dota2">Defense of the Ancients 2</option>
+                <option value="sc2">StarCraft II</option>
+                <option value="csgo">Counter Strike: Global Offensive</option>
+              </datalist>
+              <button type="submit">Done</button>
+            </form>
+          </details>
+        </dd>
+        <dt>Overlay</dt>
+        <dd></dd>
+        <dt>Statistics</dt>
+        <dd></dd>
+        <dt>Heat map</dt>
+        <dd></dd>
+      </dl>
+    </main>
+    <div class="wheel">
+    </div>
+    <input type="color" name="Color" placeholder="Color" />
+  </body>
+</html>

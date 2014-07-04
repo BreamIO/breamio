@@ -140,6 +140,7 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 func (web *Webber) HandleStatic(pattern, file string) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		web.logger.Printf("Static request for %s.", pattern)
+		web.logger.Println(file)
 		http.ServeFile(w, req, file)
 	})
 }
@@ -166,6 +167,7 @@ func (web *Webber) Close() error {
 
 func (web *Webber) addServings() {
 	web.HandleStatic("/control", path.Join(Root, "control.html"))
+	web.HandleStatic("/consumer", path.Join(Root, "consumer.html"))
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
 	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
