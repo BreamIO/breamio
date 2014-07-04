@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	ListenAddress = ":80"
+	Port    = "8080"
+	Address = "localhost"
 )
 
 var Root = "web"
@@ -88,16 +89,30 @@ func New() *Webber {
 	}
 }
 
-func (web *Webber) ListenAndServe() error {
-	var err error
-	web.listener, err = net.Listen("tcp", ListenAddress)
+func (web *Webber) ListenAndServe() (err error) {
+	var (
+		port    = os.Getenv("PORT")
+		address = os.Getenv("ADDRESS")
+	)
+
+	if port == "" {
+		port = Port
+	}
+	if address == "" {
+		address = Address
+	}
+
+	listenAddress := fmt.Sprintf("%s:%s", address, port)
+	web.listener, err = net.Listen("tcp", listenAddress)
 	if err != nil {
 		return err
 	}
-	web.logger.Printf("Listening on %s", ListenAddress)
+
+	web.logger.Printf("Listening on %s", listenAddress)
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
+
 	http.Serve(web.listener, web.mux)
 	return nil
 }
