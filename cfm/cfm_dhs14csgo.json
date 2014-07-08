@@ -90,11 +90,11 @@
 		"Data": {
 			"Name":"minimap", 
 			"Def":{
-				"Type":"circle",
+				"Type":"ellipse",
 				"X": 0.11,
-				"Width": 0.12,
+				"Width": 0.07,
 				"Y": 0.22,
-				"Height": 0.0
+				"Height": 0.12
 			}
 		}
 	}]
