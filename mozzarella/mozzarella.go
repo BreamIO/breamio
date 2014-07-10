@@ -8,6 +8,7 @@ type EventAnalyser struct {
 	stopCh	chan struct{}
 	closeCh chan struct{}
 	resetCh chan struct{}
+	publishCh chan struct{}
 }
 
 func NewEventAnalyser() *EventAnalyser {
@@ -15,6 +16,7 @@ func NewEventAnalyser() *EventAnalyser {
 			stopCh: make(chan {}),
 			closeCh: make(chan {}),
 			resetCh: make(chan {}),
+			publishCh: make(chan {}),
 		}
 }
 
