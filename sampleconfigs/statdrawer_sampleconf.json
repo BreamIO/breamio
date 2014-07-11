@@ -18,32 +18,32 @@
 		"CellInfo": [
 			 	{
 				"Type": "freetext"
-				"Text": "H�r under kommer antalet minimap looks senaste 147 sekundrarna"
+				"Data": "H�r under kommer antalet minimap looks senaste 147 sekundrarna"
 				},
 				
 				{
 				"Type": "freetext"
-				"Text": "Time between looks p� pengarna senaste 123 sekundrarna"
+				"Data": "Time between looks p� pengarna senaste 123 sekundrarna"
 				},
 				
 				{
 				"Type": "freetext"
-				"Text": "Tid spenderat p� mitten av skr�men senaste minuten"
+				"Data": "Tid spenderat p� mitten av skr�men senaste minuten"
 				},
 				
 			 	{
 				"Type": "looksNumber"
-				"Region": "Minimap_2m27s"
+				"Data": "Minimap_2m27s"
 				},
 				
 				{
 				"Type": "timeBetween"
-				"Region": "Pengar_2m3s"
+				"Data": "Pengar_2m3s"
 				},
 				
 				{
 				"Type": "timeSpent"
-				"Region": "Mitten_1m"
+				"Data": "Mitten_1m"
 				}	
 			]
 		} 
