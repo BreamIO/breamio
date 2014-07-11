@@ -3,41 +3,49 @@
 	"Data": {
 		"Rows": "2",
 		"Columns": "3",
-		"Additional-Spacing": {
-			"Row0": "5"
-			"Row1": "10"
-			"Col0": "0"
-			"Col1": "123"
-			"Col2": "0"
-		}
+		"Additional-Spacing-Row": [
+				5,
+				10
+			],
+		"Additonal-Spacing-Col": [
+				8,
+				0,
+				123
+			]
 		"FontSize": "12"
 		"Font": "default"
 		"FontColor": "0xFF00AA"
-		"CellInfo":{
-			"Cell0-0": {
+		"CellInfo": [
+			 	{
 				"Type": "freetext"
-				"Text": "Här under kommer antalet minimap looks senaste 147 sekundrarna"
-			}
-			"Cell0-1": {
+				"Text": "Hï¿½r under kommer antalet minimap looks senaste 147 sekundrarna"
+				},
+				
+				{
 				"Type": "freetext"
-				"Text": "Time between looks på pengarna senaste 123 sekundrarna"
-			}
-			"Cell0-2": {
+				"Text": "Time between looks pï¿½ pengarna senaste 123 sekundrarna"
+				},
+				
+				{
 				"Type": "freetext"
-				"Text": "Tid spenderat på mitten av skrämen senaste minuten"
-			}
-			"Cell1-0": {
+				"Text": "Tid spenderat pï¿½ mitten av skrï¿½men senaste minuten"
+				},
+				
+			 	{
 				"Type": "looksNumber"
 				"Region": "Minimap_2m27s"
-			}
-			"Cell1-1": {
+				},
+				
+				{
 				"Type": "timeBetween"
 				"Region": "Pengar_2m3s"
-			}
-			"Cell1-2": {
+				},
+				
+				{
 				"Type": "timeSpent"
 				"Region": "Mitten_1m"
-			}
-		}
+				}	
+			]
+		} 
 	}
 }
