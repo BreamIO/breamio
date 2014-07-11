@@ -16,32 +16,32 @@
 		"Font": "default"
 		"FontColor": "0xFF00AA"
 		"CellInfo": [
-			 	{
+			 	{ //0,0
 				"Type": "freetext"
 				"Data": "H�r under kommer antalet minimap looks senaste 147 sekundrarna"
 				},
 				
-				{
+				{ //0,1
 				"Type": "freetext"
 				"Data": "Time between looks p� pengarna senaste 123 sekundrarna"
 				},
 				
-				{
+				{//0,2
 				"Type": "freetext"
 				"Data": "Tid spenderat p� mitten av skr�men senaste minuten"
 				},
 				
-			 	{
+			 	{//1,0
 				"Type": "looksNumber"
 				"Data": "Minimap_2m27s"
 				},
 				
-				{
+				{//1,1
 				"Type": "timeBetween"
 				"Data": "Pengar_2m3s"
 				},
 				
-				{
+				{//1,2
 				"Type": "timeSpent"
 				"Data": "Mitten_1m"
 				}	
