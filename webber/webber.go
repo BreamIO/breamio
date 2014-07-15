@@ -168,7 +168,6 @@ func (web *Webber) Close() error {
 
 func (web *Webber) addServings() {
 	web.HandleStatic("/control", path.Join(Root, "control.html"))
-	web.HandleStatic("/consumer", path.Join(Root, "consumer.html"))
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
 	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
@@ -185,19 +184,29 @@ func (web *Webber) addServings() {
 		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
-	web.Handle("/stats", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
-		tmpl, err := template.ParseFiles(path.Join(Root, "stats.html"))
+	web.Handle("/statistics", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
+		statsTmpl, err := template.ParseFiles(path.Join(Root, "stats.html"))
 		if err != nil {
 			web.logger.Println("Template parse error:", err)
 			PublishError(w, Error{500, "Template parse error"})
 		}
-		drwr := drawer{
+		stats := statistics{
 			Id: id,
 		}
-		tmpl.Execute(w, drwr) //TODO catch any errors.
+		statsTmpl.Execute(w, stats) //TODO catch any errors.
 		return nil
 	}))
-	// web.HandleStatic("/stats", path.Join(Root, "stats.html"))
+	web.mux.HandleFunc("/consumer", func(w http.ResponseWriter, req *http.Request) {
+		consumerTmpl, err := template.ParseFiles(path.Join(Root, "consumer.html"))
+		if err != nil {
+			web.logger.Println("Template parse error:", err)
+			PublishError(w, Error{500, "Template parse error"})
+		}
+		cons := consumer{
+		// TODO: Add fields
+		}
+		consumerTmpl.Execute(w, cons)
+	})
 	web.mux.HandleFunc("/calibrate", func(w http.ResponseWriter, req *http.Request) {
 		calibrateTmpl, err := template.ParseFiles(path.Join(Root, calibrate))
 		if err != nil {
