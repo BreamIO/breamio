@@ -1,3 +1,17 @@
 {{define "color"}}
-<input type="color" placeholder="Color" />
+<div class="wheel">
+  <input type="color" placeholder="Color" />
+  <input type="text" name="hexcode" />
+  <canvas></canvas>
+  <input type="range" name="luminance" />
+  <input type="text" name="luminance_text" />
+  <input type="range" name="red" />
+  <input type="text" name="red_text" />
+  <input type="range" name="green" />
+  <input type="text" name="green_text" />
+  <input type="range" name="blue" />
+  <input type="text" name="blue_text" />
+  <input type="range" name="alpha" />
+  <input type="text" name="alpha_text" />
+</div>
 {{end}}
