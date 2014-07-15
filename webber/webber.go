@@ -197,7 +197,7 @@ func (web *Webber) addServings() {
 		return nil
 	}))
 	web.mux.HandleFunc("/consumer", func(w http.ResponseWriter, req *http.Request) {
-		consumerTmpl, err := template.ParseFiles(path.Join(Root, "consumer.html"))
+		consumerTmpl, err := template.ParseFiles(path.Join(Root, "consumer.html"), path.Join(Root, "color.html"))
 		if err != nil {
 			web.logger.Println("Template parse error:", err)
 			PublishError(w, Error{500, "Template parse error"})

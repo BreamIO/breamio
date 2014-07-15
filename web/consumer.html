@@ -12,133 +12,112 @@
       }
       .logo{
         width: 600px;
+        background-image: url("/logo.png")
       }
     </style>
+    <script>
+      // Here should the main script be
+    </script>
   </head>
   <body>
     <main>
-      <section id="login">
-        <img class="logo" src="Bream iO Logo-Name dark under.png" alt="Bream iO Logo">
+      <section>
+        <header>Bream iO</header>
         <form>
-          <label>User Name <input type="text" name="username" placeholder="User Name" required>
+          <label>User Name <input type="text" name="username" placeholder="User Name" required="required" />
           </label>
-          <label>Password <input type="password" name="pass" placeholder="Password" required>
+          <label>Password <input type="password" name="pass" placeholder="Password" required="required" />
           </label>
-          <label>Register <input type="checkbox" name="regcheck">
-          </label>
-          <label id="confirmPass">Confirm Password <input type="password" name="confirm" placeholder="Confirm Password">
-          </label>
-          <input type="submit" name="submit" value="Done">
+          <details>
+            <summary>Register</summary>
+            <label>Confirm Password <input type="password" name="confirm" placeholder="Confirm Password" />
+            </label>
+          </details>
+          <button type="submit">Login</button>
         </form>
       </section>
-      <dl>
-        <dt>Home</dt>
-        <dd>
-          <form>
-            <header>Load configuration</header>
-            <input name="load" placeholder="Search stored configurations" list="configurations" />
-            <datalist id="configurations">
-              <option value="LoL">LoL</option>
-              <option value="StarCraftII">StarCraftII</option>
-            </datalist>
-          </form>
-          <details>
-            <summary>Create new configuration</summary>
+      <section>
+        <dl>
+          <dt>Home</dt>
+          <dd>
             <form>
-              <input name="name" placeholder="Name of the configuration" />
-              <input name="template" placeholder="Optionally select a template" list="presets" />
-              <datalist>
-                <option value="lol">League of Legends</option>
-                <option value="dota2">Defense of the Ancients 2</option>
-                <option value="sc2">StarCraft II</option>
-                <option value="csgo">Counter Strike: Global Offensive</option>
+              <header>Load configuration</header>
+              <input name="load" placeholder="Search stored configurations" list="configurations" />
+              <datalist id="configurations">
+                <option value="LoL">LoL</option>
+                <option value="StarCraftII">StarCraftII</option>
               </datalist>
-              <button type="submit">Done</button>
             </form>
-          </details>
-        </dd>
-        <dt>Overlay</dt>
-        <dd>
-          <canvas id="overlayTestCanvas" width="256" height="256"></canvas> 
-          <p>Radius Size: 
-            <br>Smaller<input type="range" id="overlayRadiusSlider" min="2" max="120" step="0.4"> Bigger
-          </p>
-          <p>Thickness 
-            <br>Thinner<input type="range" id="overlayThicknessSlider" min="0.0" max="24" step="0.2"> Thicker
-          </p>
-          <input type="color" id="overlayColor" placeholder="Color" />
-          <script>
-            //Setup used element "shortcuts"
-            var c = document.getElementById("overlayTestCanvas");
-            var radiusSlider = document.getElementById("overlayRadiusSlider");
-            var thicknessSlider = document.getElementById("overlayThicknessSlider");
-            var colorpicker = document.getElementById("overlayColor");
-            var context = c.getContext("2d");
-            
-            //Definie function:
-            var overlayPreviewUpdate = function()
-            {
-              //Clear Canvas
-              context.clearRect(0, 0, c.width, c.height);
-
-              //Get Values
-              var radius = radiusSlider.value;
-              var thickness = thicknessSlider.value;
-              var color = colorpicker.value;
-
-              //Set Context Stuff
-              context.lineWidth = thickness;
-              context.strokeStyle = color;
-
-              //Draw Circle
-              context.beginPath();
-              context.arc(c.width / 2, c.height / 2, radius, 0, 2*Math.PI);
-              context.stroke();
-            }
-            //Changing sliders runs the function
-            radiusSlider.oninput = thicknessSlider.oninput = colorpicker.oninput = overlayPreviewUpdate;
-            //Initial Draw
-            overlayPreviewUpdate();
-          </script> 
-        </dd>
-        <dt>Statistics</dt>
-        <dd>
-          <table id="statstable">
-            <tr>
-              <th></th>
-              <th>Region name 1</th>
-              <th>Region name 2</th>
-              <th>Region name 3</th>
-            </tr>
-            <tr>
-              <th>Looks/Min</th>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <th>Time Between Looks/Min</th>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <th>Time Spent In Region/Min</th>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-              <td><input type="checkbox"></td>
-            </tr>
-          </table>
-          <!-- //TODO -->
-        </dd>
-        <dt>Heat map</dt>
-        <dd>
-          <!-- //TODO -->
-        </dd>
-      </dl>
+            <details>
+              <summary>Create new configuration</summary>
+              <form>
+                <input name="name" placeholder="Name of the configuration" required="required" />
+                <input name="template" placeholder="Optionally select a template" list="template" />
+                <datalist id="template">
+                  <option value="lol">League of Legends</option>
+                  <option value="dota2">Defense of the Ancients 2</option>
+                  <option value="sc2">StarCraft II</option>
+                  <option value="csgo">Counter Strike: Global Offensive</option>
+                </datalist>
+                <button type="submit">Done</button>
+              </form>
+            </details>
+          </dd>
+          <dt>Overlay</dt>
+          <dd>
+            <form>
+              <label>Radius Size
+                <span>Smaller</span><input type="range" min="2" max="120" step="0.4" /><span>Bigger</span>
+              </label>
+              <label>Thickness
+                <span>Thinner</span><input type="range" min="0.0" max="24" step="0.2" /><span>Thicker</span>
+              </label>
+              {{template color}}
+            </form>
+            <canvas></canvas>
+          </dd>
+          <dt>Statistics</dt>
+          <dd>
+            <form>
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Region1</th>
+                    <th>Region2</th>
+                    <th>Region3</th>
+                  </tr>
+                </thead>
+                <tfoot></tfoot>
+                <tbody>
+                  <tr>
+                    <th>Looks/Min</th>
+                    <td><input type="checkbox" name="Region1_looks" /></td>
+                    <td><input type="checkbox" name="Region2_looks" /></td>
+                    <td><input type="checkbox" name="Region3_looks" /></td>
+                  </tr>
+                  <tr>
+                    <th>Time Between Looks/Min</th>
+                    <td><input type="checkbox" name="Region1_between" /></td>
+                    <td><input type="checkbox" name="Region2_between" /></td>
+                    <td><input type="checkbox" name="Region3_between" /></td>
+                  </tr>
+                  <tr>
+                    <th>Time Spent In Region/Min</th>
+                    <td><input type="checkbox" name="Region1_spent" /></td>
+                    <td><input type="checkbox" name="Region2_spent" /></td>
+                    <td><input type="checkbox" name="Region3_spent" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </form>
+          </dd>
+          <dt>Heat map</dt>
+          <dd>
+            <!-- //TODO -->
+          </dd>
+        </dl>
+      </section>
     </main>
-    <div class="wheel">
-    </div>
-    <input type="color" name="Color" placeholder="Color" />
   </body>
 </html>
