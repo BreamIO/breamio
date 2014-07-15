@@ -10,10 +10,27 @@
                           radial-gradient(circle at  25%  6.69872981077808%, rgba(0, 255, 0, 1) 0, rgba(0, 255, 0, 0) 50%),
                           radial-gradient(circle at  25% 93.30127018922192%, rgba(0, 0, 255, 1) 0, rgba(0, 0, 255, 0) 50%);
       }
+      .logo{
+        width: 600px;
+      }
     </style>
   </head>
   <body>
     <main>
+      <section id="login">
+        <img class="logo" src="Bream iO Logo-Name dark under.png" alt="Bream iO Logo">
+        <form>
+          <header>User Name</header>
+          <input type="text" name="usrname" placeholder="User Name">
+          <header>Password</header>
+          <input type="password" name="pass" placeholder="Password">
+          <header>Register</header>
+          <input type="checkbox" name="regcheck">
+          <header>Confirm Password</header>
+          <input type="password" name="confirm" placeholder="Confirm Password">
+          <input type="submit" name="submit">
+        </form>
+      </section>
       <dl>
         <dt>Home</dt>
         <dd>
@@ -29,7 +46,7 @@
             <summary>Create new configuration</summary>
             <form>
               <input name="name" placeholder="Name of the configuration" />
-              <input name="preset" placeholder="Optionally select a preset" list="presets" />
+              <input name="template" placeholder="Optionally select a template" list="presets" />
               <datalist>
                 <option value="lol">League of Legends</option>
                 <option value="dota2">Defense of the Ancients 2</option>
@@ -86,6 +103,32 @@
         </dd>
         <dt>Statistics</dt>
         <dd>
+          <table id="statstable">
+            <tr>
+              <th></th>
+              <th>Region name 1</th>
+              <th>Region name 2</th>
+              <th>Region name 3</th>
+            </tr>
+            <tr>
+              <th>Looks/Min</th>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+            </tr>
+            <tr>
+              <th>Time Between Looks/Min</th>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+            </tr>
+            <tr>
+              <th>Time Spent In Region/Min</th>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+              <td><input type="checkbox"></td>
+            </tr>
+          </table>
           <!-- //TODO -->
         </dd>
         <dt>Heat map</dt>
