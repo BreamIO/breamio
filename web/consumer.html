@@ -11,8 +11,12 @@
                           radial-gradient(circle at  25% 93.30127018922192%, rgba(0, 0, 255, 1) 0, rgba(0, 0, 255, 0) 50%);
       }
       .logo{
-        width: 600px;
-        background-image: url("/logo.png")
+        text-align: center;
+        width: 360px;
+        height: 110px;
+        background: url(logo.svg);
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
       }
     </style>
     <script>
@@ -22,7 +26,7 @@
   <body>
     <main>
       <section>
-        <header>Bream iO</header>
+        <header class="logo">Bream iO</header>
         <form>
           <label>User Name <input type="text" name="username" placeholder="User Name" required="required" />
           </label>
