@@ -28,10 +28,14 @@
       td {
         text-align: center;
       }
+      .heading{
+        font-weight: bold;
+        font-size: 2em;
+      }
       .box {
         width: 480px;
         padding: 12px;
-        margin: 12px;
+        margin: 16px;
         border: 2px solid black;
         border-radius: 16px;
         background-color: #027894;
@@ -65,7 +69,7 @@
     <main>
       <section>
         <header class="logo">Bream iO</header>
-        <form>
+        <form class="box">
           <label>User Name <input type="text" name="username" placeholder="User Name" required="required" />
           </label>
           <label>Password <input type="password" name="pass" placeholder="Password" required="required" />
@@ -80,9 +84,9 @@
       </section>
       <section>
         <dl>
-          <dt>Home</dt>
-          <dd>
-            <form>
+          <dt class="heading">Home</dt>
+          <dd class="box">
+            <form >
               <header>Load configuration</header>
               <input name="load" placeholder="Search stored configurations" list="configurations" />
               <datalist id="configurations">
@@ -105,7 +109,7 @@
               </form>
             </details>
           </dd>
-          <dt>Overlay</dt>
+          <dt class="heading">Overlay</dt>
           <dd>
             <form>
               <label class="box">Radius Size
@@ -118,9 +122,9 @@
             </form>
             <canvas></canvas>
           </dd>
-          <dt>Statistics</dt>
+          <dt class="heading">Statistics</dt>
           <dd>
-            <form>
+            <form class="box">
               <table>
                 <thead>
                   <tr>
@@ -162,7 +166,7 @@
               </datalist>
             </form>
           </dd>
-          <dt>Heat map</dt>
+          <dt class="heading">Heat map</dt>
           <dd>
             <form>
               {{template "color"}}
