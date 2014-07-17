@@ -126,14 +126,24 @@
           </dd>
           <dt class="heading">Overlay</dt>
           <dd>
-            <form>
-              <label class="box">Radius Size
-                <span>Smaller</span><input type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
-              </label>
-              <label class="box">Thickness
-                <span>Thinner</span><input type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
-              </label>
-              {{template "color"}}
+            <form class="box">
+              <div>
+                <label>Radius Size
+                  <div>
+                    <span>Smaller</span><input type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
+                    </div>
+                </label>
+              </div>
+              <div>
+                <label>Thickness
+                  <div>
+                    <span>Thinner</span><input type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
+                  </div>
+                </label>
+              </div>
+              <div>
+                {{template "color"}}
+              </div>
             </form>
             <canvas></canvas>
           </dd>
