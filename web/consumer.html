@@ -10,6 +10,15 @@
       Complement Color (Bream Orange): #FF7F00 or 255,127,0
       Range: #FFC387 , #FF9D3D , #FF7F00 , #EF7700 , #9D4E00
       */
+      @font-face {
+        font-family: lanenarrow;
+        src: url(lanenarrow.ttf);
+      }
+      @font-face {
+        font-family: lanenarrow;
+        src: url(lanenarrow.ttf);
+        font-weight: bold;
+      }
       body{
         color: white;
         background-color: #014F61; /*Bream Darkest Blue*/
@@ -24,15 +33,19 @@
       th {
         background-color: #9D4E00; /*Bream Darkest Orange*/
         color: white;
+        font-family: "garamond", serif;
+        font-weight: bold;
       }
       td {
         text-align: center;
+        font-family: "garamond", serif;
       }
       .heading{
-        font-weight: bold;
+        font-family: lanenarrow;
         font-size: 2em;
       }
       .box {
+        font-family: "garamond", serif;
         width: 480px;
         padding: 12px;
         margin: 16px;
@@ -53,6 +66,8 @@
                           radial-gradient(circle at  25% 93.30127018922192%, rgba(0, 0, 255, 1) 0, rgba(0, 0, 255, 0) 50%);
       }
       .logo{
+        font-family: lanenarrow;
+        font-size: 4em;
         text-align: center;
         width: 360px;
         height: 110px;
