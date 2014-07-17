@@ -22,30 +22,29 @@
       body{
         color: white;
         background-color: #014F61; /*Bream Darkest Blue*/
+        font-family: "garamond", serif; /* Bream Font*/
       }
       table{
         border-collapse: collapse;
         empty-cells: hide;
       }
       table, td, th {
-        border: 2px solid #EF7700; /*Bream Orange*/
+        border: 2px solid black; /*Bream Orange*/
       }
       th {
-        background-color: #9D4E00; /*Bream Darkest Orange*/
-        color: white;
-        font-family: "garamond", serif;
+        background-color: #39BBDA;
+        color: black;
         font-weight: bold;
       }
       td {
+        background-color: #39BBDA;
         text-align: center;
-        font-family: "garamond", serif;
       }
       .heading{
         font-family: lanenarrow;
         font-size: 2em;
       }
       .box {
-        font-family: "garamond", serif;
         width: 480px;
         padding: 12px;
         margin: 16px;
@@ -125,8 +124,8 @@
             </details>
           </dd>
           <dt class="heading">Overlay</dt>
-          <dd>
-            <form class="box">
+          <dd class="box">
+            <form>
               <div>
                 <label>Radius Size
                   <div>
@@ -148,8 +147,8 @@
             <canvas></canvas>
           </dd>
           <dt class="heading">Statistics</dt>
-          <dd>
-            <form class="box">
+          <dd class="box">
+            <form>
               <table>
                 <thead>
                   <tr>
