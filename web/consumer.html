@@ -2,22 +2,43 @@
   <head>
     <title>Consumer GUI</title>
     <style>
+      /*
+      Colors of Bream iO (Remove this section later!)
+      We might need some colors to make this page, this is our colors:
+      Primary Color (Bream Blue): #05AED6 or 5,174,214
+      Range: #7DD1E5 , #39BBDA , #05AED6 , #027894 , #014F61
+      Complement Color (Bream Orange): #FF7F00 or 255,127,0
+      Range: #FFC387 , #FF9D3D , #FF7F00 , #EF7700 , #9D4E00
+      */
       body{
         color: white;
-        background-color: #014F61; /*Bream Dark Blue*/
+        background-color: #014F61; /*Bream Darkest Blue*/
       }
       table{
         border-collapse: collapse;
+        empty-cells: hide;
       }
       table, td, th {
         border: 2px solid #EF7700; /*Bream Orange*/
       }
       th {
-        background-color: #9D4E00;
+        background-color: #9D4E00; /*Bream Darkest Orange*/
         color: white;
       }
       td {
         text-align: center;
+      }
+      .box {
+        width: 480px;
+        padding: 12px;
+        margin: 12px;
+        border: 2px solid black;
+        border-radius: 16px;
+        background-color: #027894;
+      }
+      .fill {
+        width: 100%;
+        height: 100%;
       }
       .wheel {
         width: 200px;
@@ -87,10 +108,10 @@
           <dt>Overlay</dt>
           <dd>
             <form>
-              <label>Radius Size
+              <label class="box">Radius Size
                 <span>Smaller</span><input type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
               </label>
-              <label>Thickness
+              <label class="box">Thickness
                 <span>Thinner</span><input type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
               </label>
               {{template "color"}}
@@ -113,21 +134,21 @@
                 <tbody>
                   <tr>
                     <th>Looks/Min</th>
-                    <td><input type="checkbox" name="Region1_looks" /></td>
-                    <td><input type="checkbox" name="Region2_looks" /></td>
-                    <td><input type="checkbox" name="Region3_looks" /></td>
+                    <td><input class="fill" type="checkbox" name="Region1_looks" /></td>
+                    <td><input class="fill" type="checkbox" name="Region2_looks" /></td>
+                    <td><input class="fill" type="checkbox" name="Region3_looks" /></td>
                   </tr>
                   <tr>
                     <th>Time Between Looks/Min</th>
-                    <td><input type="checkbox" name="Region1_between" /></td>
-                    <td><input type="checkbox" name="Region2_between" /></td>
-                    <td><input type="checkbox" name="Region3_between" /></td>
+                    <td><input class="fill" type="checkbox" name="Region1_between" /></td>
+                    <td><input class="fill" type="checkbox" name="Region2_between" /></td>
+                    <td><input class="fill" type="checkbox" name="Region3_between" /></td>
                   </tr>
                   <tr>
                     <th>Time Spent In Region/Min</th>
-                    <td><input type="checkbox" name="Region1_spent" /></td>
-                    <td><input type="checkbox" name="Region2_spent" /></td>
-                    <td><input type="checkbox" name="Region3_spent" /></td>
+                    <td><input class="fill" type="checkbox" name="Region1_spent" /></td>
+                    <td><input class="fill" type="checkbox" name="Region2_spent" /></td>
+                    <td><input class="fill" type="checkbox" name="Region3_spent" /></td>
                   </tr>
                 </tbody>
               </table>
