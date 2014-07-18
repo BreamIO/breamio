@@ -40,6 +40,26 @@
         background-color: #39BBDA;
         text-align: center;
       }
+      [class*='btn'] {
+        border-radius: 24px;
+        display: inline-block;
+        font-size: 16px;
+        padding: 8px 32px;
+        text-transform: uppercase;
+        text-decoration: none;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+        outline: 0;
+      }
+      .btn-login {
+        color: white;
+        background: #FF7F00;
+      }
+      .btn-login:hover {
+        background: radial-gradient(#FF9D3D 25%, #FF7F00 75%); 
+      }
+      .btn-login:active {
+        background: radial-gradient(#FFC387 33%, #FF7F00 67%); 
+      }
       .heading{
         font-family: lanenarrow;
         font-size: 2em;
@@ -49,7 +69,7 @@
         padding: 12px;
         margin: 16px;
         border: 2px solid black;
-        border-radius: 16px;
+        border-radius: 4px;
         background-color: #027894;
       }
       .fill {
@@ -60,7 +80,7 @@
         padding: 12px;
         margin: 16px;
         border: 2px solid black;
-        border-radius: 16px;
+        border-radius: 4px;
         background-color: #05AED6;
       }
       .slider {
@@ -103,7 +123,7 @@
             <label>Confirm Password <input type="password" name="confirm" placeholder="Confirm Password" />
             </label>
           </details>
-          <button type="submit">Login</button>
+          <button class="btn-login" type="submit">Log in</button>
         </form>
       </section>
       <section>
