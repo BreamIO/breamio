@@ -29,11 +29,11 @@
         empty-cells: hide;
       }
       table, td, th {
-        border: 2px solid black; /*Bream Orange*/
+        border: 2px solid black;
       }
       th {
         background-color: #39BBDA;
-        color: black;
+        color: white;
         font-weight: bold;
       }
       td {
@@ -41,8 +41,9 @@
         text-align: center;
       }
       input[type=text],
-      input[type=password], {
-
+      input[type=password] {
+        background-color: white; 
+        border-radius: 4px;
       }
       [class*='btn'] {
         border-radius: 24px;
@@ -136,7 +137,7 @@
           <dd class="box">
             <form >
               <header>Load configuration</header>
-              <input name="load" placeholder="Search stored configurations" list="configurations" />
+              <input type="text" name="load" placeholder="Search stored configurations" list="configurations" />
               <datalist id="configurations">
                 <option value="LoL">LoL</option>
                 <option value="StarCraftII">StarCraftII</option>
@@ -145,8 +146,8 @@
             <details>
               <summary>Create new configuration</summary>
               <form>
-                <input name="name" placeholder="Name of the configuration" required="required" />
-                <input name="template" placeholder="Optionally select a template" list="template" />
+                <input type="text" name="name" placeholder="Name of the configuration" required="required" />
+                <input type="text" name="template" placeholder="Optionally select a template" list="template" />
                 <datalist id="template">
                   <option value="lol">League of Legends</option>
                   <option value="dota2">Defense of the Ancients 2</option>
