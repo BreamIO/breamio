@@ -40,6 +40,10 @@
         background-color: #39BBDA;
         text-align: center;
       }
+      input[type=text],
+      input[type=password], {
+
+      }
       [class*='btn'] {
         border-radius: 24px;
         display: inline-block;
@@ -50,14 +54,14 @@
         text-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
         outline: 0;
       }
-      .btn-login {
+      .btn-orange {
         color: white;
         background: #FF7F00;
       }
-      .btn-login:hover {
+      .btn-orange:hover {
         background: radial-gradient(#FF9D3D 25%, #FF7F00 75%); 
       }
-      .btn-login:active {
+      .btn-orange:active {
         background: radial-gradient(#FFC387 33%, #FF7F00 67%); 
       }
       .heading{
@@ -123,7 +127,7 @@
             <label>Confirm Password <input type="password" name="confirm" placeholder="Confirm Password" />
             </label>
           </details>
-          <button class="btn-login" type="submit">Log in</button>
+          <button class="btn-orange" type="submit">Log in</button>
         </form>
       </section>
       <section>
@@ -149,7 +153,7 @@
                   <option value="sc2">StarCraft II</option>
                   <option value="csgo">Counter Strike: Global Offensive</option>
                 </datalist>
-                <button type="submit">Done</button>
+                <button class="btn-orange" type="submit">Done</button>
               </form>
             </details>
           </dd>
