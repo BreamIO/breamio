@@ -63,7 +63,7 @@
       button:active {
         background: radial-gradient(#FFC387 33%, #FF7F00 67%);
       }
-      .heading{
+      dt{
         font-family: lanenarrow;
         font-size: 2em;
       }
@@ -127,12 +127,12 @@
             <label>Confirm Password <input type="password" name="confirm" placeholder="Confirm Password" />
             </label>
           </details>
-          <button class="btn-orange" type="submit">Log in</button>
+          <button type="submit">Log in</button>
         </form>
       </section>
       <section>
         <dl>
-          <dt class="heading">Home</dt>
+          <dt>Home</dt>
           <dd class="box">
             <form >
               <header>Load configuration</header>
@@ -153,11 +153,11 @@
                   <option value="sc2">StarCraft II</option>
                   <option value="csgo">Counter Strike: Global Offensive</option>
                 </datalist>
-                <button class="btn-orange" type="submit">Done</button>
+                <button type="submit">Done</button>
               </form>
             </details>
           </dd>
-          <dt class="heading">Overlay</dt>
+          <dt>Overlay</dt>
           <dd class="box">
             <form>
               <div class="sliderbox">
@@ -180,7 +180,7 @@
             </form>
             <canvas></canvas>
           </dd>
-          <dt class="heading">Statistics</dt>
+          <dt>Statistics</dt>
           <dd class="box">
             <form>
               <table>
@@ -224,7 +224,7 @@
               </datalist>
             </form>
           </dd>
-          <dt class="heading">Heat map</dt>
+          <dt>Heat map</dt>
           <dd class="box">
             <form>
               {{template "color"}}
