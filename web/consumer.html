@@ -45,6 +45,10 @@
         background-color: white; 
         border-radius: 4px;
       }
+      input[type=range] {
+        display: inline;
+        width: 50%;
+      }
       summary{
         outline: 0;
       }
@@ -83,17 +87,12 @@
         margin-top: 0.5em;
         display: block;
       }
+      span {
+        /* display: inline; */
+      }
       .fill {
         width: 100%;
         height: 100%;
-      }
-      .sliderbox {
-        padding: 12px;
-        margin: 16px;
-        border-radius: 4px;
-      }
-      .slider {
-        width: 77%;
       }
       .wheel {
         width: 200px;
@@ -212,7 +211,9 @@
                 </tbody>
               </table>
               {{template "color"}}
-              <input type="range" name="size" min="8" max="36" step="0.5" />
+              <label>Font Size
+                <span>Smaller<input type="range" name="size" min="8" max="36" step="0.5" />Bigger</span>
+              </label>
               <input type="text" name="font" list="fonts" />
               <datalist id="fonts">
                 <option value="Arial">Arial</option>
