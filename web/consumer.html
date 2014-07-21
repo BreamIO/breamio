@@ -45,6 +45,9 @@
         background-color: white; 
         border-radius: 4px;
       }
+      summary{
+        outline: 0;
+      }
       button {
         color: white;
         background: #FF7F00;
@@ -67,7 +70,7 @@
         font-family: lanenarrow;
         font-size: 2em;
       }
-      .box {
+      dd {
         width: 480px;
         padding: 12px;
         margin: 16px;
@@ -76,6 +79,10 @@
         background-color: white;
         box-shadow: 0px 0px 16px #888888;
       }
+      label {
+        margin-top: 0.5em;
+        display: block;
+      }
       .fill {
         width: 100%;
         height: 100%;
@@ -83,9 +90,7 @@
       .sliderbox {
         padding: 12px;
         margin: 16px;
-        border: 2px solid black;
         border-radius: 4px;
-        background-color: #05AED6;
       }
       .slider {
         width: 77%;
@@ -117,7 +122,7 @@
     <header class="logo">Bream iO</header>
     <main>
       <section>
-        <form class="box">
+        <form>
           <label>User Name <input type="text" name="username" placeholder="User Name" required="required" />
           </label>
           <label>Password <input type="password" name="pass" placeholder="Password" required="required" />
@@ -133,7 +138,7 @@
       <section>
         <dl>
           <dt>Home</dt>
-          <dd class="box">
+          <dd>
             <form >
               <header>Load configuration</header>
               <input type="text" name="load" placeholder="Search stored configurations" list="configurations" />
@@ -158,22 +163,14 @@
             </details>
           </dd>
           <dt>Overlay</dt>
-          <dd class="box">
+          <dd>
             <form>
-              <div class="sliderbox">
-                <label>Radius Size
-                  <div>
-                    <span>Smaller</span><input class="slider" type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
-                    </div>
-                </label>
-              </div>
-              <div class="sliderbox">
-                <label>Thickness
-                  <div>
-                    <span>Thinner</span><input class="slider" type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
-                  </div>
-                </label>
-              </div>
+              <label>Radius Size
+                <span>Smaller</span><input class="slider" type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
+              </label>
+              <label>Thickness
+                <span>Thinner</span><input class="slider" type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
+              </label>
               <div>
                 {{template "color"}}
               </div>
@@ -181,7 +178,7 @@
             <canvas></canvas>
           </dd>
           <dt>Statistics</dt>
-          <dd class="box">
+          <dd>
             <form>
               <table>
                 <thead>
@@ -225,7 +222,7 @@
             </form>
           </dd>
           <dt>Heat map</dt>
-          <dd class="box">
+          <dd>
             <form>
               {{template "color"}}
             </form>
