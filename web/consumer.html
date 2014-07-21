@@ -165,10 +165,14 @@
           <dd>
             <form>
               <label>Radius Size
-                <span>Smaller</span><input class="slider" type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
+                <div>
+                  <span>Smaller</span><input class="slider" type="range" name="radius" min="2" max="120" step="0.4" /><span>Bigger</span>
+                </div>
               </label>
               <label>Thickness
-                <span>Thinner</span><input class="slider" type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
+                <div>
+                  <span>Thinner</span><input class="slider" type="range" name="thickness" min="0.0" max="24" step="0.2" /><span>Thicker</span>
+                </div>
               </label>
               <div>
                 {{template "color"}}
@@ -212,7 +216,9 @@
               </table>
               {{template "color"}}
               <label>Font Size
-                <span>Smaller<input type="range" name="size" min="8" max="36" step="0.5" />Bigger</span>
+                <div>
+                  <span>Smaller<input type="range" name="size" min="8" max="36" step="0.5" />Bigger</span>
+                </div>
               </label>
               <input type="text" name="font" list="fonts" />
               <datalist id="fonts">
