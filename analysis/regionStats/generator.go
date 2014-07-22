@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"math"
 
 	"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/beenleigh"
@@ -275,6 +276,10 @@ func (rs *RegionStatistics) removeRegions(regs []string) error {
 // sends it away on the publish channel.
 func (rs RegionStatistics) Generate() {
 	rs.publish <- rs.generate()
+}
+
+func inRange(p1, p2 gr.XYer, distance float64) bool{
+	return math.Sqrt(math.Pow(p1.X() - p2.X(), 2) + math.Pow(p1.Y() - p2.Y(), 2)) <= distance
 }
 
 func (rs RegionStatistics) generate() RegionStatsMap {
