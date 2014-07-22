@@ -287,15 +287,14 @@ func TestNewFixation(t *testing.T){
 		Yf: 0.5,
 	}
 
-	p3 := newFixation(p1, p2)
+	p3 := newFixation(p1, p2, 2)
 	if p3.X() != 0.25 || p3.Y() != 0.25 {
 		t.Fail()
 	}
 
-	p4 := newFixation(p2, p1)
+	p4 := newFixation(p2, p1, 2)
 	if p4.X() != 0.25 || p4.Y() != 0.25 {
 		t.Fail()
 	}
-
 
 }

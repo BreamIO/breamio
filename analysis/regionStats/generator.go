@@ -285,13 +285,13 @@ func inRange(p1, p2 gr.XYer, distance float64) bool {
 }
 
 // Function used for calculating new fixation points given a new data point
-func newFixation(p1, p2 gr.XYer) *gr.Point2D {
+func newFixation(p1, p2 gr.XYer, numPoints int) *gr.Point2D {
 	dx := p2.X() - p1.X()
 	dy := p2.Y() - p1.Y()
 
 	return &gr.Point2D {
-		Xf: p1.X() + dx/2,
-		Yf: p1.Y() + dy/2,
+		Xf: p1.X() + dx/float64(numPoints),
+		Yf: p1.Y() + dy/float64(numPoints),
 	}
 }
 
@@ -309,9 +309,11 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	for coord := range rs.getCoords() {        // Alot of coords
 
 		if currFixation == nil {
+			// First data coordinate
 			currFixation = &coord.Filtered
 		} else if inRange(currFixation, coord.Filtered, fixationRange){
 			// Update currFixation
+			currFixation = newFixation(currFixation, coord.Filtered, 2)
 		} else { // Not in range, new fixation
 		}
 
