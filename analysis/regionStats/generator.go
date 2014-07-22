@@ -280,7 +280,18 @@ func (rs RegionStatistics) Generate() {
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
+
+	// Fixation init
+	currFixation := &gr.ETData{}
+	currFixation = nil
+	log.Println(currFixation)
+
 	for coord := range rs.getCoords() {        // Alot of coords
+
+		if currFixation == nil {
+			currFixation = coord
+		}
+
 		for i, r := range rs.regions { // like one region
 
 			if prevTime[i] == nil && r.Contains(coord.Filtered) {
