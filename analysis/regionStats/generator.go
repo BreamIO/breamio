@@ -293,10 +293,15 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	currFixation = nil
 	log.Println(currFixation)
 
+	fixationRange := 0.05
+
 	for coord := range rs.getCoords() {        // Alot of coords
 
 		if currFixation == nil {
 			currFixation = coord
+		} else if inRange(currFixation, coord, fixationRange){
+			// Update currFixation
+		} else { // Not in range, new fixation
 		}
 
 		for i, r := range rs.regions { // like one region
