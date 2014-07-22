@@ -275,3 +275,27 @@ func TestInRange(t *testing.T) {
 	}
 
 }
+
+func TestNewFixation(t *testing.T){
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 0.5,
+		Yf: 0.5,
+	}
+
+	p3 := newFixation(p1, p2)
+	if p3.X() != 0.25 || p3.Y() != 0.25 {
+		t.Fail()
+	}
+
+	p4 := newFixation(p2, p1)
+	if p4.X() != 0.25 || p4.Y() != 0.25 {
+		t.Fail()
+	}
+
+
+}
