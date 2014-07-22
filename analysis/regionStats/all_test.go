@@ -298,3 +298,32 @@ func TestNewFixation(t *testing.T){
 	}
 
 }
+
+func TestNewFixation3Points(t *testing.T){
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 1.0,
+		Yf: 0.0,
+	}
+
+	p3 := gr.Point2D{
+		Xf: 0.5,
+		Yf: 1.0,
+	}
+
+	p4 := newFixation(p1, p2, 2)
+	t.Log(p4.X())
+	t.Log(p4.Y())
+	p5 := newFixation(p4, p3, 3)
+
+	t.Log(p5.X())
+	t.Log(p5.Y())
+
+	if p5.X() != 0.5 || p5.Y() != (1.0/3.0) {
+		t.Fail()
+	}
+}
