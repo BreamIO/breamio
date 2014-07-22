@@ -166,7 +166,8 @@ func TestWithBeenleigh(t *testing.T) {
 			},
 		})
 	*/
-	timeout := time.After(50000 * time.Millisecond)
+	//timeout := time.After(50000 * time.Millisecond)
+	timeout := time.After(2 * time.Millisecond)
 	omgquit := false
 	for !omgquit {
 		select {
@@ -255,4 +256,22 @@ func TestBLwithBufferCommands(t *testing.T) {
 
 	//re.Dispatch("shutdown", struct{}{});
 	log.Println("Done!")
+}
+
+func TestInRange(t *testing.T) {
+	t.Log("Testing InRange")
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 0.3,
+		Yf: 0.4,
+	}
+
+	if inRange(p1, p2, 0.5) != true {
+		t.Fail()
+	}
+
 }
