@@ -300,7 +300,7 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
 
 	// Fixation init
-	currFixation := &gr.ETData{}
+	currFixation := &gr.Point2D{}
 	currFixation = nil
 	log.Println(currFixation)
 
@@ -309,8 +309,8 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	for coord := range rs.getCoords() {        // Alot of coords
 
 		if currFixation == nil {
-			currFixation = coord
-		} else if inRange(currFixation.Filtered, coord.Filtered, fixationRange){
+			currFixation = &coord.Filtered
+		} else if inRange(currFixation, coord.Filtered, fixationRange){
 			// Update currFixation
 		} else { // Not in range, new fixation
 		}
