@@ -278,7 +278,7 @@ func (rs RegionStatistics) Generate() {
 	rs.publish <- rs.generate()
 }
 
-func inRange(p1, p2 gr.XYer, distance float64) bool{
+func InRange(p1, p2 gr.XYer, distance float64) bool {
 	return math.Sqrt(math.Pow(p1.X() - p2.X(), 2) + math.Pow(p1.Y() - p2.Y(), 2)) <= distance
 }
 
