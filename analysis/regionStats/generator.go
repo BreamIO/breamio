@@ -291,7 +291,7 @@ func newFixation(p1, p2 gr.XYer) *gr.Point2D {
 
 	return &gr.Point2D {
 		Xf: p1.X() + dx/2,
-		Yf: p2.Y() + dy/2,
+		Yf: p1.Y() + dy/2,
 	}
 }
 
