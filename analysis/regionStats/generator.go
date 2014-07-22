@@ -284,6 +284,17 @@ func inRange(p1, p2 gr.XYer, distance float64) bool {
 	return l <= distance
 }
 
+// Function used for calculating new fixation points given a new data point
+func newFixation(p1, p2 gr.XYer, distance float64) *gr.Point2D {
+	dx := p1.X() - p2.X()
+	dy := p2.Y() - p2.Y()
+
+	return &gr.Point2D {
+		Xf: p1.X() + dx/2,
+		Yf: p2.Y() + dy/2,
+	}
+}
+
 func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
@@ -299,7 +310,7 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 
 		if currFixation == nil {
 			currFixation = coord
-		} else if inRange(currFixation, coord, fixationRange){
+		} else if inRange(currFixation.Filtered, coord.Filtered, fixationRange){
 			// Update currFixation
 		} else { // Not in range, new fixation
 		}
