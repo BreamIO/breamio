@@ -286,8 +286,8 @@ func inRange(p1, p2 gr.XYer, distance float64) bool {
 
 // Function used for calculating new fixation points given a new data point
 func newFixation(p1, p2 gr.XYer) *gr.Point2D {
-	dx := p1.X() - p2.X()
-	dy := p1.Y() - p2.Y()
+	dx := p2.X() - p1.X()
+	dy := p2.Y() - p1.Y()
 
 	return &gr.Point2D {
 		Xf: p1.X() + dx/2,
