@@ -299,6 +299,8 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
 
+	prevFixInRegion := make([]bool, len(rs.regions))
+
 	// Fixation init
 	currFixation := &gr.Point2D{}
 	currFixation = nil
@@ -307,33 +309,45 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 
 	fixationRange := 0.05
 	coordsInFixation := 0
+	isNewFixation := true
 
 	for coord := range rs.getCoords() {        // Alot of coords
 		if currFixation == nil {
 			// First data coordinate
 			currFixation = &coord.Filtered
 			coordsInFixation = 1
+			isNewFixation = false
 		} else if inRange(currFixation, coord.Filtered, fixationRange){
 			// Update currFixation
 			coordsInFixation++
 			currFixation = newFixation(currFixation, coord.Filtered, coordsInFixation)
+			isNewFixation = false
 		} else { // Not in range, new fixation, set prevFixation
 			coordsInFixation = 1
 			prevFixation = currFixation
 			currFixation = &coord.Filtered
+			isNewFixation = true
 		}
 
-		for i, r := range rs.regions { // like one region
+		for i, r := range rs.regions {
+			// Overhead
+			if isNewFixation {
+				prevFixInRegion[i] = rs.Contains(prevFixation)
+			}
 
-			if prevTime[i] == nil && r.Contains(coord.Filtered) {
-				stats[i].Looks++
+			if rs.Contains(currFixation) && prevTime[i] == nil { // Enter
 				prevTime[i] = &coord.Timestamp
+				if !prevFixationInRegion[i] { // Normal enter
+					stats[i].Looks++
+				}
+				// If the previous fixation was in the region, it counts as a re-enter
+				// and skipping the incrementation of looks
 
-			} else if prevTime[i] != nil && r.Contains(coord.Filtered) {
+			} else if rs.Contains(currFixation) && prevTime[i] != nil { // Inside
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				prevTime[i] = &coord.Timestamp
 
-			} else if prevTime[i] != nil && !r.Contains(coord.Filtered) {
+			} else if rs.Contains(currFixation) && prevTime[i] == nil { // Leave
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				prevTime[i] = nil
 			}
