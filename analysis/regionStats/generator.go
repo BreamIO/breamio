@@ -302,19 +302,25 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	// Fixation init
 	currFixation := &gr.Point2D{}
 	currFixation = nil
-	log.Println(currFixation)
+	prevFixation := &gr.Point2D{}
+	prevFixation = nil
 
 	fixationRange := 0.05
+	coordsInFixation := 0
 
 	for coord := range rs.getCoords() {        // Alot of coords
-
 		if currFixation == nil {
 			// First data coordinate
 			currFixation = &coord.Filtered
+			coordsInFixation = 1
 		} else if inRange(currFixation, coord.Filtered, fixationRange){
 			// Update currFixation
-			currFixation = newFixation(currFixation, coord.Filtered, 2)
-		} else { // Not in range, new fixation
+			coordsInFixation++
+			currFixation = newFixation(currFixation, coord.Filtered, coordsInFixation)
+		} else { // Not in range, new fixation, set prevFixation
+			coordsInFixation = 1
+			prevFixation = currFixation
+			currFixation = &coord.Filtered
 		}
 
 		for i, r := range rs.regions { // like one region
