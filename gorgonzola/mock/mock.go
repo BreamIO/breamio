@@ -23,6 +23,29 @@ func mockSporadic(t float64) (float64, float64) {
 	return 0.5 + 0.5*math.Cos(t) + rand.Float64()/50, 0.5 + 0.5*math.Sin(10*t) + rand.Float64()/50
 }
 
+var prevX, prevY float64
+func mockRandomFixation(t float64) (float64, float64) {
+	var retX, retY float64
+
+	// Stay or go?
+	if math.Abs(rand.NormFloat64()) <= 2.0 {
+		// Stay
+		retX = prevX + rand.NormFloat64() * 0.01
+		retY = prevY + rand.NormFloat64() * 0.01
+	} else {
+		// Go
+		//dx = math.Cos(2*3.1415*rand.Float64())/5.0
+		//dy = math.Sin(2*3.1415*rand.Float64())/5.0
+		retX = rand.Float64()
+		retY = rand.Float64()
+	}
+
+	prevX = retX
+	prevY = retY
+
+	return retX, retY
+}
+
 type MockDriver struct{}
 
 func (d MockDriver) List() []string {
@@ -40,6 +63,8 @@ func (d MockDriver) CreateFromId(identifier string) (Tracker, error) {
 		return New(mockConstant), nil
 	case "sporadic":
 		return New(mockSporadic), nil
+	case "random_fix":
+		return New(mockRandomFixation), nil
 	default:
 		return nil, errors.New("No such tracker.")
 	}
