@@ -1,4 +1,4 @@
-package spreader
+package proxy
 
 import (
 	"encoding/json"
