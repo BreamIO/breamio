@@ -31,18 +31,12 @@ package
 		
 		public function Connection (host:String = null, port:int = 0, type:String = null )
 		{ 
-			trace("Hallo");
 			_port = port;
 			_host = host;
 			super();
 			socket = new Socket();
 			configureSocketListener();
-			socket.connect(host, port);
-			trace("lol");
-			_timer = new Timer(1000/30, 0);
-			_timer.addEventListener(TimerEvent.TIMER, test1);
-			//_timer.start();
-			
+			socket.connect(host, port);	
 		}
 		
 		/**
@@ -69,29 +63,13 @@ package
 			this.dispatchEvent(_event);	
 		}
 		
-		
-		private function test1(event:TimerEvent) : void {
-			var calle:String  = "{";
-			calle += " \"filtered\": { ";
-			calle += " \"xf\" : " + x ;
-			calle += ", \"yf\" : " + y ; 
-			calle += "} }"
-			var _event:ConnectionEvent = new ConnectionEvent(ConnectionEvent.DATA);
-			_event.data = calle;
-			x =  (x + 0.005) % 1; 
-			y =  (y + 0.005) % 1;
-			this.dispatchEvent(_event);
-		}
-		
 		private function ioHandler(event:Event):void {
 			if (debugging) {
 				trace("An io error occured" + Event);
 			}
-			// TODO ERROR management 
 		}
 		
 		private function connectHandler(event:Event):void {
-			trace("ostsås");
 			subscribe();  // maybe should be called on the object instead and so can be done from the outside after connect instead. 
 			return
 		}
@@ -100,7 +78,6 @@ package
 			if (debugging) {
 				trace("A security error occured" + Event);
 			}
-			// TODO ERROR management
 		}
 		
 		private function closeHandler(event:Event):void {
