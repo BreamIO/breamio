@@ -14,7 +14,7 @@ const tcpJSONaddr = ":4041"
 
 func init() {
 	registerTCPJSON()
-	registerTCPGOB()
+	//registerTCPGOB()
 }
 
 func registerTCPJSON() {
@@ -53,7 +53,7 @@ func (t TCPServer) Listen(ioman aioli.IOManager, logger *log.Logger) {
 			logger.Printf("Failed to accept connection on TCP address %s: %s\n", tcpJSONaddr, err)
 			return
 		}
-
+		logger.Printf("Connection recieved from %s.", in.RemoteAddr())
 		go ioman.Listen(t.codecConstructor(in), logger)
 	}
 }
