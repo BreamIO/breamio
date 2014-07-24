@@ -64,7 +64,7 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz, rc.GenerationInterval)
 		case <-r.closeChan:
 			log.Println("Shutting down")
-			break
+			return
 		}
 	}
 }
