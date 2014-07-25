@@ -1,5 +1,3 @@
-// +build !windows
-
 package main
 
 import (
@@ -8,4 +6,6 @@ import (
 	_ "github.com/maxnordlund/breamio/aioli/access"
 	_ "github.com/maxnordlund/breamio/aioli/ancientPower"
 	_ "github.com/maxnordlund/breamio/webber"
+
+	_ "github.com/maxnordlund/breamio/analysis/regionStats"
 )
