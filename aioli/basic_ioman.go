@@ -135,7 +135,7 @@ func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, log
 
 	logger.Printf("Subscription for event \"%s\" on emitter %d started.\n", recvData.Event, recvData.ID)
 	for !biom.IsClosed() {
-		val, ok := dataCh.TryRecv()
+		val, ok := dataCh.Recv()
 		if !ok {
 			continue
 		}
