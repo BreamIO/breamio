@@ -1,0 +1,42 @@
+<html>
+<head>
+	<script src="/api/eyestream.js"></script>
+	<script>
+	EyeStream.connect("ws://localhost:8080/api/json")
+	function sendData(){
+		var thickness = parseInt(document.getElementById("thickness").value);
+		var alpha = parseFloat(document.getElementById("alpha").value);
+		var radius = parseInt(document.getElementById("radius").value);
+		var color = parseInt(document.getElementById("color").value);
+		var config =
+		{
+			"Thicknes": ParseInt(thickness), 
+			"Alpha" : ParseFloat(alpha),
+			"Radius" : radius,
+			"Color": [color]
+		};
+		Eyestream.send("drawer:setting", config);
+	}
+	</script>
+</head>
+<body>
+<div>
+<header>Thickness:</header>
+<input id="thickness" value="4" />
+<div/>
+<div>
+<header>Alpha:</header>
+<input id="alpha" value="3"/>
+<div/>
+<div>
+<header>Radius:</header>
+<input id="radius" value = "10" />
+<div/>
+<div>
+<header>Color:</header>
+<input id="color" value="844156" />
+<div/>
+<button onclick="sendData()">Send To server</button>
+</body>
+</html>
+
