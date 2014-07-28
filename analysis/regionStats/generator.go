@@ -347,7 +347,7 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				prevTime[i] = &coord.Timestamp
 
-			} else if rs.Contains(currFixation) && prevTime[i] == nil { // Leave
+			} else if !rs.Contains(currFixation) && prevTime[i] == nil { // Leave
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				prevTime[i] = nil
 			}
