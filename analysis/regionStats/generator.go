@@ -349,7 +349,11 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 
 			} else if !rs.Contains(currFixation) && prevTime[i] != nil { // Leave
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
-				prevTime[i] = nil
+				if isNewFixation {
+					prevTime[i] = nil
+				} else { // If it was not a new "jump" this coordinate is on the border of the region and should count
+					prevTime[i] = &coord.Timestamp
+				}
 			}
 		}
 	}
