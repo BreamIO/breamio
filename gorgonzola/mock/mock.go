@@ -46,6 +46,10 @@ func mockRandomFixation(t float64) (float64, float64) {
 	return retX, retY
 }
 
+func mockConstantFixation(t float64) (float64, float64) {
+	return 0.5 + rand.NormFloat64() * 0.01, 0.5 + rand.NormFloat64() * 0.01
+}
+
 type MockDriver struct{}
 
 func (d MockDriver) List() []string {
@@ -65,6 +69,8 @@ func (d MockDriver) CreateFromId(identifier string) (Tracker, error) {
 		return New(mockSporadic), nil
 	case "random_fix":
 		return New(mockRandomFixation), nil
+	case "constant_fix":
+		return New(mockConstantFixation), nil
 	default:
 		return nil, errors.New("No such tracker.")
 	}
