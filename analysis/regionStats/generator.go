@@ -337,7 +337,7 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 
 			if r.Contains(currFixation) && prevTime[i] == nil { // Enter
 				prevTime[i] = &coord.Timestamp
-				if !prevFixationInRegion[i] { // Normal enter
+				if !prevFixInRegion[i] { // Normal enter
 					stats[i].Looks++
 				}
 				// If the previous fixation was in the region, it counts as a re-enter
