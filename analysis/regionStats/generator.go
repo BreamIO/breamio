@@ -332,10 +332,10 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 		for i, r := range rs.regions {
 			// Overhead
 			if isNewFixation {
-				prevFixInRegion[i] = rs.Contains(prevFixation)
+				prevFixInRegion[i] = r.Contains(prevFixation)
 			}
 
-			if rs.Contains(currFixation) && prevTime[i] == nil { // Enter
+			if r.Contains(currFixation) && prevTime[i] == nil { // Enter
 				prevTime[i] = &coord.Timestamp
 				if !prevFixationInRegion[i] { // Normal enter
 					stats[i].Looks++
@@ -343,11 +343,11 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 				// If the previous fixation was in the region, it counts as a re-enter
 				// and skipping the incrementation of looks
 
-			} else if rs.Contains(currFixation) && prevTime[i] != nil { // Inside
+			} else if r.Contains(currFixation) && prevTime[i] != nil { // Inside
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				prevTime[i] = &coord.Timestamp
 
-			} else if !rs.Contains(currFixation) && prevTime[i] != nil { // Leave
+			} else if !r.Contains(currFixation) && prevTime[i] != nil { // Leave
 				stats[i].TimeInside += InsideTime(coord.Timestamp.Sub(*prevTime[i]))
 				if isNewFixation {
 					prevTime[i] = nil
