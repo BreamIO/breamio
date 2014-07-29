@@ -166,7 +166,6 @@ func TestWithBeenleigh(t *testing.T) {
 			},
 		})
 	*/
-	//timeout := time.After(50000 * time.Millisecond)
 	timeout := time.After(2 * time.Millisecond)
 	omgquit := false
 	for !omgquit {
@@ -276,7 +275,7 @@ func TestInRange(t *testing.T) {
 
 }
 
-func TestNewFixation(t *testing.T){
+func TestNewFixation(t *testing.T) {
 	p1 := gr.Point2D{
 		Xf: 0.0,
 		Yf: 0.0,
@@ -299,7 +298,7 @@ func TestNewFixation(t *testing.T){
 
 }
 
-func TestNewFixation3Points(t *testing.T){
+func TestNewFixation3Points(t *testing.T) {
 	p1 := gr.Point2D{
 		Xf: 0.0,
 		Yf: 0.0,

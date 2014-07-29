@@ -3,6 +3,7 @@ package webber
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
+	"github.com/gorilla/mux"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
 	"io/ioutil"
@@ -76,7 +77,7 @@ func PublishError(w http.ResponseWriter, e Error) *Error {
 }
 
 type Webber struct {
-	mux *http.ServeMux
+	mux *mux.Router
 
 	logger   *log.Logger
 	listener net.Listener
@@ -84,7 +85,7 @@ type Webber struct {
 
 func New() *Webber {
 	return &Webber{
-		mux:    http.NewServeMux(),
+		mux:    mux.NewRouter(),
 		logger: log.New(os.Stdout, "[Webber] ", log.LstdFlags),
 	}
 }
@@ -140,6 +141,7 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 func (web *Webber) HandleStatic(pattern, file string) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		web.logger.Printf("Static request for %s.", pattern)
+		web.logger.Println(file)
 		http.ServeFile(w, req, file)
 	})
 }
@@ -166,6 +168,7 @@ func (web *Webber) Close() error {
 
 func (web *Webber) addServings() {
 	web.HandleStatic("/control", path.Join(Root, "control.html"))
+	web.HandleStatic("/consumer", path.Join(Root, "consumer.html"))
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
 	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))

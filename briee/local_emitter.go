@@ -160,6 +160,11 @@ func (ee *LocalEventEmitter) TypeOf(eventID string) (reflect.Type, error) {
 	if event, ok := ee.eventMap[eventID]; ok {
 		return event.ElemType, nil
 	} else {
+		defer typeMapLock.Unlock()
+		typeMapLock.Lock()
+		if typ, ok := typeMap[eventID]; ok {
+			return typ, nil
+		}
 		return nil, errors.New(fmt.Sprintf("No event with '%s' identifier is registered", eventID))
 	}
 }

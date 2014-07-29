@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title></title>
+		<meta name="description" content="" />
+		<!-- <meta name="viewport" content="width=device-width, initial-scale=1" /> -->
+		<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.0/normalize.min.css" /> -->
+		<style>
+		{{ .Normalize }}
+		</style>
+		<style>
+			/* Main style for X-configuration application */
+			main {
+				width: 100%;
+				height: 100%;
+			}
+
+			#front, #top {
+				float: left;
+			}
+
+			#front .screen {
+				fill: transparent;
+				stroke: black;
+				stroke-width: 1px;
+			}
+
+			#top .screen {
+				fill: black;
+				stroke-width: 0;
+			}
+
+			circle {
+				fill: red;
+			}
+		</style>
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js" async="async"></script>-->
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/bluebird/1.0.0/bluebird.min.js" async="async"></script>-->
+		<script>
+			// Main script
+			document.addEventListener("DOMContentLoaded", function main(event) {
+				console.log("DOM fully loaded and parsed")
+
+				var front = {
+					screen: document.querySelector("#front .screen"),
+					tracker: document.querySelector("#front .tracker")
+				}, top = {
+					screen: document.querySelector("#top .screen"),
+					tracker: document.querySelector("#top .tracker")
+				}, form = {
+					x: document.getElementById("x"),
+					y: document.getElementById("y"),
+					z: document.getElementById("z"),
+					diagonal: document.getElementById("diagonal"),
+					ratio: document.getElementById("ratio"),
+					options: Array.prototype.slice.call(
+						document.querySelectorAll("option")
+					).reduce(function populateOptions(map, option) {
+						var key = option.getAttribute("value"),
+					      either = key.split(":"),
+					      width = parseInt(either[0], 10),
+					      height = parseInt(either[1], 10)
+						map[key] = {
+							ratio: width / height,
+							element: option
+						}
+						return map
+					}, {})
+				}, test = new (function Test() {
+					var dppx = 1, // dppx = physical pixels / device-independent pixels
+					    highPixelDensity = ([
+					    	"(min-resolution: 2dppx)",
+					    	"(-webkit-min-device-pixel-ratio: 1.5)",
+					    	"(-moz-min-device-pixel-ratio: 1.5)",
+					    	"(min-device-pixel-ratio: 1.5)"
+					    ]).join(",")
+
+					if (window.devicePixelRatio) {
+						dppx = window.devicePixelRatio
+					} else if (window.matchMedia && window.matchMedia(highPixelDensity).matches) {
+						dppx = 2
+					}
+
+					this.width = window.screen.width * dppx
+					this.height = window.screen.height * dppx
+					this.ratio = this.width / this.height
+					this.diagonal = Math.sqrt(this.width * this.width + this.height * this.height)
+				})(), minimum
+
+				minimum = Object.keys(form.options).reduce(function findMinimum(left, right) {
+					var diff = {
+						left: Math.abs(form.options[left].ratio - test.ratio),
+						right: Math.abs(form.options[right].ratio - test.ratio)
+					}
+					return (diff.left < diff.right) ? left : right
+				})
+				form.ratio.selectedIndex = form.options[minimum].element.index
+
+				window.data = {
+					front: front,
+					top: top,
+					form: form,
+					test: test
+				}
+			})
+		</script>
+	</head>
+	<body>
+		<main>
+			<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewPort="0 0 100 100" preserveAspectRatio="none">
+				<svg id="front" x="0" y="0" width="50%" height="100%" viewPort="0 0 50 100" preserveAspectRatio="none">
+					<rect class="screen" x="10%" y="10%" width="80%" height="40%" rx="15" ry="15" />
+					<svg class="tracker" x="40%" y="60%" width="20%" height="10%">
+						<rect x="0" y="0" width="100%" height="100%" />
+						<circle cx="25%" cy="50%" r="10%" />
+						<circle cx="75%" cy="50%" r="10%" />
+					</svg>
+				</svg>
+				<svg id="top" x="50%" y="0" width="50%" height="100%" viewPort="0 0 50 100" preserveAspectRatio="none">
+					<svg class="screen" x="10%" y="35%" width="80%" height="15%" viewPort="0 0 80 10" preserveAspectRatio="none">
+						<rect x="0" y="70%" width="100%" height="30%" />
+						<ellipse cx="50%" cy="100%" rx="10%" ry="100%"/>
+					</svg>
+					<rect class="tracker" x="40%" y="60%" width="20%" height="10%" />
+				</svg>
+			</svg>
+			<form>
+				<input id="x" type="number" max="10" min="-10" value="0" />
+				<input id="y" type="number" max="10" min="-10" value="0" />
+				<input id="z" type="number" max="10" min="-10" value="0" />
+				<input id="diagonal" type="number" max="160" min="3" value="13" />
+				<select id="ratio">
+					<option value="4:3">4:3</option>
+					<option value="5:3">5:3</option>
+					<option value="5:4">5:4</option>
+					<option value="16:9">16:9</option>
+					<option value="16:10">16:10</option>
+				</select>
+			</form>
+		</main>
+	</body>
+</html>

@@ -3,10 +3,10 @@ package regionStats
 import (
 	"errors"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"time"
-	"math"
 
 	"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/beenleigh"
@@ -280,7 +280,7 @@ func (rs RegionStatistics) Generate() {
 
 // inRange determines if the two coordinates are within range
 func inRange(p1, p2 gr.XYer, distance float64) bool {
-	l := math.Sqrt(math.Pow(p1.X() - p2.X(), 2) + math.Pow(p1.Y() -p2.Y(), 2))
+	l := math.Sqrt(math.Pow(p1.X()-p2.X(), 2) + math.Pow(p1.Y()-p2.Y(), 2))
 	return l <= distance
 }
 
@@ -289,7 +289,7 @@ func newFixation(p1, p2 gr.XYer, numPoints int) *gr.Point2D {
 	dx := p2.X() - p1.X()
 	dy := p2.Y() - p1.Y()
 
-	return &gr.Point2D {
+	return &gr.Point2D{
 		Xf: p1.X() + dx/float64(numPoints),
 		Yf: p1.Y() + dy/float64(numPoints),
 	}
@@ -311,13 +311,13 @@ func (rs RegionStatistics) generate() RegionStatsMap {
 	coordsInFixation := 0
 	isNewFixation := true
 
-	for coord := range rs.getCoords() {        // Alot of coords
+	for coord := range rs.getCoords() { // Alot of coords
 		if currFixation == nil {
 			// First data coordinate
 			currFixation = &coord.Filtered
 			coordsInFixation = 1
 			isNewFixation = false
-		} else if inRange(currFixation, coord.Filtered, fixationRange){
+		} else if inRange(currFixation, coord.Filtered, fixationRange) {
 			// Update currFixation
 			coordsInFixation++
 			currFixation = newFixation(currFixation, coord.Filtered, coordsInFixation)

@@ -157,6 +157,15 @@ func TestTypeOf(t *testing.T) {
 		t.Errorf("TypeOf an unregistered event shall cause an error")
 	}
 
+	RegisterGlobalEventType("B", atype)
+	btype, err := ee.TypeOf("B")
+	if err != nil {
+		t.Errorf("TypeOf a globalized event returns a error: ", err)
+	}
+	if btype != atype {
+		t.Errorf("TypeOf returned wrong type")
+	}
+
 }
 
 func TestTypes(t *testing.T) {
@@ -283,18 +292,18 @@ func TestOnOff(t *testing.T) {
 	ee.Wait()
 }
 
-func BenchmarkSubUnsub(b *testing.B){
+func BenchmarkSubUnsub(b *testing.B) {
 	ee := New()
 	subs := ee.Subscribe("event", struct{}{}).(<-chan struct{})
 	publ := ee.Publish("event", struct{}{}).(chan<- struct{})
 	done := make(chan bool)
 
-	sendPing := func(){
-		publ<-struct{}{}
-		done<-true
+	sendPing := func() {
+		publ <- struct{}{}
+		done <- true
 	}
 
-	recvPing := func(){
+	recvPing := func() {
 		<-done
 		<-subs
 	}
@@ -302,7 +311,7 @@ func BenchmarkSubUnsub(b *testing.B){
 	go sendPing()
 	recvPing()
 
-	for i := 0; i<b.N; i++ {
+	for i := 0; i < b.N; i++ {
 		ee.Unsubscribe("event", subs)
 		subs = ee.Subscribe("event", struct{}{}).(<-chan struct{})
 		go sendPing()
