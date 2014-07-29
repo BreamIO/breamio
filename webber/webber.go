@@ -16,11 +16,6 @@ import (
 	"strconv"
 )
 
-const (
-	Port    = "8080"
-	Address = "localhost"
-)
-
 var Root = "web"
 
 func GetInstance() *Webber {
