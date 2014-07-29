@@ -3,6 +3,7 @@ package webber
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
+	"github.com/gorilla/mux"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
 	"io/ioutil"
@@ -76,7 +77,7 @@ func PublishError(w http.ResponseWriter, e Error) *Error {
 }
 
 type Webber struct {
-	mux *http.ServeMux
+	mux *mux.Router
 
 	logger   *log.Logger
 	listener net.Listener
@@ -84,7 +85,7 @@ type Webber struct {
 
 func New() *Webber {
 	return &Webber{
-		mux:    http.NewServeMux(),
+		mux:    mux.NewRouter(),
 		logger: log.New(os.Stdout, "[Webber] ", log.LstdFlags),
 	}
 }
