@@ -312,8 +312,8 @@
 								console.log("Main movement complete, starting pulse")
 								return Promise.all([
 									server.wait("tracker:calibrate:add", id, {
-										Xf: point[0],
-										Yf: point[1]
+										Xf: point[0] / 100.0,
+										Yf: point[1] / 100.0
 									}).then(circle.pulse.end.bind(circle.pulse)),
 									circle.pulse.begin()
 								])
