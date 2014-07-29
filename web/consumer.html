@@ -24,19 +24,24 @@
         background-color: #F0F0F0;
         font-family: "garamond", serif; /* Bream Font*/
       }
-      table{
-        margin-top: 1em;
-        border-collapse: collapse;
-        empty-cells: hide;
-      }
-      table, td, th {
-        border: 2px solid black;
-      }
-      th {
-        font-weight: bold;
-      }
-      td {
+      body > header {
+        font-family: lanenarrow;
+        font-size: 4em;
         text-align: center;
+        padding-top: 2.5em;
+        background: url(logo.svg);
+        background-repeat: no-repeat;
+        background-position: center top;
+      }
+      section {
+        width: 36em;
+        padding: 1em;
+        margin:   1em;
+        margin-top: 4em;
+        text-align: left;
+        border-radius: 0.33em;
+        background-color: white;
+        box-shadow: 0px 0px 16px #888888;
       }
       input[type=text],
       input[type=password] {
@@ -77,28 +82,25 @@
       span {
         /* display: inline; */
       }
-      dd{
+      dd {
+        display: none;
         margin-top: 0.0em;
         margin-left: 0.5em;
         margin-bottom: 2.0em;
       }
-      section {
-        width: 480px;
-        padding: 12px;
-        margin:   16px;
-        margin-top: 3em;
-        border-radius: 4px;
-        background-color: white;
-        box-shadow: 0px 0px 16px #888888;
+      dd.active {
+        display: block;
       }
-      dt{
+      dt {
+        margin: 0px;
+        padding: 0px;
+        top: 5.5em;
         font-family: lanenarrow;
         font-size: 2em;
+        position: absolute;
         background: inherit;
         cursor: pointer;
         -webkit-user-select: none;
-        padding-left: 0.25em;
-        padding-right: 0.25em;
         border-radius: 36px;
         box-shadow: 0px 0px 8px #888888;
       }
@@ -109,24 +111,30 @@
         background: radial-gradient(#FF7F00 10%, rgba(255, 255, 255, 0) 65%); 
       }
       #home {
-        position: absolute;
-        top: 120px;
         left: 0.5em;
       }
       #overlay {
-        position: absolute;
-        top: 120px;
         left: 3.75em;
       }
       #stats {
-        position: absolute;
-        top: 120px;
         left: 7.75em;
       }
       #heatmap {
-        position: absolute;
-        top: 120px;
         left: 12em;
+      }
+      table{
+        margin-top: 1em;
+        border-collapse: collapse;
+        empty-cells: hide;
+      }
+      table, td, th {
+        border: 2px solid black;
+      }
+      th {
+        font-weight: bold;
+      }
+      td {
+        text-align: center;
       }
       .fill {
         width: 100%;
@@ -140,23 +148,15 @@
                           radial-gradient(circle at  25%  6.69872981077808%, rgba(0, 255, 0, 1) 0, rgba(0, 255, 0, 0) 50%),
                           radial-gradient(circle at  25% 93.30127018922192%, rgba(0, 0, 255, 1) 0, rgba(0, 0, 255, 0) 50%);
       }
-      .logo{
-        font-family: lanenarrow;
-        font-size: 4em;
-        text-align: center;
-        width: 360px;
-        height: 110px;
-        background: url(logo.svg);
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-      }
+  
+      
     </style>
     <script>
       // Here should the main script be
     </script>
   </head>
   <body>
-    <header class="logo">Bream iO</header>
+    <header>Bream iO</header>
     <main>
       <section hidden>
         <form>
@@ -175,8 +175,8 @@
       <section>
         <dl>
           <dt id="home">Home</dt>
-          <dd>
-            <form >
+          <dd class="active">
+            <form>
               <header>Load configuration</header>
               <input type="text" name="load" placeholder="Search configuration" list="configurations" />
               <datalist id="configurations">
