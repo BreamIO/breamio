@@ -166,7 +166,7 @@ func TestWithBeenleigh(t *testing.T) {
 			},
 		})
 	*/
-	timeout := time.After(50000 * time.Millisecond)
+	timeout := time.After(2 * time.Millisecond)
 	omgquit := false
 	for !omgquit {
 		select {
@@ -255,4 +255,74 @@ func TestBLwithBufferCommands(t *testing.T) {
 
 	//re.Dispatch("shutdown", struct{}{});
 	log.Println("Done!")
+}
+
+func TestInRange(t *testing.T) {
+	t.Log("Testing InRange")
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 0.3,
+		Yf: 0.4,
+	}
+
+	if inRange(p1, p2, 0.5) != true {
+		t.Fail()
+	}
+
+}
+
+func TestNewFixation(t *testing.T) {
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 0.5,
+		Yf: 0.5,
+	}
+
+	p3 := newFixation(p1, p2, 2)
+	if p3.X() != 0.25 || p3.Y() != 0.25 {
+		t.Fail()
+	}
+
+	p4 := newFixation(p2, p1, 2)
+	if p4.X() != 0.25 || p4.Y() != 0.25 {
+		t.Fail()
+	}
+
+}
+
+func TestNewFixation3Points(t *testing.T) {
+	p1 := gr.Point2D{
+		Xf: 0.0,
+		Yf: 0.0,
+	}
+
+	p2 := gr.Point2D{
+		Xf: 1.0,
+		Yf: 0.0,
+	}
+
+	p3 := gr.Point2D{
+		Xf: 0.5,
+		Yf: 1.0,
+	}
+
+	p4 := newFixation(p1, p2, 2)
+	t.Log(p4.X())
+	t.Log(p4.Y())
+	p5 := newFixation(p4, p3, 3)
+
+	t.Log(p5.X())
+	t.Log(p5.Y())
+
+	if p5.X() != 0.5 || p5.Y() != (1.0/3.0) {
+		t.Fail()
+	}
 }
