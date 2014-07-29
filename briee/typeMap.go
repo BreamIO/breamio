@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	typeMap     map[string]reflect.Type
-	typeMapLock sync.Locker
+	typeMap     = make(map[string]reflect.Type)
+	typeMapLock = sync.Locker(new(sync.Mutex))
 )
 
 func RegisterGlobalEventType(event string, typ reflect.Type) {
