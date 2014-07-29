@@ -1,25 +1,100 @@
 <html>
 	<head>
 		<style>
-			.stats {
-				background: #000;
-				color: #FFF;
-			}
 		</style>
 		<script src="/api/eyestream.js"></script>
 		<script>
-			var id={{.Id}}
-			EyeStream.socket.onopen = function() {
-				EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
-					console.log(regionsMap)
-					for (var region in regionsMap) {
-						var regionInfo = regionsMap[region];
-						//render table or whatever
-					}
-				})
-			}
+			document.addEventListener("DOMContentLoaded", function init(event) {
+				"use strict";
+
+				console.log("DOM fully loaded and parsed")
+
+				EyeStream.socket.onopen = function drawParagraph() {
+					EyeStream.subscribe("regionStats:regions", {{.Id}}, function(regionsMap) {
+						console.log("Regions map", regionsMap)
+
+						var i, paragraph, region,
+						    looks = document.getElementById("looks"),
+						    fragment = document.createDocumentFragment(),
+						    regions = Object.keys(regionsMap).sort(function(left, right) {
+						    	return left.length - right.length
+						    })
+
+						for (i = 0; i < regions.length; ++i) {
+							region = regions[i]
+							paragraph = document.createElement("p")
+							paragraph.appendChild(document.createTextNode([
+								region[0].toUpperCase(),
+								region.slice(1).replace(/-/g, " "),
+								" had ~",
+								regionsMap[region].looks,
+								" looks/minute"
+							].join("")))
+							// Screen had ~8 looks/minute
+							// Top left rectangle had ~3 looks/minute
+							// Bottom right circle had ~2 looks/minute
+
+							fragment.appendChild(paragraph)
+						}
+						looks.innerHTML = ""
+						looks.appendChild(fragment)
+					})
+				}
+
+				function drawTable() {
+					EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
+						console.log("Regions map", regionsMap)
+
+						var mytable = document.getElementById("stats_table")
+						var mytbody = document.getElementById("stats_tbody")
+						var myNewtbody = document.createElement("tbody")
+						myNewtbody.id = "stats_tbody"
+						var docFragment = document.createDocumentFragment()
+						var trElem, tdElem, txtNode
+
+						// Add the description box
+
+						for (var region in regionsMap) {
+							var regionInfo = regionsMap[region]
+							//render table or whatever
+							console.log("Region info", regionInfo)
+
+							// Create a tr element
+							trElem = document.createElement("tr")
+							trElem.className = region
+
+							tdElem = document.createElement("td")
+							tdElem.className = "col0"
+							txtNode = document.createTextNode(region)
+							tdElem.appendChild(txtNode)
+							trElem.appendChild(tdElem)
+
+							tdElem = document.createElement("td")
+							tdElem.className = "col1"
+							txtNode = document.createTextNode(regionInfo.looks)
+							tdElem.appendChild(txtNode)
+							trElem.appendChild(tdElem)
+
+							tdElem = document.createElement("td")
+							tdElem.className = "col2"
+							txtNode = document.createTextNode(regionInfo.time)
+							tdElem.appendChild(txtNode)
+							trElem.appendChild(tdElem)
+
+							docFragment.appendChild(trElem)
+						}
+						myNewtbody.appendChild(docFragment)
+						mytable.replaceChild(myNewtbody, mytbody)
+					})
+				}
+			})
 		</script>
 	</head>
 	<body>
+		<!-- <table id="stats_table" border>
+			<tbody id="stats_tbody">
+			</tbody>
+		</table> -->
+		<section id="looks"></section>
 	</body>
 </html>

@@ -22,7 +22,7 @@ type Config struct {
 	Duration time.Duration
 	Hertz    uint
 	Res      *Resolution
-	Color    *color.RGBA
+	Color    *color.NRGBA
 }
 
 type Resolution struct {
@@ -63,8 +63,8 @@ const (
 type Generator struct {
 	coordinateHandler analysis.CoordinateHandler
 	width, height     int
-	publish           chan<- *image.RGBA
-	color             *color.RGBA
+	publish           chan<- *image.NRGBA
+	color             *color.NRGBA
 	closeChan         chan struct{}
 }
 
@@ -76,11 +76,11 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 		coordinateHandler: analysis.NewCoordBuffer(ch, c.Duration, uint(c.Hertz)),
 		width:             c.Res.Width,
 		height:            c.Res.Height,
-		publish:           ee.Publish("heatmap:image", new(image.RGBA)).(chan<- *image.RGBA),
+		publish:           ee.Publish("heatmap:image", new(image.NRGBA)).(chan<- *image.NRGBA),
 	}
 
 	if (c.Color == nil) {
-		g.color = &color.RGBA{
+		g.color = &color.NRGBA{
 			R: 255,
 			G: 0,
 			B: 0,
@@ -164,39 +164,23 @@ func (gen *Generator) generate() {
 		}
 	}
 
-	heatmap := image.NewRGBA(image.Rect(0, 0, width, height))
+	heatmap := image.NewNRGBA(image.Rect(0, 0, width, height))
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			v := heat[y][x] / maxHeat
 
 			alpha := uint8(float64(gen.color.A) * v)
-			heatmap.SetRGBA(x, y, color.RGBA{
+			heatmap.SetNRGBA(x, y, color.NRGBA{
 				R: gen.color.R,
 				G: gen.color.G,
 				B: gen.color.B,
-				A: uint8(alpha),
+				A: alpha,
 				// I don't know what this previous row did, because it overflowed uint8
 				//A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
 			})
 		}
 	}
-	/*
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			v := heat[y][x] / maxHeat
-
-			alpha := uint8(float64(gen.color.A) * v)
-			heatmap.SetRGBA(x, y, color.RGBA{
-				R: gen.color.R,
-				G: gen.color.G,
-				B: gen.color.B,
-				A: uint8(alpha),
-				// I don't know what this previous row did, because it overflowed uint8
-				//A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
-			})
-		}
-	}*/
 
 	gen.publish <- heatmap
 }
@@ -262,7 +246,7 @@ func (gen *Generator) updateSettings(conf *Config) {
 	//Duration time.Duration
 	//Hertz uint
 	//Res Resolution
-	//Color image.RGBA
+	//Color image.NRGBA
 
 	if conf == nil {
 		return
@@ -301,6 +285,6 @@ func (gen *Generator) setDuration(duration time.Duration) {
 	gen.coordinateHandler.SetInterval(duration)
 }
 
-func (gen *Generator) setColor(color *color.RGBA) {
+func (gen *Generator) setColor(color *color.NRGBA) {
 	gen.color = color
 }

@@ -6,7 +6,7 @@ import (
 	"image/png"
 	"os"
 	"log"
-	"math"
+	"math/rand"
 	"testing"
 	"time"
 	//"github.com/maxnordlund/breamio/analysis"
@@ -20,10 +20,11 @@ func TestHeatmap(t *testing.T) {
 	ee := briee.New()
 	defer ee.Close()
 
-	subs := ee.Subscribe("heatmap:image", new(image.RGBA)).(<-chan *image.RGBA)
+	subs := ee.Subscribe("heatmap:image", new(image.NRGBA)).(<-chan *image.NRGBA)
 
 	tracker := mock.New(func(q float64) (x, y float64) {
-		return 0.5 + 0.5*math.Cos(q), 0.5 + 0.5*math.Sin(q)
+		return rand.Float64(), rand.Float64()
+		//return 0.5 + 0.5*math.Cos(q), 0.5 + 0.5*math.Sin(q)
 	})
 	tracker.Connect()
 	tracker.Link(ee)
@@ -32,16 +33,16 @@ func TestHeatmap(t *testing.T) {
 	conf := &Config{
 		Emitter:  0,
 		Duration: time.Minute * 5,
-		Hertz:    uint(30),
+		Hertz:    uint(40),
 		Res: &Resolution{
-			Width:  1920,
-			Height: 1080,
+			Width:  600,
+			Height: 600,
 		},
-		Color: &color.RGBA{
+		Color: &color.NRGBA{
 			R: 255,
 			G: 0,
 			B: 0,
-			A: 255,
+			A: 200,
 		},
 	}
 
@@ -51,12 +52,12 @@ func TestHeatmap(t *testing.T) {
 	//time.Sleep(time.Millisecond * 60000)
 	_ = <-subs
 	heatmapImg := <-subs
-	saveHeatmap("newHeatmap", heatmapImg)
+	saveHeatmap("newHeatmap.png", heatmapImg)
 	log.Printf("Done")
 	//hmr.Run(tracker)
 }
 
-func saveHeatmap(outFilename string, m *image.RGBA) {
+func saveHeatmap(outFilename string, m *image.NRGBA) {
 	//outFilename := "blank.png"
 	outFile, err := os.Create(outFilename)
 	if err != nil {
