@@ -1,0 +1,15 @@
+{
+  "asi": true,
+  "bitwise": true,
+  "browser": true,
+  "devel": true,
+  "eqeqeq": true,
+  "noarg": true,
+  "noempty": true,
+  "nonbsp": true,
+  "nonew": true,
+  "quotmark": false,
+  "smarttabs": true,
+  "undef": true,
+  "unused": true
+}
