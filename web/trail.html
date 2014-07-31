@@ -19,12 +19,12 @@
 				}
 
 				Trail.tau = 2 * Math.PI
-				Trail.radius = 60;
-				Trail.alpha = 1;
-				Trail.r = 255;
-				Trail.g = 100;
-				Trail.b = 0;
-				Trail.thickness = 2.0; // Thickness of the drawn line
+				Trail.radius = 60
+				Trail.alpha = 1
+				Trail.r = 255
+				Trail.g = 100
+				Trail.b = 0
+				Trail.thickness = 2.0 // Thickness of the drawn line
 				Trail.maxLength = 16 // Max number of points in the trail
 				Trail.fadeRadius = 400
 
@@ -36,14 +36,14 @@
 				}
 
 				Trail.prototype.setConfig = function setConfig(config) {
-					this.radius = config.Radius ? config.Radius : this.radius;
-					this.alpha = config.Alpha ? config.Alpha : this.alpha;
+					this.radius = config.Radius || this.radius
+					this.alpha = config.Alpha || this.alpha
 					if (config.Color && config.Color.length > 0) {
-						this.r = (config.Color[0]>>16) & 0xFF;
-						this.g = (config.Color[0]>>8) & 0xFF;
-						this.b = (config.Color[0]) & 0xFF;
+						this.r = (config.Color[0]>>16) & 0xFF
+						this.g = (config.Color[0]>>8) & 0xFF
+						this.b = (config.Color[0]) & 0xFF
 					}
-					this.thickness = config.Thickness ? config.Thickness : this.thickness; // Thickness of the drawn line
+					this.thickness = config.Thickness || this.thickness; // Thickness of the drawn line
 				}
 
 				Trail.prototype.render = function render(timestamp) {
