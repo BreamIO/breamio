@@ -15,6 +15,7 @@
 					this.context = canvas.getContext("2d")
 					this.context.lineWidth = Trail.thickness
 					EyeStream.subscribe("tracker:etdata", {{.Id}}, this.receive.bind(this))
+					EyeStream.subscribe("drawer:settings", {{.Id}}, this.setConfig.bind(Trail))
 				}
 
 				Trail.tau = 2 * Math.PI
@@ -32,6 +33,17 @@
 						x: data.Filtered.Xf * 0.97 * this.width,
 						y: data.Filtered.Yf * 0.97 * this.height
 					})
+				}
+
+				Trail.prototype.setConfig = function setConfig(config) {
+					this.radius = config.Radius || this.radius
+					this.alpha = config.Alpha || this.alpha
+					if (config.Color && config.Color.length > 0) {
+						this.r = (config.Color[0]>>16) & 0xFF
+						this.g = (config.Color[0]>>8) & 0xFF
+						this.b = (config.Color[0]) & 0xFF
+					}
+					this.thickness = config.Thickness || this.thickness; // Thickness of the drawn line
 				}
 
 				Trail.prototype.render = function render(timestamp) {
@@ -69,6 +81,7 @@
 
 					// Gaze-Circle
 					context.globalAlpha = 1.0
+					context.lineWidth = Trail.thickness
 					context.strokeStyle = "rgb(" + Trail.r + "," + Trail.g + "," + Trail.b  + ")"
 					context.beginPath()
 					context.arc(last.x, last.y, Trail.radius, 0, Trail.tau)
@@ -121,7 +134,7 @@
 					exports.trail.render()
 					// exports.trail.stopAfter()
 				}
-
+				exports.Trail = Trail
 				document.addEventListener("DOMContentLoaded", init)
 			})(window)
 		</script>
