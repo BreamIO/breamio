@@ -39,9 +39,9 @@
 					this.radius = config.Radius ? config.Radius : this.radius;
 					this.alpha = config.Alpha ? config.Alpha : this.alpha;
 					if (config.Color && config.Color.length > 0) {
-						this.r = config.Color[0] ? (config.Color[0]>>16) & 0xFF : this.r;
-						this.g = config.Color[0] ? (config.Color[0]>>8) & 0xFF : this.g;
-						this.b = config.Color[0] ? (config.Color[0]) & 0xFF : this.b;
+						this.r = (config.Color[0]>>16) & 0xFF;
+						this.g = (config.Color[0]>>8) & 0xFF;
+						this.b = (config.Color[0]) & 0xFF;
 					}
 					this.thickness = config.Thickness ? config.Thickness : this.thickness; // Thickness of the drawn line
 				}
