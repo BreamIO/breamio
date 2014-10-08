@@ -1,4 +1,4 @@
-package time
+package globalTime
 
 import (
 	"net/http"
