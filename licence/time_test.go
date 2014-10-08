@@ -1,4 +1,4 @@
-package globalTime
+package licence
 
 import (
 	"testing"
