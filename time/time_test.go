@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func testGetGoogleTime(t *testing.T) {
+func TestGetGoogleTime(t *testing.T) {
 	time, err := time.GetGoogleTime()
 	if err != nil {
 		t.Fatal(err, " Crashed")
