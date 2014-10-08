@@ -26,6 +26,7 @@ const (
 )
 
 func main() {
+	pflag.Parse()
 	if versionFlag {
 
 		fmt.Printf("Product: %s\nVersion number: %s\nCompany: %s\n", Product, Version, Company)
