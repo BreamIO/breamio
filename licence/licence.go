@@ -53,6 +53,9 @@ func RepeatedlyCheckEvalTime(evalLayout, evalEndDate string) {
 	}
 }
 
+//Using googles servertime checks if  evalEndDate have passed.
+//Returns error iff it fails to verify that the date has not passed.
+//Layout is the layout of the date that is parsable by time.Parse(...)
 func checkEvalPeriod(evalLayout, evalEndDate string) error {
 	// Evaluation period check
 	googleTime, err := getGoogleTime()
