@@ -2,21 +2,40 @@ package main
 
 import (
 	"fmt"
+	bl "github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/briee"
+	pflag "github.com/ogier/pflag"
 	"os"
 	"os/signal"
 	"runtime"
+)
 
-	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/briee"
+var (
+	// These variables will be injected during build process
+	fingerprint string
+	gitSHA      string
+	// Flag define here
+	versionFlag bool
 )
 
 const (
 	Company = "Bream IO"
 	Product = "EyeStream"
-	Version = "v3.0"
+	Version = "v0.9"
 )
 
 func main() {
+	if versionFlag {
+
+		fmt.Fprintf("Product: %s\nVersion number: %s\nCompany: %s\n", Product, Version, Company)
+		if Fingerprint != "" {
+			fmt.Fprintf("Fingerprint: %s\n", fingerprint)
+		}
+		if gitSHA != "" {
+			fmt.Fprintf("gitSHA: %s\n", gitSHA)
+		}
+		return //if version flag is true then we don't want to run the program
+	}
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt)
 
@@ -34,4 +53,5 @@ func main() {
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	pflag.BoolVarP(&versionFlag, "version", "v", false, "Enable this flag to print version information")
 }
