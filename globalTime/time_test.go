@@ -6,16 +6,16 @@ import (
 )
 
 func TestGetGoogleTime(t *testing.T) {
-	time, err := time.GetGoogleTime()
+	Gtime, err := GetGoogleTime()
 	if err != nil {
 		t.Fatal(err, " Crashed")
 	}
 	local := time.Now()
 	var dur time.Duration
-	if local.After(time) {
-		dur = local.Sub(time)
+	if local.After(Gtime) {
+		dur = local.Sub(Gtime)
 	} else {
-		dur = time.Sub(time)
+		dur = Gtime.Sub(local)
 	}
 	if dur.Minutes() > 2.0 { // checking if the clocks are more than 2 minutes apart
 		t.Fatal("time is not synched")
