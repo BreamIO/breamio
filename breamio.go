@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/briee"
-	pflag "github.com/ogier/pflag"
 	"os"
 	"os/signal"
 	"runtime"
+
+	bl "github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/briee"
+	pflag "github.com/ogier/pflag"
 )
 
 var (
@@ -27,12 +28,12 @@ const (
 func main() {
 	if versionFlag {
 
-		fmt.Fprintf("Product: %s\nVersion number: %s\nCompany: %s\n", Product, Version, Company)
-		if Fingerprint != "" {
-			fmt.Fprintf("Fingerprint: %s\n", fingerprint)
+		fmt.Printf("Product: %s\nVersion number: %s\nCompany: %s\n", Product, Version, Company)
+		if fingerprint != "" {
+			fmt.Printf("Fingerprint: %s\n", fingerprint)
 		}
 		if gitSHA != "" {
-			fmt.Fprintf("gitSHA: %s\n", gitSHA)
+			fmt.Printf("gitSHA: %s\n", gitSHA)
 		}
 		return //if version flag is true then we don't want to run the program
 	}
