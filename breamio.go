@@ -38,7 +38,7 @@ func main() {
 
 	// We want to be able to print version information before quitting because of ended eval period
 	// Start a routine that will check that we do not pass
-	// evauation date during runtime.
+	// evaluation date during runtime.
 	go func() {
 		licence.RepeatedlyCheckEvalTime(evalLayout, evalEndDate)
 	}()
