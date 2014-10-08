@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetGoogleTime(t *testing.T) {
-	Gtime, err := GetGoogleTime()
+	Gtime, err := getGoogleTime()
 	if err != nil {
 		t.Fatal(err, " Crashed")
 	}
@@ -19,5 +19,16 @@ func TestGetGoogleTime(t *testing.T) {
 	}
 	if dur.Minutes() > 2.0 { // checking if the clocks are more than 2 minutes apart
 		t.Fatal("time is not synched")
+	}
+}
+
+func TestCheckEvalPeriod(t *testing.T) {
+	err := checkEvalPeriod("2 Jan 2006", "2 Jan 2006")
+	if err == nil {
+		t.Fatal("checkEvalPeriod does not return error on old dates")
+	}
+	err = checkEvalPeriod("2 Jan 2006", "2 Jan 2100") //This will be a bug in a distant future
+	if err != nil {
+		t.Fatal("checkEvalPeriod does return error on future dates")
 	}
 }
