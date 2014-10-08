@@ -35,7 +35,8 @@ func RepeatedlyCheckEvalTime(evalLayout, evalEndDate string) {
 	}
 	for _ = range time.Tick(24 * time.Hour) {
 		err := checkEvalPeriod(evalLayout, evalEndDate)
-		if err != nil { //Try 5 more times or exit the program
+		if err != nil {
+			//Try 3 more times or exit the program
 			it := 0
 			for _ = range time.Tick(4 * time.Minute) {
 				it++
@@ -43,7 +44,7 @@ func RepeatedlyCheckEvalTime(evalLayout, evalEndDate string) {
 				if err == nil {
 					break
 				}
-				if it > 4 {
+				if it >= 3 {
 					log.Println("Failed to check evaluation date, please verify your internet connection")
 					log.Println("Now exiting program")
 					os.Exit(0)
