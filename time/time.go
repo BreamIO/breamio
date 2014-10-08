@@ -15,5 +15,10 @@ func GetGoogleTime() (time.Time, error) {
 		return time.Now(), err
 	}
 	date := resp.Header["Date"]
-	return time.Now(), nil
+	layout := "[Mon, 2 Jan 2006 15:04:05 MST]"
+	t, err := time.Parse(layout, date)
+	if err != nil {
+		return time.Now(), err
+	}
+	return t, nil
 }
