@@ -31,36 +31,39 @@ func init() {
 
 func start(logic beenleigh.Logic, closer <-chan struct{}) {
 	shutdown := false
+
+	C.UnregisterHotKey(nil, 1) //Clear an existing registration
 	altBId := C.ES_RegisterHotKey(MOD_ALT|MOD_NOREPEAT, 0x42)
+	defer C.UnregisterHotKey(nil, altBId)
+
 	if altBId == 0 {
 		logger.Println("Unable to register hotkey ALT-B.")
 	}
+
+	logger.Println("Listening for ALT-B to toggle drawing.")
 
 	go func() {
 		<-closer
 		shutdown = true
 		logger.Println("Shutting down.")
-		C.UnregisterHotKey(nil, altBId)
 	}()
 
 	var msg C.MSG
 	drawing := true
-	emitter := logic.CreateEmitter(1)
-	resume := emitter.Publish("drawer:resume", struct{}{}).(chan<- struct{})
-	pause := emitter.Publish("drawer:pause", struct{}{}).(chan<- struct{})
-
-	defer close(resume)
-	defer close(pause)
-
 	for C.ES_GetMessage(&msg) != 0 || !shutdown {
 		if msg.message == WM_HOTKEY {
-			logger.Printf("Hotkey %s detected!", msg.lParam)
 			if drawing {
-				pause <- struct{}{}
+				logic.CreateEmitter(1).Dispatch("drawer:pause", struct{}{})
+				logger.Println("Pausing drawers.")
 			} else {
-				resume <- struct{}{}
+				logic.CreateEmitter(1).Dispatch("drawer:resume", struct{}{})
+				logger.Println("Resuming drawers.")
 			}
+			//Creating an emitter causes the TODO Continue comment
+
 			drawing = !drawing
 		}
 	}
+
+	logger.Println("This should not happen yet...")
 }
