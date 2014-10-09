@@ -1,5 +1,5 @@
 # Bream IO
-The [golang][] implementation of Eriver, aka our event software.
+The [golang][] implementation of Eye Stream, aka our event software.
 
 ## Calibration protocol
 
