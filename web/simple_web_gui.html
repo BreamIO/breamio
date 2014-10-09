@@ -1,0 +1,69 @@
+<html>
+	<head>
+	<link rel="stylesheet" media="screen" type="text/css" href="colorpicker.min.css" />
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="colorpicker.min.js"></script>
+	<script src="/api/eyestream.js"></script>
+	<script>
+	function sendData(){
+		var thickness = parseInt(document.getElementById("thickness").value);
+		var alpha = parseFloat(document.getElementById("alpha").value);
+		var radius = parseInt(document.getElementById("radius").value);
+		var color = parseInt("0x" + (document.getElementById("color").value));
+
+		// If thickness is greater than radius * 2, the behaviour is undefined (looks wierd)
+		if (thickness > radius * 2) {
+			thickness = radius * 2
+		}
+
+		var config =
+		{
+			"Thickness": thickness,
+			"Alpha" : alpha,
+			"Radius" : radius,
+			"Color": [color]
+		};
+		EyeStream.command("drawer:settings", 1, config);
+	}
+	$(function(){
+		$('#color').ColorPicker({
+			onSubmit: function(hsb, hex, rgb, el, parent) {
+				$(el).val(hex);
+				$(el).ColorPickerHide();
+			},
+			onBeforeShow: function () {
+				$(this).ColorPickerSetColor(this.value);
+			},
+			onChange: function (hsb, hex, rgb) {
+				$('#color').val(hex);
+			}
+		})
+		.on('keyup', function(){
+			$(this).ColorPickerSetColor(this.value);
+		});
+	});
+
+	</script>
+
+	</head>
+	<body>
+		<div>
+			<header>Thickness:</header>
+			<input id="thickness" value="4" />
+		<div/>
+		<div>
+			<header>Alpha:</header>
+			<input id="alpha" value="3"/>
+		<div/>
+		<div>
+			<header>Radius:</header>
+			<input id="radius" value = "10" />
+		<div/>
+		<div>
+			<header>Color:</header>
+			<input type="text" id="color" value="EFEFEF">
+		<div/>
+		<button onclick="sendData()">Update</button>
+	</body>
+</html>
+

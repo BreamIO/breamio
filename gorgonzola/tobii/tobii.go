@@ -198,29 +198,33 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 	for {
 		select {
 		case p := <-inCh:
-			log.Println("GazeTracker#calibrateStartHandler", "Calibration Start event recieved.")
+			log.Println("GazeTracker#calibrateAddHandler", "Calibration Add event recieved.")
 			g.calibrationPoints++
 			//println("calibration points:", g.calibrationPoints)
-			if g.calibrationPoints >= 5 {
-				computed := make(chan struct{})
-				g.ComputeAndSetCalibration(handleError(errorCh, func() {
-					close(computed)
-				}))
+			log.Printf("Adding point {%f, %f} to calibration.", p.X(), p.Y())
+			g.AddPointToCalibration(gaze.NewPoint2D(p.X(), p.Y()),
+				handleError(errorCh, func() {
+					if g.calibrationPoints >= 5 {
+						log.Println("All points accounted for. Computing calibration...")
+						computed := make(chan struct{})
+						g.ComputeAndSetCalibration(handleError(errorCh, func() {
+							close(computed)
+						}))
 
-				<-computed
+						<-computed
 
-				g.StopCalibration(handleError(errorCh, func() {
-					endCh <- struct{}{}
-					vstartCh <- struct{}{}
-				}))
+						log.Println("New calibration computed and set. Ending calibration mode.")
+						g.StopCalibration(handleError(errorCh, func() {
+							endCh <- struct{}{}
+							vstartCh <- struct{}{}
+							log.Println("Calibration completed.")
+						}))
 
-			} else {
-				g.AddPointToCalibration(gaze.NewPoint2D(p.X(), p.Y()),
-					handleError(errorCh, func() {
+					} else {
 						nextCh <- struct{}{}
-					}))
+					}
+				}))
 
-			}
 		case <-g.closer:
 			return
 		}
