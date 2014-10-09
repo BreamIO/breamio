@@ -174,6 +174,12 @@ func (web *Webber) addServings() {
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
 	web.HandleStatic("/xsplit_interaction.html", path.Join(Root, "xsplit_interaction.html"))
 
+	web.HandleStatic("/ColorPicker/jscolor.js", path.Join(Root, "ColorPicker/jscolor.js"))
+	web.HandleStatic("/ColorPicker/hv.png", path.Join(Root, "ColorPicker/hv.png"))
+	web.HandleStatic("/ColorPicker/hs.png", path.Join(Root, "ColorPicker/hs.png"))
+	web.HandleStatic("/ColorPicker/cross.gif", path.Join(Root, "ColorPicker/cross.gif"))
+	web.HandleStatic("/ColorPicker/arrow.gif", path.Join(Root, "ColorPicker/arrow.gif"))
+
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {
