@@ -26,6 +26,7 @@
 
 				Trail.prototype.pause = function pause(data) {
 					this.drawing = false
+					this.buffer = []
 				}
 				Trail.prototype.resume = function resume(data) {
 					this.drawing = true
