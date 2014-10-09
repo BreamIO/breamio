@@ -4,8 +4,12 @@
 	<title>Eye Stream</title>
 	<link rel="stylesheet" media="screen" type="text/css" href="colorpicker.min.css" />
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="colorpicker.min.js"></script>
-	<script src="/api/eyestream.js"></script>
+	<script src="colorpicker.min.js"></script>
+	<!-- Bootstrap -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script><script src="/api/eyestream.js"></script>
+
 	<script>
 	function sendData(){
 		var thickness = parseInt(document.getElementById("thickness").value);
@@ -64,25 +68,44 @@
 
 </head>
 	<body>
-		<h1>Eye Stream</h1>
-		<div>
-			<header>Radius:</header>
-			<input id="radius" size="6" value = "30" />
-		<div/>
-		<div>
-			<header>Thickness:</header>
-			<input id="thickness" size="6" value="3" />
-		<div/>
-		<div>
-			<header>Trail Length:</header>
-			<input id="maxLength" size="6" value = "10" />
-		<div/>
-		<div>
-			<header>Color:</header>
-			<input type="text" id="color" maxlength="6" size="6" value="0015FF">
-		<div/>
-		<br>
-		<button onclick="sendData()">Update</button>
+		<h1 style="margin-left: 5em;">Eye Stream</h1>
+
+		<form class="form-horizontal">
+			<div class="form-group">
+				<label for="radius" class="col-sm-2 control-label">Radius</label>
+				<div class="col-sm-2">
+					<input type="text" class="form-control" id="radius" value="30">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="thickness" class="col-sm-2 control-label">Thickness</label>
+				<div class="col-sm-2">
+					<input type="text" class="form-control" id="thickness" value="3">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="maxLength" class="col-sm-2 control-label">Trail length</label>
+				<div class="col-sm-2">
+					<input type="text" class="form-control" id="maxLength" value="10">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="color" class="col-sm-2 control-label">Color</label>
+				<div class="col-sm-2">
+					<input type="text" class="form-control" id="color" value="0015FF">
+				</div>
+			</div>
+		</form>
+		<div class="col-sm-offset-2 col-sm-10">
+			<button onclick="sendData()" class="btn btn-primary">Update</button>
+		</div>
+		<div style="margin-top: 8em;">
+			<blockquote><div style="font-style: normal; text-align: left; margin-left: 5em;">Copyright  © 2014. <a
+			href="http://bream.io">Bream IO AB</a>. All rights reserved.</div></blockquote>
+		</div>
 	</body>
 </html>
 
