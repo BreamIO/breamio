@@ -9,6 +9,5 @@ int ES_RegisterHotKey(unsigned int modifiers, unsigned int key) {
 }
 
 int ES_GetMessage(MSG * msg) {
-	return GetMessage(msg, NULL, 0, 0);
+	return GetMessage(msg, NULL, 0x0312, 0x0312);
 }
-
