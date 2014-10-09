@@ -7,6 +7,7 @@
 				"use strict";
 				var Trail = function Trail(canvas) {
 					var rect = canvas.getBoundingClientRect()
+					this.drawing = true
 					this.width   = canvas.width  = rect.width
 					this.height  = canvas.height = rect.height
 					this.buffer  = []
@@ -19,6 +20,15 @@
 					this.context.lineWidth = Trail.thickness
 					EyeStream.subscribe("tracker:etdata", {{.Id}}, this.receive.bind(this))
 					EyeStream.subscribe("drawer:settings", {{.Id}}, this.setConfig.bind(Trail))
+					EyeStream.subscribe("drawer:pause", {{.Id}}, this.pause.bind(this))
+					EyeStream.subscribe("drawer:resume", {{.Id}}, this.resume.bind(this))
+				}
+
+				Trail.prototype.pause = function pause(data) {
+					this.drawing = false
+				}
+				Trail.prototype.resume = function resume(data) {
+					this.drawing = true
 				}
 
 				Trail.tau = 2 * Math.PI
@@ -45,10 +55,12 @@
 					console.log("JUMP")
 				}
 
-				this.buffer.push({
-					x: this.avgp.x * 0.97 * this.width,
-					y: this.avgp.y * 0.97 * this.height
-				})
+				if (this.drawing == true) {
+					this.buffer.push({
+						x: this.avgp.x * 0.97 * this.width,
+						y: this.avgp.y * 0.97 * this.height
+					})
+				}
 			}
 
 				Trail.prototype.setConfig = function setConfig(config) {
