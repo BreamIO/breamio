@@ -1,7 +1,7 @@
 /*
 Business Logic module
 
-Beenleigh handles all business logic of BreamIO Eriver
+Beenleigh handles all business logic of Bream IO Eye Stream
 It exposes a interface for interacting with this logic
 but not the actual implementation.
 */
