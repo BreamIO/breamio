@@ -10,6 +10,9 @@
 					this.width   = canvas.width  = rect.width
 					this.height  = canvas.height = rect.height
 					this.buffer  = []
+					this.noavgp  = 1 // number of points that avarage is calculated from
+					this.avgp    = {x: 1, y: 1}
+					this.avgr    = .3
 					this.last    = null
 					this.counter = 0
 					this.context = canvas.getContext("2d")
@@ -29,11 +32,24 @@
 				Trail.fadeRadius = 400
 
 				Trail.prototype.receive = function receive(data) {
-					this.buffer.push({
-						x: data.Filtered.Xf * 0.97 * this.width,
-						y: data.Filtered.Yf * 0.97 * this.height
-					})
+
+				if (this.noavgp <= 1 || Math.sqrt(Math.pow(this.avgp.x - data.Filtered.Xf, 2) + Math.pow(this.avgp.y - data.Filtered.Yf, 2)) < this.avgr) {
+					this.avgp.x = this.avgp.x * (this.noavgp / (this.noavgp + 1.0)) + data.Filtered.Xf * (1.0 / (this.noavgp + 1.0))
+					this.avgp.y = this.avgp.y * (this.noavgp / (this.noavgp + 1.0)) + data.Filtered.Yf * (1.0 / (this.noavgp + 1.0))
+					this.noavgp += 1
+					console.log("AVG")
+				} else {
+					this.avgp.x = data.Filtered.Xf
+					this.avgp.y = data.Filtered.Yf
+					this.noavgp = 1
+					console.log("JUMP")
 				}
+
+				this.buffer.push({
+					x: this.avgp.x * 0.97 * this.width,
+					y: this.avgp.y * 0.97 * this.height
+				})
+			}
 
 				Trail.prototype.setConfig = function setConfig(config) {
 					this.radius = config.Radius || this.radius
@@ -147,72 +163,6 @@
 				padding: 0;
 			}
 		</style>
-		<!-- <script>
-			document.addEventListener("DOMContentLoaded", function(event) {
-				"use strict"; // If you like all your code to be strict
-				window.trail = document.getElementById("trail")
-				window.trail.width  = window.innerWidth*0.97;
-				window.trail.height = window.innerHeight*0.97;
-				window.ctx = trail.getContext("2d")
-				listen("ws://localhost:8080/api/json")
-				setInterval(fade, 10)
-			});
-
-			var socket;
-			function listen(addr) {
-				'use strict';
-				socket = new WebSocket(addr);
-				socket.onopen = function() {
-					'use strict';
-					console.log("Socket opened.");
-					socket.send(JSON.stringify({
-						Event: "tracker:etdata",
-						Subscribe: true,
-						ID: {{.Id}}
-						}));
-				};
-
-				socket.onmessage = function (message) {
-					'use strict';
-					var event = JSON.parse(message.data);
-					// console.log(event);
-					if (event.Error !== undefined && event.Error !== null) {
-						console.log(event.Error);
-						return;
-					}
-					if (event.Event === "tracker:etdata") {
-						/*console.log({
-								raw: event.Data,
-								btoa: btoa(event.Data),
-								atob: atob(event.Data)
-							})*/
-						var etdata = JSON.parse(atob(event.Data));
-						render(etdata)
-					}
-				};
-
-				socket.onclose = function() {
-					'use strict';
-					console.log("Socket closed.")
-				};
-			}
-
-			function render(etdata) {
-				'use strict';
-				ctx.fillStyle = "#FF0000";
-				ctx.beginPath();
-				ctx.arc(trail.width*etdata.Filtered.Xf,
-					trail.height*etdata.Filtered.Yf,
-					10,0,2*Math.PI);
-				ctx.fill();
-			}
-
-			function fade() {
-				'use strict';
-				ctx.fillStyle = "rgba(255,255,255,0.1)"
-				ctx.fillRect(0,0,trail.width,trail.height)
-			}
-		</script> -->
 	</head>
 	<body>
 		<canvas id="trail"></canvas>
