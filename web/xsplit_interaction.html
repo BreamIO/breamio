@@ -2,20 +2,20 @@
 <head>
 	<script src="/api/eyestream.js"></script>
 	<script>
-	EyeStream.connect("ws://localhost:8080/api/json")
+	//EyeStream.connect("ws://localhost:8080/api/json")
 	function sendData(){
-		var thickness = parseInt(document.getElementById("thickness").value);
-		var alpha = parseFloat(document.getElementById("alpha").value);
-		var radius = parseInt(document.getElementById("radius").value);
-		var color = parseInt(document.getElementById("color").value);
+		var thickness = (document.getElementById("thickness").value);
+		var alpha = (document.getElementById("alpha").value);
+		var radius = (document.getElementById("radius").value);
+		var color = "0x" + (document.getElementById("color").value);
 		var config =
 		{
-			"Thicknes": ParseInt(thickness), 
-			"Alpha" : ParseFloat(alpha),
-			"Radius" : radius,
-			"Color": [color]
+			"Thickness": parseInt(thickness),
+			"Alpha" : parseFloat(alpha),
+			"Radius" : parseInt(radius),
+			"Color": [parseInt(color)]
 		};
-		Eyestream.send("drawer:settings", config);
+		EyeStream.command("drawer:settings", 1, config);
 	}
 	</script>
 </head>

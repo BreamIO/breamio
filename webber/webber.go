@@ -172,6 +172,7 @@ func (web *Webber) addServings() {
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
 	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
+	web.HandleStatic("/xsplit_interaction.html", path.Join(Root, "xsplit_interaction.html"))
 
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
