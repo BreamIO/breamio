@@ -26,6 +26,9 @@ func (GazeDriver) Create() (Tracker, error) {
 }
 
 func (g GazeDriver) CreateFromId(id string) (Tracker, error) {
+	if id == "any" {
+		return g.Create()
+	}
 	url := "tet-usb://" + id
 	tracker, err := gaze.EyeTrackerFromURL(url)
 	return &GazeTracker{tracker, make(chan struct{}), nil, false, 0, 0}, err
