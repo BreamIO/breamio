@@ -172,7 +172,7 @@ func (web *Webber) addServings() {
 	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
 	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
-	web.HandleStatic("/xsplit_interaction.html", path.Join(Root, "xsplit_interaction.html"))
+	web.HandleStatic("/gui", path.Join(Root, "simple_web_gui.html"))
 
 	web.HandleStatic("/ColorPicker/jscolor.js", path.Join(Root, "ColorPicker/jscolor.js"))
 	web.HandleStatic("/ColorPicker/hv.png", path.Join(Root, "ColorPicker/hv.png"))
