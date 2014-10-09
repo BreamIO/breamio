@@ -1,0 +1,8 @@
+@font-face { font-family: Lanenar; src: url('LANENAR_.ttf'); }
+h1, label, blockquote, button {
+	font-family: Lanenar;
+}
+
+label {
+	font-size: 140%;
+}

@@ -185,6 +185,8 @@ func (web *Webber) addServings() {
 	web.HandleStatic("/images/grabber.png", path.Join(Root, "/images/grabber.png"))
 	web.HandleStatic("/images/submit.png", path.Join(Root, "/images/submit.png"))
 
+	web.HandleStatic("/breamio.css", path.Join(Root, "breamio.css"))
+	web.HandleStatic("/LANENAR_.ttf", path.Join(Root, "LANENAR_.ttf"))
 
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
