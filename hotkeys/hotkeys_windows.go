@@ -44,9 +44,23 @@ func start(logic beenleigh.Logic, closer <-chan struct{}) {
 	}()
 
 	var msg C.MSG
-	for C.ES_GetMessage(&msg) != 0 {
+	drawing := true
+	emitter := logic.CreateEmitter(1)
+	resume := emitter.Publish("drawer:resume", struct{}{}).(chan<- struct{})
+	pause := emitter.Publish("drawer:pause", struct{}{}).(chan<- struct{})
+
+	defer close(resume)
+	defer close(pause)
+
+	for C.ES_GetMessage(&msg) != 0 || !shutdown {
 		if msg.message == WM_HOTKEY {
-			logger.Println("Hotkey detected!")
+			logger.Printf("Hotkey %s detected!", msg.lParam)
+			if drawing {
+				pause <- struct{}{}
+			} else {
+				resume <- struct{}{}
+			}
+			drawing = !drawing
 		}
 	}
 }
