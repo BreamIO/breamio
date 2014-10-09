@@ -174,11 +174,17 @@ func (web *Webber) addServings() {
 	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
 	web.HandleStatic("/gui", path.Join(Root, "simple_web_gui.html"))
 
-	web.HandleStatic("/ColorPicker/jscolor.js", path.Join(Root, "ColorPicker/jscolor.js"))
-	web.HandleStatic("/ColorPicker/hv.png", path.Join(Root, "ColorPicker/hv.png"))
-	web.HandleStatic("/ColorPicker/hs.png", path.Join(Root, "ColorPicker/hs.png"))
-	web.HandleStatic("/ColorPicker/cross.gif", path.Join(Root, "ColorPicker/cross.gif"))
-	web.HandleStatic("/ColorPicker/arrow.gif", path.Join(Root, "ColorPicker/arrow.gif"))
+	web.HandleStatic("/colorpicker.min.js", path.Join(Root, "colorpicker.min.js"))
+	web.HandleStatic("/colorpicker.min.css", path.Join(Root, "colorpicker.min.css"))
+
+	web.HandleStatic("/images/select.gif", path.Join(Root,"/images/select.gif" ))
+	web.HandleStatic("/images/overlay.png", path.Join(Root,"/images/overlay.png" ))
+	web.HandleStatic("/images/select_hue.png", path.Join(Root, "/images/select_hue.png"))
+	web.HandleStatic("/images/indic.gif", path.Join(Root, "/images/indic.gif"))
+	web.HandleStatic("/images/gradient_input.png", path.Join(Root, "/images/gradient_input.png"))
+	web.HandleStatic("/images/grabber.png", path.Join(Root, "/images/grabber.png"))
+	web.HandleStatic("/images/submit.png", path.Join(Root, "/images/submit.png"))
+
 
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))

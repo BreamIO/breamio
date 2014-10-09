@@ -1,8 +1,10 @@
 <html>
-<head>
+	<head>
+	<link rel="stylesheet" media="screen" type="text/css" href="colorpicker.min.css" />
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="colorpicker.min.js"></script>
 	<script src="/api/eyestream.js"></script>
 	<script>
-	//EyeStream.connect("ws://localhost:8080/api/json")
 	function sendData(){
 		var thickness = parseInt(document.getElementById("thickness").value);
 		var alpha = parseFloat(document.getElementById("alpha").value);
@@ -23,29 +25,45 @@
 		};
 		EyeStream.command("drawer:settings", 1, config);
 	}
+	$(function(){
+		$('#color').ColorPicker({
+			onSubmit: function(hsb, hex, rgb, el, parent) {
+				$(el).val(hex);
+				$(el).ColorPickerHide();
+			},
+			onBeforeShow: function () {
+				$(this).ColorPickerSetColor(this.value);
+			},
+			onChange: function (hsb, hex, rgb) {
+				$('#color').val(hex);
+			}
+		})
+		.on('keyup', function(){
+			$(this).ColorPickerSetColor(this.value);
+		});
+	});
+
 	</script>
 
-
-</head>
-<body>
-<div>
-<header>Thickness:</header>
-<input id="thickness" value="4" />
-<div/>
-<div>
-<header>Alpha:</header>
-<input id="alpha" value="3"/>
-<div/>
-<div>
-<header>Radius:</header>
-<input id="radius" value = "10" />
-<div/>
-<div>
-<header>Color:</header>
-<script type="text/javascript" src="ColorPicker/jscolor.js"></script>
-<input id = "color" class="color" value="66ff00">
-<div/>
-<button onclick="sendData()">Update</button>
-</body>
+	</head>
+	<body>
+		<div>
+			<header>Thickness:</header>
+			<input id="thickness" value="4" />
+		<div/>
+		<div>
+			<header>Alpha:</header>
+			<input id="alpha" value="3"/>
+		<div/>
+		<div>
+			<header>Radius:</header>
+			<input id="radius" value = "10" />
+		<div/>
+		<div>
+			<header>Color:</header>
+			<input type="text" id="color" value="EFEFEF">
+		<div/>
+		<button onclick="sendData()">Update</button>
+	</body>
 </html>
 
