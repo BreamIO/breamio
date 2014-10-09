@@ -19,4 +19,5 @@ type DrawerSettings struct {
 	Thickness uint
 	Alpha     float64
 	Color     []uint
+	MaxLength uint
 }
