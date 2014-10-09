@@ -10,6 +10,9 @@
 					this.width   = canvas.width  = rect.width
 					this.height  = canvas.height = rect.height
 					this.buffer  = []
+					this.noavgp  = 1 // number of points that avarage is calculated from
+					this.avgp    = {x: 1, y: 1}
+					this.avgr    = .3
 					this.last    = null
 					this.counter = 0
 					this.context = canvas.getContext("2d")
@@ -29,11 +32,24 @@
 				Trail.fadeRadius = 400
 
 				Trail.prototype.receive = function receive(data) {
-					this.buffer.push({
-						x: data.Filtered.Xf * 0.97 * this.width,
-						y: data.Filtered.Yf * 0.97 * this.height
-					})
+
+				if (this.noavgp <= 1 || Math.sqrt(Math.pow(this.avgp.x - data.Filtered.Xf, 2) + Math.pow(this.avgp.y - data.Filtered.Yf, 2)) < this.avgr) {
+					this.avgp.x = this.avgp.x * (this.noavgp / (this.noavgp + 1.0)) + data.Filtered.Xf * (1.0 / (this.noavgp + 1.0))
+					this.avgp.y = this.avgp.y * (this.noavgp / (this.noavgp + 1.0)) + data.Filtered.Yf * (1.0 / (this.noavgp + 1.0))
+					this.noavgp += 1
+					console.log("AVG")
+				} else {
+					this.avgp.x = data.Filtered.Xf
+					this.avgp.y = data.Filtered.Yf
+					this.noavgp = 1
+					console.log("JUMP")
 				}
+
+				this.buffer.push({
+					x: this.avgp.x * 0.97 * this.width,
+					y: this.avgp.y * 0.97 * this.height
+				})
+			}
 
 				Trail.prototype.setConfig = function setConfig(config) {
 					this.radius = config.Radius || this.radius
