@@ -44,6 +44,7 @@ func start(logic beenleigh.Logic, closer <-chan struct{}) {
 	}()
 
 	var msg C.MSG
+
 	drawing := true
 	emitter := logic.CreateEmitter(1)
 	resume := emitter.Publish("drawer:resume", struct{}{}).(chan<- struct{})
