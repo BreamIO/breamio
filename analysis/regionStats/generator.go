@@ -59,7 +59,10 @@ func (r *RegionRun) Run(logic beenleigh.Logic) {
 	defer ee.Unsubscribe("new:regionStats", newChan)
 	for {
 		select {
-		case rc := <-newChan:
+		case rc, ok := <-newChan:
+			if !ok {
+				continue
+			}
 			log.Println("Starting a new generator for emitter:", rc.Emitter)
 			r.generators[rc.Emitter] =
 				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz, rc.GenerationInterval)
