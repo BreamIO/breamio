@@ -4,22 +4,28 @@
 	<script>
 	//EyeStream.connect("ws://localhost:8080/api/json")
 	function sendData(){
-		var thickness = (document.getElementById("thickness").value);
-		var alpha = (document.getElementById("alpha").value);
-		var radius = (document.getElementById("radius").value);
-		var color = "0x" + (document.getElementById("color").value);
+		var thickness = parseInt(document.getElementById("thickness").value);
+		var alpha = parseFloat(document.getElementById("alpha").value);
+		var radius = parseInt(document.getElementById("radius").value);
+		var color = parseInt("0x" + (document.getElementById("color").value));
+
+		// If thickness is greater than radius * 2, the behaviour is undefined (looks wierd)
+		if (thickness > radius * 2) {
+			thickness = radius * 2
+		}
+
 		var config =
 		{
-			"Thickness": parseInt(thickness),
-			"Alpha" : parseFloat(alpha),
-			"Radius" : parseInt(radius),
-			"Color": [parseInt(color)]
+			"Thickness": thickness,
+			"Alpha" : alpha,
+			"Radius" : radius,
+			"Color": [color]
 		};
 		EyeStream.command("drawer:settings", 1, config);
 	}
 	</script>
-	
-	
+
+
 </head>
 <body>
 <div>
@@ -39,7 +45,7 @@
 <script type="text/javascript" src="ColorPicker/jscolor.js"></script>
 <input id = "color" class="color" value="66ff00">
 <div/>
-<button onclick="sendData()">Send To server</button>
+<button onclick="sendData()">Update</button>
 </body>
 </html>
 
