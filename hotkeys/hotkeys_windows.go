@@ -40,8 +40,6 @@ func start(logic beenleigh.Logic, closer <-chan struct{}) {
 		logger.Println("Unable to register hotkey ALT-B.")
 	}
 
-	logger.Println("Listening for ALT-B to toggle drawing.")
-
 	go func() {
 		<-closer
 		shutdown = true
