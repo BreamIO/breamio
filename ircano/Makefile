@@ -78,11 +78,11 @@ docker-install: bin/$(VERSION)/$(GOHOSTOS)-$(GOHOSTARCH)
 
 # Run the resulting binary
 docker-run: docker-install
-	@$<
+	@bin/$(VERSION)/$(GOHOSTOS)-$(GOHOSTARCH)
 
 # Bypass docker and build for this platform directly
 install: $(GOFILES)
-	@go install
+	@go install $(GOFLAGS)
 
 # Run the resulting binary
 run: install
