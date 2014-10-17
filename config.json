@@ -19,6 +19,17 @@
 	},
 
 	{
+		"Event": "ircano:settings",
+		"ID": 256,
+		"Data": {
+			"_Username": "breamio",
+			"_Password": "oauth:rizyskb9a694burwouzh71tsmqxr6lx",
+			"_Server": "irc.twitch.tv:6667",
+			"Channel": "#breamio"
+		}
+	},
+
+	{
 		"Event": "new:regionStats",
 		"ID": 256,
 		"Data": {
