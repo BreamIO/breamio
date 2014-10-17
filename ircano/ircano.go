@@ -17,7 +17,7 @@ import (
 func main() {
 	fmt.Println("IRCano", Version, GitSHA)
 	irc := ircevent.IRC("breamio", "breamio")
-	irc.Password = "oauth:<insert this>"
+	irc.Password = "oauth:rizyskb9a694burwouzh71tsmqxr6lx"
 	irc.AddCallback("001", func(event *ircevent.Event) {
 		fmt.Println(
 			event.Code,
