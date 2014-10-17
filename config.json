@@ -1,141 +1,125 @@
-{"Events": [
-	{
-		"Event": "new:tracker",
-	 	"ID": 256,
-	 	"Data": {
-	 		"Emitter": 1,
-	 		"Data": "mock://random_fix",
-	 		"_Data": "tobii://REXDL-010103247001"
-	 	}
-	},
-	{
-		"Event": "new:tracker",
-	 	"ID": 256,
-	 	"Data": {
-	 		"Emitter": 2,
-	 		"Data": "mock://standard",
-	 		"_Data": "tobii://REXDL-010104627253"
-	 	}
-	},
-
-	{
-		"Event": "ircano:settings",
-		"ID": 256,
-		"Data": {
-			"_Username": "breamio",
-			"_Password": "oauth:rizyskb9a694burwouzh71tsmqxr6lx",
-			"_Server": "irc.twitch.tv:6667",
-			"Channel": "#breamio"
-		}
-	},
-
-	{
-		"Event": "new:regionStats",
-		"ID": 256,
-		"Data": {
-			"Emitter": 1,
-			"Duration": "60s",
-			"Hertz": 40,
-			"GenerationInterval": "10s"
-		}
-	},
-
-	{
-		"Event": "new:regionStats",
-		"ID": 256,
-		"Data": {
-			"Emitter": 2,
-			"Duration": "60s",
-			"Hertz": 40,
-			"GenerationInterval": "10s"
-		}
-	},
-
-
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 1,
-		"Data": {
-			"Name":"screen",
-			"Def":{
-				"Type":"rectangle",
-				"X": 0.0,
-				"Width": 1.0,
-				"Y": 0.0,
-				"Height": 1.0
-			}
-		}
-	},
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 1,
-		"Data": {
-			"Name":"top-left-rectangle",
-			"Def":{
-				"Type":"rectangle",
-				"X": 0.0,
-				"Width": 0.5,
-				"Y": 0.0,
-				"Height": 0.5
-			}
-		}
-	},
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 1,
-		"Data": {
-			"Name":"bottom-right-circle",
-			"Def":{
-				"Type":"circle",
-				"X": 0.5,
-				"Width": 0.5,
-				"Y": 0.5,
-				"Height": 0.5
-			}
-		}
-	},
-
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 2,
-		"Data": {
-			"Name":"screen",
-			"Def":{
-				"Type":"rectangle",
-				"X": 0.0,
-				"Width": 1.0,
-				"Y": 0.0,
-				"Height": 1.0
-			}
-		}
-	},
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 2,
-		"Data": {
-			"Name":"top-left-rectangle",
-			"Def":{
-				"Type":"rectangle",
-				"X": 0.0,
-				"Width": 0.5,
-				"Y": 0.0,
-				"Height": 0.5
-			}
-		}
-	},
-	{
-		"Event": "regionStats:addRegion",
-		"ID": 2,
-		"Data": {
-			"Name":"bottom-right-circle",
-			"Def":{
-				"Type":"circle",
-				"X": 0.5,
-				"Width": 0.5,
-				"Y": 0.5,
-				"Height": 0.5
-			}
-		}
-	}
-	]
+{
+  "Events": [{
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Emitter": 1,
+        "Data": "mock://random_fix",
+        "_Data": "tobii://REXDL-010103247001"
+      }
+    }, {
+      "Event": "new:tracker",
+      "ID": 256,
+      "Data": {
+        "Emitter": 2,
+        "Data": "mock://standard",
+        "_Data": "tobii://REXDL-010104627253"
+      }
+    },{
+      "Event": "ircano:settings",
+      "ID": 256,
+      "Data": {
+        "_Username": "breamio",
+        "_Password": "oauth:rizyskb9a694burwouzh71tsmqxr6lx",
+        "_Server": "irc.twitch.tv:6667",
+        "Channel": "#breamio"
+      }
+    },{
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Emitter": 1,
+        "Duration": "60s",
+        "Hertz": 40,
+        "GenerationInterval": "10s"
+      }
+    },{
+      "Event": "new:regionStats",
+      "ID": 256,
+      "Data": {
+        "Emitter": 2,
+        "Duration": "60s",
+        "Hertz": 40,
+        "GenerationInterval": "10s"
+      }
+    },{
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Name": "screen",
+        "Def": {
+          "Type": "rectangle",
+          "X": 0.0,
+          "Width": 1.0,
+          "Y": 0.0,
+          "Height": 1.0
+        }
+      }
+    }, {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Name": "top-left-rectangle",
+        "Def": {
+          "Type": "rectangle",
+          "X": 0.0,
+          "Width": 0.5,
+          "Y": 0.0,
+          "Height": 0.5
+        }
+      }
+    }, {
+      "Event": "regionStats:addRegion",
+      "ID": 1,
+      "Data": {
+        "Name": "bottom-right-circle",
+        "Def": {
+          "Type": "circle",
+          "X": 0.5,
+          "Width": 0.5,
+          "Y": 0.5,
+          "Height": 0.5
+        }
+      }
+    },{
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Name": "screen",
+        "Def": {
+          "Type": "rectangle",
+          "X": 0.0,
+          "Width": 1.0,
+          "Y": 0.0,
+          "Height": 1.0
+        }
+      }
+    }, {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Name": "top-left-rectangle",
+        "Def": {
+          "Type": "rectangle",
+          "X": 0.0,
+          "Width": 0.5,
+          "Y": 0.0,
+          "Height": 0.5
+        }
+      }
+    }, {
+      "Event": "regionStats:addRegion",
+      "ID": 2,
+      "Data": {
+        "Name": "bottom-right-circle",
+        "Def": {
+          "Type": "circle",
+          "X": 0.5,
+          "Width": 0.5,
+          "Y": 0.5,
+          "Height": 0.5
+        }
+      }
+    }
+  ]
 }
