@@ -24,41 +24,89 @@ type Settings struct {
 	Channel string
 }
 
-func (s *Settings) FillDefaults() {
-	if s.Username == "" {
-		s.Username = Username
-		if s.Password == "" {
-			s.Password = Password
-		}
-	}
-	if s.Server == "" {
-		s.Server = Server
-	}
-}
-
-type IRCBot struct {
+type ircBot struct {
 	settings Settings
-	*irc.Conn
+	conn     *irc.Conn
+	closer   chan error
+	messages chan *irc.Message
 }
 
-var bot *IRCBot
+var bot *ircBot
 var logger *log.Logger
 
-func New(s Settings) *IRCBot {
-	return &IRCBot{s, nil}
+func New(s Settings) *ircBot {
+	return &ircBot{
+		settings: s,
+		closer:   make(chan error),
+		messages: make(chan *irc.Message),
+	}
 }
 
-func (bot IRCBot) ListenAndServe() {
-
+func (bot *ircBot) FillDefaults() {
+	if bot.settings.Username == "" {
+		bot.settings.Username = Username
+		if bot.settings.Password == "" {
+			bot.settings.Password = Password
+		}
+	}
+	if bot.settings.Server == "" {
+		bot.settings.Server = Server
+	}
 }
 
-func (bot IRCBot) Close() error {
-	return nil
+func (bot *ircBot) ListenAndServe() error {
+	conn, err := irc.Dial(bot.settings.Server)
+	if err != nil {
+		return err
+	}
+	bot.conn = conn
+	go func() {
+		msg, err := bot.conn.Decode()
+		if err != nil {
+			bot.closer <- err
+			return
+		}
+		bot.messages <- msg
+	}()
+	bot.conn.Encode(&irc.Message{
+		Prefix: &irc.Prefix{
+			Name: bot.settings.Username,
+			User: bot.settings.Username,
+		},
+		Command: irc.PASS,
+		Params:  []string{bot.settings.Password},
+	})
+	for {
+		select {
+		case msg := <-bot.messages:
+			switch msg.Command {
+			case irc.PRIVMSG:
+				if msg.Trailing == "!stats" {
+					bot.conn.Encode(&irc.Message{
+						Prefix: &irc.Prefix{
+							Name: bot.settings.Username,
+							User: bot.settings.Username,
+						},
+						Command:  irc.PRIVMSG,
+						Params:   []string{string(irc.Channel) + bot.settings.Channel},
+						Trailing: "Hello World",
+					})
+				}
+			}
+		case err := <-bot.closer:
+			return err
+		}
+	}
+}
+
+func (bot *ircBot) Close() error {
+	bot.closer <- nil
+	return bot.conn.Close()
 }
 
 func init() {
 	logger = log.New(os.Stderr, "[Ircano] ", log.LstdFlags|log.Lshortfile)
-	bot = &IRCBot{}
+	bot = &ircBot{}
 	bl.Register(bl.NewRunHandler(func(l bl.Logic, closer <-chan struct{}) {
 		settings := l.RootEmitter().Subscribe(SettingsEvent, Settings{}).(<-chan Settings)
 		defer func() {
@@ -75,11 +123,11 @@ func init() {
 				if !ok {
 					return
 				}
-				s.FillDefaults()
 				bot.Close()
-				//Skipping error because we do not care since we are creating a new connection soon anyway.
+				// Skipping error since we are creating a new connection soon anyway.
 
-				bot = New(s)
+				bot.settings = s
+				bot.FillDefaults()
 				go bot.ListenAndServe()
 			case <-closer:
 				return
