@@ -45,10 +45,10 @@ Dockerfile:
 
 # Build Docker container
 docker.image: Dockerfile
-	# Docker contexts are broken, circumvent this
-	cp Dockerfile $(GITROOT)
+	# Docker contexts are broken, circumvent this if not in GITROOT
+	$(if $(subst $(GITROOT),,$(PWD)), cp Dockerfile $(GITROOT))
 	docker build -t "$(DOCKER_IMAGE)" $(GITROOT)
-	rm $(GITROOT)/Dockerfile
+	$(if $(subst $(GITROOT),,$(PWD)), rm $(GITROOT)/Dockerfile)
 
 	# Touch docker.image to make make play along
 	touch $@
