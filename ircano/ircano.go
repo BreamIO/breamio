@@ -163,7 +163,7 @@ func init() {
 		regionStatsChan := et.Subscribe(RegionStatsEvent, make(rs.RegionStatsMap)).(<-chan rs.RegionStatsMap)
 		defer func() {
 			l.RootEmitter().Unsubscribe(SettingsEvent, settingsChan)
-			l.RootEmitter().Unsubscribe(RegionStatsEvent, regionStatsChan)
+			et.Unsubscribe(RegionStatsEvent, regionStatsChan)
 			err := bot.Close()
 			if err != nil {
 				logger.Println(err)
