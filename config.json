@@ -59,7 +59,7 @@
       "Event": "regionStats:addRegion",
       "ID": 1,
       "Data": {
-        "Name": "top-left-rectangle",
+        "Name": "top-left",
         "Def": {
           "Type": "rectangle",
           "X": 0.0,
@@ -72,7 +72,7 @@
       "Event": "regionStats:addRegion",
       "ID": 1,
       "Data": {
-        "Name": "bottom-right-circle",
+        "Name": "bottom-right",
         "Def": {
           "Type": "circle",
           "X": 0.5,
