@@ -1,14 +1,18 @@
 package ircano
 
 import (
+	"fmt"
+	rs "github.com/maxnordlund/breamio/analysis/regionStats"
 	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/sorcix/irc"
 	"log"
 	"os"
+	"sync"
 )
 
 const (
-	SettingsEvent = "ircano:settings"
+	SettingsEvent    = "ircano:settings"
+	RegionStatsEvent = "regionStats:regions"
 )
 
 const (
@@ -25,10 +29,12 @@ type Settings struct {
 }
 
 type ircBot struct {
-	settings Settings
-	conn     *irc.Conn
-	closer   chan error
-	messages chan *irc.Message
+	settings  Settings
+	stats     rs.RegionStatsMap
+	statsLock sync.RWMutex
+	conn      *irc.Conn
+	closer    chan error
+	messages  chan *irc.Message
 }
 
 var bot *ircBot
@@ -36,6 +42,7 @@ var logger *log.Logger
 
 func New() *ircBot {
 	return &ircBot{
+		stats:    make(rs.RegionStatsMap),
 		closer:   make(chan error),
 		messages: make(chan *irc.Message),
 	}
@@ -85,8 +92,33 @@ func (bot *ircBot) ListenAndServe() error {
 				bot.send(irc.PING, msg.Trailing, msg.Params...)
 			case irc.PRIVMSG:
 				logger.Println("Private message", msg.Trailing)
-				if msg.Trailing == "!stats" {
-					bot.send(irc.PRIVMSG, "Hello world", bot.settings.Channel)
+				switch msg.Trailing {
+				case "!Blue circle", "!EyeTracking":
+					bot.send(irc.PRIVMSG, "The blue circle on the screen is a "+
+						"gazemarker. The gazemarker utilizes EyeStream, a software "+
+						"developed by Bream iO, to show my audience where I look on the "+
+						"screen. To present statistics on where I look, simply type "+
+						"\"!ETStats\".", bot.settings.Channel)
+				case "!ETStatsInfo":
+					bot.send(irc.PRIVMSG, "Region is the region that the stats is "+
+						"collected for. look/min is how many times I look at the region "+
+						"per minute. average look time is how long I look at the region "+
+						"each time I look there.", bot.settings.Channel)
+				case "!ETStats":
+					go func(bot *ircBot) {
+						bot.statsLock.RLock()
+						defer bot.statsLock.RUnlock()
+						bot.send(irc.PRIVMSG, "EyeStream statistics:", bot.settings.Channel)
+						bot.send(irc.PRIVMSG, "Region\tlooks/min\taverage look time", bot.settings.Channel)
+						for name, region := range bot.stats {
+							bot.send(irc.PRIVMSG, fmt.Sprintf(
+								"%s\t%d\t%d",
+								name,
+								region.Looks,
+								region.TimeInside,
+							), bot.settings.Channel)
+						}
+					}(bot)
 				}
 			}
 		case err := <-bot.closer:
@@ -112,6 +144,7 @@ func (bot *ircBot) send(command, trailing string, params ...string) error {
 func (bot *ircBot) Close() error {
 	if bot.conn != nil {
 		bot.closer <- nil
+		logger.Println("Quiting IRC")
 		return bot.conn.Close()
 	}
 	return nil
@@ -121,9 +154,16 @@ func init() {
 	logger = log.New(os.Stderr, "[Ircano] ", log.LstdFlags|log.Lshortfile)
 	bot = New()
 	bl.Register(bl.NewRunHandler(func(l bl.Logic, closer <-chan struct{}) {
-		settings := l.RootEmitter().Subscribe(SettingsEvent, Settings{}).(<-chan Settings)
+		et, err := l.EmitterLookup(1)
+		if err != nil {
+			logger.Println(err)
+			return
+		}
+		settingsChan := l.RootEmitter().Subscribe(SettingsEvent, Settings{}).(<-chan Settings)
+		regionStatsChan := et.Subscribe(RegionStatsEvent, make(rs.RegionStatsMap)).(<-chan rs.RegionStatsMap)
 		defer func() {
-			l.RootEmitter().Unsubscribe(SettingsEvent, settings)
+			l.RootEmitter().Unsubscribe(SettingsEvent, settingsChan)
+			l.RootEmitter().Unsubscribe(RegionStatsEvent, regionStatsChan)
 			err := bot.Close()
 			if err != nil {
 				logger.Println(err)
@@ -132,7 +172,7 @@ func init() {
 
 		for {
 			select {
-			case s, ok := <-settings:
+			case settings, ok := <-settingsChan:
 				if !ok {
 					return
 				}
@@ -140,11 +180,20 @@ func init() {
 				bot.Close()
 				// Skipping error since we are creating a new connection soon anyway.
 
-				bot.settings = s
+				bot.settings = settings
 				bot.FillDefaults()
 				go bot.ListenAndServe()
+			case regionStats, ok := <-regionStatsChan:
+				if !ok {
+					return
+				}
+				logger.Println("Region stats update")
+				go func(bot *ircBot, regionStats rs.RegionStatsMap) {
+					bot.statsLock.Lock()
+					defer bot.statsLock.Unlock()
+					bot.stats = regionStats
+				}(bot, regionStats)
 			case <-closer:
-				logger.Println("Quiting IRC")
 				return
 			}
 		}
