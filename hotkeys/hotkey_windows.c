@@ -1,4 +1,4 @@
-#include "hotkey.h"
+#include "hotkey_windows.h"
 
 int ES_RegisterHotKey(unsigned int modifiers, unsigned int key) {
 	static int id = 1;
