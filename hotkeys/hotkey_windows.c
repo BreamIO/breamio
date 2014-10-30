@@ -9,5 +9,13 @@ int ES_RegisterHotKey(unsigned int modifiers, unsigned int key) {
 }
 
 int ES_GetMessage(MSG * msg) {
-	return GetMessage(msg, NULL, 0x0312, 0x0312);
+	//Param1: The message to be filled.
+	//Param2: Do not link to a particular window.
+	//Param3: Message should be at least a Hotkey event
+	//Param4: Message should be at most a Hotkey event
+	//Param5: Remove message afterwards.
+	// return PeekMessage(msg, NULL, 0, 0, 1);
+
+	//Same as above but blocking
+	return GetMessage(msg, NULL, 0, 0);
 }
