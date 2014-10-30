@@ -8,22 +8,24 @@ but not the actual implementation.
 package beenleigh
 
 import (
-	"errors"
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
+	"github.com/maxnordlund/breamio/module"
+
+	"errors"
 	"io"
 	"log"
 	"os"
 	"sync"
 )
 
-var runners []RunCloser
+var modules []RunCloser
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
 func Register(c RunCloser) {
-	runners = append(runners, c)
+	modules = append(modules, c)
 }
 
 // The interface of a BreamIO logic.
@@ -76,7 +78,10 @@ func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 
 	//Subscribe to events
-	for _, c := range runners {
+	for _, c := range modules {
+		if l, ok := c.(module.Logging); ok {
+			l.SetLogger(module.NewLogger(l))
+		}
 		go c.Run(bl)
 		defer c.Close()
 	}
