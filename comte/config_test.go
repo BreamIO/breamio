@@ -23,11 +23,6 @@ type TestConfig struct {
 	C map[string][]string
 }
 
-func setup(c Configuration) {
-	tm := TestModule{conf: &TestConfig{}}
-	c[tm.Name()] = tm.Config()
-}
-
 func TestRegister(t *testing.T) {
 	tm := TestModule{conf: &TestConfig{}}
 	Register(tm)
@@ -42,7 +37,8 @@ func TestRegister(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	setup(config)
+	tm := TestModule{conf: &TestConfig{}}
+	config[tm.Name()] = tm.Config()
 
 	sr := strings.NewReader(testConfigData)
 	err := Load(sr)
@@ -62,7 +58,23 @@ func TestLoad(t *testing.T) {
 }
 
 func TestSection(t *testing.T) {
+	tc := &TestConfig{1337, "goo", map[string][]string{"dar": []string{"tar", "var", "car"}}}
+	tm := TestModule{conf: tc}
+	config[tm.Name()] = tm.Config()
+	if Section(tm.Name()) != tc {
+		t.Fail()
+	}
+}
 
+func TestUpdate(t *testing.T) {
+	tc := &TestConfig{1337, "goo", nil}
+	tm := TestModule{conf: tc}
+	config[tm.Name()] = tm.Config()
+	Update(tm.Name(), &TestConfig{1338, "doo", nil})
+	tc2 := config[tm.Name()].(*TestConfig)
+	if tc2.A != 1338 {
+		t.Fail()
+	}
 }
 
 const testConfigData = `{
