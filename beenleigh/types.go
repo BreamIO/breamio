@@ -17,7 +17,7 @@ type runFuncHandle struct {
 }
 
 func NewRunHandler(runner RunFunc) RunCloser {
-	return &runFuncHandle{ runner, make(chan struct{}) }
+	return &runFuncHandle{runner, make(chan struct{})}
 }
 
 func (rfh *runFuncHandle) Run(l Logic) {
