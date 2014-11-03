@@ -3,6 +3,7 @@ package comte
 import (
 	"encoding/json"
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	"io"
 	"reflect"
 )
@@ -33,16 +34,24 @@ var config = make(Configuration)
 
 //Registers a configurable for use in this Configuration.
 func (c Configuration) Register(module Configable) {
-	config[module.Name()] = module.Config()
+	c[module.Name()] = module.Config()
 }
 
 //Loads the configuration from the reader.
 //JSON encoding is used.
 func (c Configuration) Load(in io.Reader) error {
 	dec := json.NewDecoder(in)
-	if dec.Decode(c) != nil {
-		return Undecodable
+
+	tmp := make(map[string]interface{})
+
+	if err := dec.Decode(&tmp); err != nil {
+		return err //Undecodable
 	}
+
+	for key, _ := range c {
+		mapstructure.Decode(tmp[key], c[key])
+	}
+
 	return nil
 }
 
