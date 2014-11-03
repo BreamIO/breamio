@@ -9,4 +9,5 @@ import (
 	_ "github.com/maxnordlund/breamio/webber"
 
 	_ "github.com/maxnordlund/breamio/analysis/regionStats"
+	_ "github.com/maxnordlund/breamio/ircano"
 )
