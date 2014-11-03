@@ -45,7 +45,7 @@ func (c Configuration) Load(in io.Reader) error {
 	tmp := make(map[string]interface{})
 
 	if err := dec.Decode(&tmp); err != nil {
-		return err //Undecodable
+		return Undecodable
 	}
 
 	for key, _ := range c {
@@ -72,6 +72,8 @@ func (c Configuration) Update(key string, section ConfigSection) {
 	if reflect.TypeOf(section) != reflect.TypeOf(c[key]) {
 		panic(BadSection)
 	}
+
+	c[key] = section
 }
 
 //Calls Register on the default configuration
