@@ -10,7 +10,6 @@ package beenleigh
 import (
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/module"
 
 	"errors"
 	"io"
@@ -79,9 +78,6 @@ func (bl *breamLogic) ListenAndServe() {
 
 	//Subscribe to events
 	for _, c := range modules {
-		if l, ok := c.(module.Logging); ok {
-			l.SetLogger(module.NewLogger(l))
-		}
 		go c.Run(bl)
 		defer c.Close()
 	}
@@ -141,4 +137,10 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 		return v, nil
 	}
 	return nil, errors.New("No emitter with that id.")
+}
+
+func NewLogger(n interface {
+	Name() string
+}) *log.Logger {
+	return log.New(os.Stderr, "[ "+n.Name()+" ] ", log.LstdFlags|log.Lshortfile)
 }
