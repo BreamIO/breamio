@@ -10,7 +10,7 @@ package beenleigh
 import (
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/comté"
+	"github.com/maxnordlund/breamio/comte"
 
 	"errors"
 	"io"
@@ -146,13 +146,13 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 }
 
 func (breamLogic) LoadConfig() error {
-	configFile := comté.DefaultConfigFile
+	configFile := comte.DefaultConfigFile
 	f, err := os.Open(configFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return comté.Load(f)
+	return comte.Load(f)
 }
 
 func NewLogger(n interface {

@@ -1,4 +1,4 @@
-package comté
+package comte
 
 import (
 	"encoding/json"
