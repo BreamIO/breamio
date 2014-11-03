@@ -10,6 +10,7 @@ package beenleigh
 import (
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
+	"github.com/maxnordlund/breamio/comté"
 
 	"errors"
 	"io"
@@ -76,6 +77,11 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 
+	err := bl.LoadConfig()
+	if err != nil {
+		bl.logger.Fatalln(err)
+	}
+
 	//Subscribe to events
 	for _, c := range modules {
 		go c.Run(bl)
@@ -137,6 +143,16 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 		return v, nil
 	}
 	return nil, errors.New("No emitter with that id.")
+}
+
+func (breamLogic) LoadConfig() error {
+	configFile := comté.DefaultConfigFile
+	f, err := os.Open(configFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return comté.Load(f)
 }
 
 func NewLogger(n interface {

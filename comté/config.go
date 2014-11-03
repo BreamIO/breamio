@@ -7,6 +7,8 @@ import (
 	"reflect"
 )
 
+const DefaultConfigFile = "config.json"
+
 /*
 Represents any type that is configurable.
 A configurable type needs to have a name and
