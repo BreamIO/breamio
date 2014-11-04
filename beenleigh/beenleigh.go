@@ -11,6 +11,7 @@ import (
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/comte"
+	"github.com/maxnordlund/breamio/module"
 
 	"errors"
 	"io"
@@ -19,13 +20,13 @@ import (
 	"sync"
 )
 
-var modules []RunCloser
+var modules = make(map[string]module.Module)
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
-func Register(c RunCloser) {
-	modules = append(modules, c)
+func Register(c module.Module) {
+	modules[c.Name()] = c
 }
 
 // The interface of a BreamIO logic.
@@ -83,9 +84,14 @@ func (bl *breamLogic) ListenAndServe() {
 	}
 
 	//Subscribe to events
-	for _, c := range modules {
-		go c.Run(bl)
-		defer c.Close()
+	for _, m := range modules {
+		if runner, ok := m.(RunCloser); ok {
+			// Legacy module or simply require special behaviour
+			runner.Run(bl)
+		} else {
+			//Default behaviour
+			go Run(l, m)
+		}
 	}
 
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
@@ -155,8 +161,6 @@ func (breamLogic) LoadConfig() error {
 	return comte.Load(f)
 }
 
-func NewLogger(n interface {
-	Name() string
-}) *log.Logger {
+func NewLogger(n module.Namer) *log.Logger {
 	return log.New(os.Stderr, "[ "+n.Name()+" ] ", log.LstdFlags|log.Lshortfile)
 }
