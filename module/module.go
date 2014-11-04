@@ -6,7 +6,7 @@ import (
 
 /*
 Defines a EyeStream local module.
-All modules that are to interface with beenleigh and other local modules needs to implement this.
+All modules that are to interact with beenleigh and other local modules needs to implement this.
 */
 type Module interface {
 	Namer
