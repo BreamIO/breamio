@@ -1,9 +1,5 @@
 package module
 
-import (
-	"log"
-)
-
 /*
 Defines a EyeStream local module.
 All modules that are to interact with beenleigh and other local modules needs to implement this.
@@ -11,7 +7,7 @@ All modules that are to interact with beenleigh and other local modules needs to
 type Module interface {
 	Namer
 	Logger() Logger
-	New(map[string]interface{}) interface{} // Might be subject of change in future
+	New(Constructor) interface{} // Might be subject of change in future
 }
 
 //Any type capable of naming itself.
@@ -29,6 +25,15 @@ type Logger interface {
 	Printf(string, ...interface{})
 	Println(...interface{})
 }
+
+type Constructor struct {
+	Logger
+	Parameters map[string]interface{}
+}
+
+//Type allowing struct-tagging of method
+//to allow special instructions regarding exact event name and such
+type EventMethod struct{}
 
 //"Abstract" implementation of Module.
 //Reduces boiler-plate code in most modules.
