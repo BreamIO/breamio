@@ -24,8 +24,17 @@ func RunFactory(l Logic, f module.Factory) {
 	}
 }
 
+var methodType = reflect.TypeOf(MethodEvent{})
+
+type exportedMethod struct {
+	name, event  string
+	returnevents []string
+}
+
 func RunModule(l Logic, m module.Module) {
 	typ := reflect.TypeOf(m)
+
+	var exported []exportedMethod
 
 	//Look for EventMethods among fields
 
