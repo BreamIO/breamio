@@ -20,14 +20,20 @@ type Namer interface {
 }
 
 //Interface declaring what a module is allowed to do to a logger.
-//More specifically, this is the "module-safe" subset of the common log methods,
-//meaning they do not alter execution or cause panics.
 //Modules are also not allowed to modify their Logger. This is done for them.
 //Designed to be implemented by the *Logger type from the log package of the standard library.
 type Logger interface {
 	Print(...interface{})
 	Printf(string, ...interface{})
 	Println(...interface{})
+
+	Fatal(...interface{})
+	Fatalf(string, ...interface{})
+	Fatalln(...interface{})
+
+	Panic(...interface{})
+	Panicf(string, ...interface{})
+	Panicln(...interface{})
 }
 
 type Constructor struct {
