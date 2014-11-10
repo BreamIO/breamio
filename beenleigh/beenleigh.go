@@ -8,6 +8,7 @@ but not the actual implementation.
 package beenleigh
 
 import (
+	"fmt"
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/comte"
@@ -20,13 +21,13 @@ import (
 	"sync"
 )
 
-var modules = make(map[string]module.Module)
+var factories = make(map[string]module.Factory)
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
-func Register(c module.Module) {
-	modules[c.Name()] = c
+func Register(c module.Factory) {
+	factories[c.String()] = c
 }
 
 // The interface of a BreamIO logic.
@@ -84,13 +85,13 @@ func (bl *breamLogic) ListenAndServe() {
 	}
 
 	//Subscribe to events
-	for _, m := range modules {
-		if runner, ok := m.(RunCloser); ok {
+	for _, f := range factories {
+		if runner, ok := f.(RunCloser); ok {
 			// Legacy module or simply require special behaviour
 			runner.Run(bl)
 		} else {
 			//Default behaviour
-			go Run(l, m)
+			go RunFactory(bl, f)
 		}
 	}
 
@@ -161,6 +162,6 @@ func (breamLogic) LoadConfig() error {
 	return comte.Load(f)
 }
 
-func NewLogger(n module.Namer) *log.Logger {
-	return log.New(os.Stderr, "[ "+n.Name()+" ] ", log.LstdFlags|log.Lshortfile)
+func NewLogger(n fmt.Stringer) *log.Logger {
+	return log.New(os.Stderr, "[ "+n.String()+" ] ", log.LstdFlags|log.Lshortfile)
 }
