@@ -1,13 +1,14 @@
 package beenleigh
 
 import (
+	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/module"
 	"reflect"
 	"strings"
 )
 
 func RunFactory(l Logic, f module.Factory) {
-	news := l.RootEmitter().Subscribe("new:"+f.String(), map[string]interface{}{}).(<-chan map[string]interface{})
+	news := l.RootEmitter().Subscribe("new:"+f.String(), Spec{}).(<-chan Spec)
 	defer l.RootEmitter().Unsubscribe("new:"+f.String(), news)
 	for n := range news {
 		// Would have prefered m as the logger object,
@@ -15,12 +16,12 @@ func RunFactory(l Logic, f module.Factory) {
 		// object before creating it, I have to use the factory
 		m := f.New(module.Constructor{
 			Logger:     NewLogger(f),
-			Parameters: n,
+			Parameters: n.Data,
 		})
 		if runner, ok := m.(RunCloser); ok {
 			go runner.Run(l)
 		} else {
-			go RunModule(l, m)
+			go RunModule(l, n.Emitter, m)
 		}
 	}
 }
@@ -34,6 +35,7 @@ type exportedMethod struct {
 
 func RunModule(l Logic, emitterId int, m module.Module) {
 	typ := reflect.TypeOf(m)
+	val := reflect.ValueOf(m)
 
 	var exported []exportedMethod
 
@@ -57,10 +59,18 @@ func RunModule(l Logic, emitterId int, m module.Module) {
 			event := field.Tag.Get("event")
 			if event == "" {
 				//Use heuristic
-				event = name
+				event = m.String() + ":" + name
 			}
 
-			returns := strings.Split(field.Tag.Get("returns"), ",")
+			rets := strings.Split(field.Tag.Get("returns"), ",")
+			returns := make([]string, 0, len(rets))
+			for _, ret := range rets {
+				if ret == "_" {
+					returns = append(returns, "_")
+				} else {
+					returns = append(returns, m.String()+":"+ret)
+				}
+			}
 			exported = append(exported, exportedMethod{name, event, returns})
 		}
 	}
@@ -68,18 +78,15 @@ func RunModule(l Logic, emitterId int, m module.Module) {
 	emitter := l.CreateEmitter(emitterId)
 
 	for _, em := range exported {
-		method, ok := typ.MethodByName(em.name)
+		methodType, ok := typ.MethodByName(em.name)
 		if !ok {
 			l.Logger().Panicf("Method %s on %s does not exist.", em.name, typ.Name())
 		}
 
-		if suitable(method) {
-			t := reflect.New(method.Type.In(1))
-			ch := emitter.Subscribe(m.String()+":"+em.name, t)
+		method := val.MethodByName(em.name)
 
-			if returnable(method) {
-				//Publish that on event
-			}
+		if suitable(methodType) {
+			go RunMethod(method, em, emitter, l.Logger())
 		}
 	}
 }
@@ -92,4 +99,38 @@ func suitable(m reflect.Method) bool {
 func returnable(m reflect.Method) bool {
 	//TODO implement me
 	return false
+}
+
+func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitter, l module.Logger) {
+	t := reflect.New(method.Type().In(0))
+	ch := emitter.Subscribe(em.event, t)
+	defer emitter.Unsubscribe(em.event, ch)
+	if len(em.returnevents) > method.Type().NumOut() {
+		l.Panicf("More return events than return values.")
+	}
+
+	returns := make([]reflect.Value, method.Type().NumOut())
+	for i, retevent := range em.returnevents {
+		if retevent == "_" {
+			continue
+		}
+		t := reflect.New(method.Type().Out(i))
+		rch := emitter.Publish(retevent, t)
+		returns[i] = reflect.ValueOf(rch)
+	}
+
+	vch := reflect.ValueOf(ch)
+	for {
+		val, ok := vch.Recv()
+		if !ok {
+			return //Event is closed.
+		}
+		rets := method.Call([]reflect.Value{val})
+		//Send return values to their respective
+		for i, val := range rets {
+			if returns[i].IsValid() {
+				returns[i].Send(val)
+			}
+		}
+	}
 }
