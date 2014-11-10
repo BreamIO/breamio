@@ -29,6 +29,8 @@ func (rfh *runFuncHandle) Close() error {
 	return nil
 }
 
+type MethodEvent struct{}
+
 // A specification for creation of new objects.
 // Type should be a type available for creation by the logic implementation.
 // Data is a context sensitive string, which syntax depends on the type.
