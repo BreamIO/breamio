@@ -3,6 +3,7 @@ package beenleigh
 import (
 	"github.com/maxnordlund/breamio/module"
 	"reflect"
+	"strings"
 )
 
 func RunFactory(l Logic, f module.Factory) {
@@ -43,6 +44,24 @@ func RunModule(l Logic, m module.Module) {
 			//Evented method declaration
 			//Figure out method name from field name and tag
 			//Store in structure to be iterated later
+
+			name := field.Tag.Get("method")
+			if name == "" {
+				//Use heuristic and field name
+				name = strings.TrimPrefix(field.Name, "Method")
+				if name == "" {
+					name = "Method" //If all else fails.
+				}
+			}
+
+			event := field.Tag.Get("event")
+			if event == "" {
+				//Use heuristic
+				event = name
+			}
+
+			returns := strings.Split(field.Tag.Get("returns"), ",")
+			exported = append(exported, exportedMethod{name, event, returns})
 		}
 	}
 
