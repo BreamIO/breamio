@@ -37,9 +37,21 @@ func RunModule(l Logic, m module.Module) {
 	var exported []exportedMethod
 
 	//Look for EventMethods among fields
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if field.Type == methodType {
+			//Evented method declaration
+			//Figure out method name from field name and tag
+			//Store in structure to be iterated later
+		}
+	}
 
-	for i := 0; i < typ.NumMethod(); i++ {
-		method := typ.Method(i)
+	for _, em := range exported {
+		method, ok := typ.MethodByName(em.name)
+		if !ok {
+			l.Logger().Panicf("Method %s on %s does not exist.", em.name, typ.Name())
+		}
+
 		if suitable(method) {
 			//Use l to get emitter, and subscribe to event
 			if returnable(method) {
