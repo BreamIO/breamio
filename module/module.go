@@ -11,12 +11,11 @@ All modules that are to interact with beenleigh and other local modules needs to
 type Module interface {
 	fmt.Stringer
 	Logger() Logger
-	New(Constructor) interface{} // Might be subject of change in future
 }
 
-//Any type capable of naming itself.
-type Namer interface {
-	Name() string
+type Factory interface {
+	fmt.Stringer
+	New(Constructor) Module // Might be subject of change in future
 }
 
 //Interface declaring what a module is allowed to do to a logger.
