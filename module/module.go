@@ -1,11 +1,15 @@
 package module
 
+import (
+	"fmt"
+)
+
 /*
 Defines a EyeStream local module.
 All modules that are to interact with beenleigh and other local modules needs to implement this.
 */
 type Module interface {
-	Namer
+	fmt.Stringer
 	Logger() Logger
 	New(Constructor) interface{} // Might be subject of change in future
 }
@@ -40,14 +44,14 @@ type EventMethod struct{}
 //If any feature is added to Module, it should first be attempted to be implemented here.
 //This is to reduce the amount of code that needs to be changed.
 type SimpleModule struct {
-	Title   string
-	Logbook Logger
+	name   string
+	logger Logger
 }
 
-func (sm SimpleModule) Name() string {
-	return sm.Title
+func (sm SimpleModule) String() string {
+	return sm.name
 }
 
 func (sm SimpleModule) Logger() Logger {
-	return sm.Logbook
+	return sm.logger
 }
