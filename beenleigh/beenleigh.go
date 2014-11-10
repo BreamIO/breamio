@@ -38,6 +38,7 @@ type Logic interface {
 	CreateEmitter(id int) briee.EventEmitter
 	aioli.EmitterLookuper
 	ListenAndServe()
+	Logger() module.Logger
 	io.Closer
 }
 
@@ -160,6 +161,9 @@ func (breamLogic) LoadConfig() error {
 	}
 	defer f.Close()
 	return comte.Load(f)
+}
+func (bl breamLogic) Logger() module.Logger {
+	return bl.logger
 }
 
 func NewLogger(n fmt.Stringer) *log.Logger {
