@@ -32,7 +32,7 @@ type exportedMethod struct {
 	returnevents []string
 }
 
-func RunModule(l Logic, m module.Module) {
+func RunModule(l Logic, emitterId int, m module.Module) {
 	typ := reflect.TypeOf(m)
 
 	var exported []exportedMethod
@@ -65,6 +65,8 @@ func RunModule(l Logic, m module.Module) {
 		}
 	}
 
+	emitter := l.CreateEmitter(emitterId)
+
 	for _, em := range exported {
 		method, ok := typ.MethodByName(em.name)
 		if !ok {
@@ -72,7 +74,9 @@ func RunModule(l Logic, m module.Module) {
 		}
 
 		if suitable(method) {
-			//Use l to get emitter, and subscribe to event
+			t := reflect.New(method.Type.In(1))
+			ch := emitter.Subscribe(m.String()+":"+em.name, t)
+
 			if returnable(method) {
 				//Publish that on event
 			}
