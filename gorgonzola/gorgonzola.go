@@ -1,6 +1,7 @@
 package gorgonzola
 
 import (
+	"github.com/maxnordlund/breamio/module"
 	//"encoding/json"
 	"errors"
 	"log"
@@ -30,6 +31,14 @@ type GorgonzolaRun struct {
 	closing chan struct{}
 }
 
+func (GorgonzolaRun) String() string {
+	return "Gorgonzola"
+}
+
+func (GorgonzolaRun) New(module.Constructor) module.Module {
+	return module.Dummy
+}
+
 func (gr GorgonzolaRun) Run(logic bl.Logic) {
 	newCh := logic.RootEmitter().Subscribe("new:tracker", bl.Spec{}).(<-chan bl.Spec)
 	for {
@@ -52,7 +61,7 @@ func (gr GorgonzolaRun) Close() error {
 func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
 	logger.Println("Recieved new:tracker event.")
 
-	tracker, err := CreateFromURI(event.Data)
+	tracker, err := CreateFromURI(event.Data["uri"].(string))
 	if err != nil {
 		logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
 		return err
@@ -67,7 +76,7 @@ func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
 	go tracker.Link(ee)
 
 	logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
-	trackers[tracker] = Metadata{Emitter: event.Emitter, Name: event.Data}
+	trackers[tracker] = Metadata{Emitter: event.Emitter, Name: event.Data["uri"].(string)}
 	return nil
 }
 
