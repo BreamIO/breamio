@@ -37,5 +37,5 @@ type MethodEvent struct{}
 // Emitter is a integer, identifying the emitter number to link the new object to.
 type Spec struct {
 	Emitter int
-	Data    string
+	Data    map[string]interface{}
 }
