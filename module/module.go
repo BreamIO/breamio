@@ -36,7 +36,7 @@ type Logger interface {
 }
 
 type Constructor struct {
-	Logger
+	Logger     Logger
 	Parameters map[string]interface{}
 }
 
@@ -51,6 +51,10 @@ type EventMethod struct{}
 type SimpleModule struct {
 	name   string
 	logger Logger
+}
+
+func NewSimpleModule(name string, c Constructor) SimpleModule {
+	return SimpleModule{name, c.Logger}
 }
 
 func (sm SimpleModule) String() string {
