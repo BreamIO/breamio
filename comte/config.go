@@ -3,12 +3,13 @@ package comte
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"io"
 	"reflect"
 )
 
-const DefaultConfigFile = "config.json"
+const DefaultConfigFile = "settings.json"
 
 /*
 Represents any type that is configurable.
@@ -17,7 +18,7 @@ a default layout as specified by the return type
 of its Config method.
 */
 type Configable interface {
-	Name() string
+	fmt.Stringer
 	Config() ConfigSection
 }
 
@@ -34,7 +35,7 @@ var config = make(Configuration)
 
 //Registers a configurable for use in this Configuration.
 func (c Configuration) Register(module Configable) {
-	c[module.Name()] = module.Config()
+	c[module.String()] = module.Config()
 }
 
 //Loads the configuration from the reader.
@@ -45,11 +46,12 @@ func (c Configuration) Load(in io.Reader) error {
 	tmp := make(map[string]interface{})
 
 	if err := dec.Decode(&tmp); err != nil {
-		return Undecodable
+		return err
 	}
 
 	for key, _ := range c {
 		mapstructure.Decode(tmp[key], c[key])
+		fmt.Println(c[key])
 	}
 
 	return nil
