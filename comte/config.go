@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"io"
-	"reflect"
 )
 
 const DefaultConfigFile = "settings.json"
@@ -27,31 +25,19 @@ Representation of a configuration.
 Each section is identified with a key.
 Once the configuration is loaded, the values can be retried using Section.
 */
-type Configuration map[string]ConfigSection
+type Configuration map[string]*json.RawMessage
 type ConfigSection interface{}
 
 //Default Configuration for use by most
 var config = make(Configuration)
 
-//Registers a configurable for use in this Configuration.
-func (c Configuration) Register(module Configable) {
-	c[module.String()] = module.Config()
-}
-
 //Loads the configuration from the reader.
 //JSON encoding is used.
-func (c Configuration) Load(in io.Reader) error {
+func (c *Configuration) Load(in io.Reader) error {
 	dec := json.NewDecoder(in)
 
-	tmp := make(map[string]interface{})
-
-	if err := dec.Decode(&tmp); err != nil {
+	if err := dec.Decode(c); err != nil {
 		return err
-	}
-
-	for key, _ := range c {
-		mapstructure.Decode(tmp[key], c[key])
-		fmt.Println(c[key])
 	}
 
 	return nil
@@ -60,27 +46,26 @@ func (c Configuration) Load(in io.Reader) error {
 //Returns the section corresponding to the key.
 //key matches return value of Configurables name.
 //Returns nil if no section is defined for key or if nil value is stored.
-func (c Configuration) Section(key string) ConfigSection {
-	return c[key]
+func (c Configuration) Section(key string, mall ConfigSection) (cs ConfigSection) {
+	if mall == nil {
+		v := make(map[string]interface{})
+		mall = &v
+		defer func() {
+			cs = v
+		}()
+	}
+	json.Unmarshal(*c[key], mall)
+	return mall
 }
 
 //Overwrites a stored configuration section with a new one.
 //Section must already exist and the sections must be of the same type.
 func (c Configuration) Update(key string, section ConfigSection) {
-	if _, ok := c[key]; !ok {
-		panic(NonexistingKey)
+	jayson, err := json.Marshal(section)
+	if err != nil {
+		panic(err)
 	}
-
-	if reflect.TypeOf(section) != reflect.TypeOf(c[key]) {
-		panic(BadSection)
-	}
-
-	c[key] = section
-}
-
-//Calls Register on the default configuration
-func Register(module Configable) {
-	config.Register(module)
+	c[key] = (*json.RawMessage)(&jayson)
 }
 
 //Calls Load on the default configuration
@@ -89,8 +74,8 @@ func Load(in io.Reader) error {
 }
 
 //Calls Section on the default configuration
-func Section(key string) ConfigSection {
-	return config.Section(key)
+func Section(key string, cs ConfigSection) ConfigSection {
+	return config.Section(key, cs)
 }
 
 //Calls Update on the default configuration

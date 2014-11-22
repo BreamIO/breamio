@@ -1,6 +1,7 @@
 package comte
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -37,33 +38,16 @@ func (t ListTestModule) Config() ConfigSection {
 
 type ListTestConfig []string
 
-func TestRegister(t *testing.T) {
-	tm := TestModule{conf: &TestConfig{}}
-	Register(tm)
-
-	if v, ok := config[tm.String()]; ok {
-		if v != tm.Config() {
-			t.Fail()
-		}
-	} else {
-		t.Fail()
-	}
-}
-
 func TestLoad(t *testing.T) {
 	tm := TestModule{conf: &TestConfig{}}
-	config[tm.String()] = tm.Config()
 	ltm := ListTestModule{make(ListTestConfig, 0, 10)}
-	config[ltm.String()] = ltm.Config()
 
 	sr := strings.NewReader(testConfigData)
 	err := Load(sr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tc := config[TestModule{}.String()].(*TestConfig)
-	t.Log(tc)
-	t.Log(config)
+	tc := config.Section(tm.String(), tm.Config()).(*TestConfig)
 	if tc.A != 42 {
 		t.Fail()
 	}
@@ -72,9 +56,9 @@ func TestLoad(t *testing.T) {
 		t.Fail()
 	}
 
-	ltc := config[ListTestModule{}.String()].(ListTestConfig)
+	ltc := config.Section(ltm.String(), &ltm.conf).(*ListTestConfig)
 	t.Log(ltc)
-	if len(ltc) != 3 {
+	if len(*ltc) != 3 {
 		t.Fail()
 	}
 }
@@ -82,8 +66,9 @@ func TestLoad(t *testing.T) {
 func TestSection(t *testing.T) {
 	tc := &TestConfig{1337, "goo", map[string][]string{"dar": []string{"tar", "var", "car"}}}
 	tm := TestModule{conf: tc}
-	config[tm.String()] = tm.Config()
-	if Section(tm.String()) != tc {
+	tmp, _ := json.Marshal(tm.Config())
+	config[tm.String()] = (*json.RawMessage)(&tmp)
+	if Section(tm.String(), tm.Config()) != tc {
 		t.Fail()
 	}
 }
@@ -91,25 +76,25 @@ func TestSection(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	tc := &TestConfig{1337, "goo", nil}
 	tm := TestModule{conf: tc}
-	config[tm.String()] = tm.Config()
 	Update(tm.String(), &TestConfig{1338, "doo", nil})
-	tc2 := config[tm.String()].(*TestConfig)
+	tc2 := config.Section(tm.String(), tm.Config()).(*TestConfig)
 	if tc2.A != 1338 {
 		t.Fail()
 	}
 }
 
-const testConfigData = `
-ListModule = ["Foo", "Bar", "Baz"]
+const testConfigData = `{
+	"ListModule": ["Foo", "Bar", "Baz"],
+	"TestModule": {
+		"A": 42,
+		"B": "Braxelibrax",
 
-[TestModule]
-A = 42
-B = "Braxelibrax"
-
-[TestModule.C]
-strings = [
-	"hej då",
-	"good bye"
-	]
-numbers = ["1", "2", "3"]
-`
+		"C": {
+			"strings": [
+				"hej då",
+				"good bye"
+				],
+			"numbers": ["1", "2", "3"]
+		}
+	}
+}`
