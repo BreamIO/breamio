@@ -9,7 +9,7 @@ type TestModule struct {
 	conf *TestConfig
 }
 
-func (TestModule) Name() string {
+func (TestModule) String() string {
 	return "TestModule"
 }
 
@@ -23,11 +23,25 @@ type TestConfig struct {
 	C map[string][]string
 }
 
+type ListTestModule struct {
+	conf ListTestConfig
+}
+
+func (ListTestModule) String() string {
+	return "ListModule"
+}
+
+func (t ListTestModule) Config() ConfigSection {
+	return t.conf
+}
+
+type ListTestConfig []string
+
 func TestRegister(t *testing.T) {
 	tm := TestModule{conf: &TestConfig{}}
 	Register(tm)
 
-	if v, ok := config[tm.Name()]; ok {
+	if v, ok := config[tm.String()]; ok {
 		if v != tm.Config() {
 			t.Fail()
 		}
@@ -38,14 +52,16 @@ func TestRegister(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	tm := TestModule{conf: &TestConfig{}}
-	config[tm.Name()] = tm.Config()
+	config[tm.String()] = tm.Config()
+	ltm := ListTestModule{make(ListTestConfig, 0, 10)}
+	config[ltm.String()] = ltm.Config()
 
 	sr := strings.NewReader(testConfigData)
 	err := Load(sr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tc := config[TestModule{}.Name()].(*TestConfig)
+	tc := config[TestModule{}.String()].(*TestConfig)
 	t.Log(tc)
 	t.Log(config)
 	if tc.A != 42 {
@@ -55,13 +71,19 @@ func TestLoad(t *testing.T) {
 	if tc.B != "Braxelibrax" {
 		t.Fail()
 	}
+
+	ltc := config[ListTestModule{}.String()].(ListTestConfig)
+	t.Log(ltc)
+	if len(ltc) != 3 {
+		t.Fail()
+	}
 }
 
 func TestSection(t *testing.T) {
 	tc := &TestConfig{1337, "goo", map[string][]string{"dar": []string{"tar", "var", "car"}}}
 	tm := TestModule{conf: tc}
-	config[tm.Name()] = tm.Config()
-	if Section(tm.Name()) != tc {
+	config[tm.String()] = tm.Config()
+	if Section(tm.String()) != tc {
 		t.Fail()
 	}
 }
@@ -69,28 +91,25 @@ func TestSection(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	tc := &TestConfig{1337, "goo", nil}
 	tm := TestModule{conf: tc}
-	config[tm.Name()] = tm.Config()
-	Update(tm.Name(), &TestConfig{1338, "doo", nil})
-	tc2 := config[tm.Name()].(*TestConfig)
+	config[tm.String()] = tm.Config()
+	Update(tm.String(), &TestConfig{1338, "doo", nil})
+	tc2 := config[tm.String()].(*TestConfig)
 	if tc2.A != 1338 {
 		t.Fail()
 	}
 }
 
-const testConfigData = `{
-	    "TestModule": {
-	        "A": 42,
-	        "B": "Braxelibrax",
-	        "C": {
-	            "strings": [
-	                "hej då",
-	                "good bye"
-	            ],
-	            "numbers": [
-	                "1",
-	                "2",
-	                "3"
-	            ]
-	        }
-	    }
-}`
+const testConfigData = `
+ListModule = ["Foo", "Bar", "Baz"]
+
+[TestModule]
+A = 42
+B = "Braxelibrax"
+
+[TestModule.C]
+strings = [
+	"hej då",
+	"good bye"
+	]
+numbers = ["1", "2", "3"]
+`

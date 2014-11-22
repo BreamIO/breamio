@@ -13,6 +13,7 @@ import (
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/comte"
 	"github.com/maxnordlund/breamio/module"
+	"path/filepath"
 
 	"errors"
 	"io"
@@ -51,7 +52,7 @@ func New(eef func() briee.EventEmitter) Logic {
 // Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root                    briee.EventEmitter
-	logger                  *log.Logger
+	logger                  module.Logger
 	closer                  chan struct{}
 	wg                      sync.WaitGroup
 	eventEmitterConstructor func() briee.EventEmitter
@@ -61,7 +62,7 @@ type breamLogic struct {
 
 func newBL(eef func() briee.EventEmitter) *breamLogic {
 	logic := new(breamLogic)
-	logic.logger = log.New(os.Stdout, "[Beenleigh] ", log.LstdFlags)
+	logic.logger = NewLogger(logic)
 	logic.closer = make(chan struct{})
 	logic.emitters = make(map[int]briee.EventEmitter)
 	logic.eventEmitterConstructor = eef
@@ -80,6 +81,7 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 
+	bl.Logger().Println("Loading configuration")
 	err := bl.LoadConfig()
 	if err != nil {
 		bl.logger.Fatalln(err)
@@ -87,9 +89,13 @@ func (bl *breamLogic) ListenAndServe() {
 
 	//Subscribe to events
 	for _, f := range factories {
-		if runner, ok := f.(RunCloser); ok {
+		bl.Logger().Printf("Starting module %s.", f)
+		if closer, ok := f.(io.Closer); ok {
+			defer closer.Close()
+		}
+		if runner, ok := f.(Runner); ok {
 			// Legacy module or simply require special behaviour
-			runner.Run(bl)
+			go runner.Run(bl)
 		} else {
 			//Default behaviour
 			go RunFactory(bl, f)
@@ -155,6 +161,10 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 
 func (breamLogic) LoadConfig() error {
 	configFile := comte.DefaultConfigFile
+	if os.Getenv("EYESTREAM") != "" {
+		configFile = filepath.Join(os.Getenv("EYESTREAM"), configFile)
+	}
+
 	f, err := os.Open(configFile)
 	if err != nil {
 		return err
@@ -162,10 +172,19 @@ func (breamLogic) LoadConfig() error {
 	defer f.Close()
 	return comte.Load(f)
 }
+
 func (bl breamLogic) Logger() module.Logger {
 	return bl.logger
 }
 
+func (breamLogic) String() string {
+	return "Beenleigh"
+}
+
 func NewLogger(n fmt.Stringer) *log.Logger {
-	return log.New(os.Stderr, "[ "+n.String()+" ] ", log.LstdFlags|log.Lshortfile)
+	return NewLoggerS(n.String())
+}
+
+func NewLoggerS(name string) *log.Logger {
+	return log.New(os.Stderr, "[ "+name+" ] ", log.LstdFlags|log.Lshortfile)
 }

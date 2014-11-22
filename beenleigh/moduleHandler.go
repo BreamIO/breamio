@@ -18,7 +18,8 @@ func RunFactory(l Logic, f module.Factory) {
 			Logger:     NewLogger(f),
 			Parameters: n.Data,
 		})
-		if runner, ok := m.(RunCloser); ok {
+		m.Logger().Println("Booting up!")
+		if runner, ok := m.(Runner); ok {
 			go runner.Run(l)
 		} else {
 			go RunModule(l, n.Emitter, m)
