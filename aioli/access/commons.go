@@ -2,7 +2,6 @@ package access
 
 import (
 	"fmt"
-	"github.com/maxnordlund/breamio/module"
 
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/beenleigh"

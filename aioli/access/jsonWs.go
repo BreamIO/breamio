@@ -2,13 +2,12 @@ package access
 
 import (
 	"code.google.com/p/go.net/websocket"
-	"github.com/maxnordlund/breamio/module"
 	"github.com/maxnordlund/breamio/webber"
 
 	// "net/http"
 
 	"github.com/maxnordlund/breamio/aioli"
-	//"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/beenleigh"
 )
 
 func init() {
