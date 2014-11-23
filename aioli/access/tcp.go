@@ -2,11 +2,11 @@ package access
 
 import (
 	"encoding/gob"
-	"github.com/maxnordlund/breamio/module"
 	"io"
 	"net"
 
 	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/beenleigh"
 )
 
 //Access server port for JSON encoded events over normal TCP connections.
