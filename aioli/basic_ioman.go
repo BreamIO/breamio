@@ -1,9 +1,9 @@
 package aioli
 
 import (
+	"log"
 	"encoding/json"
 	"errors"
-	"github.com/maxnordlund/breamio/module"
 	"io"
 	"reflect"
 	"sync/atomic"
@@ -15,7 +15,7 @@ type BasicIOManager struct {
 	lookuper EmitterLookuper
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
-	logger   module.Logger
+	logger   log.*Logger
 	closed   int32
 }
 
