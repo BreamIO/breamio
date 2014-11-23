@@ -1,8 +1,8 @@
 package aioli
 
 import (
+	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/module"
 )
 
 // ExtPkg is the struct used as the external protocol
@@ -34,13 +34,13 @@ type EmitterLookuper interface {
 
 // IOManager interface defines an I/O manager with external reader functionality.
 type IOManager interface {
-	Listen(codec EncodeDecoder, l module.Logger)
+	Listen(codec EncodeDecoder, l beenleigh.Logger)
 	Dispatch(ep ExtPkg)
 	Run()
 	Close() error
 }
 
 // New creates a new instance of the default implementation BasicIOManager
-func New(lookuper EmitterLookuper, logger module.Logger) IOManager {
+func New(lookuper EmitterLookuper, logger beenleigh.Logger) IOManager {
 	return newBasicIOManager(lookuper, logger)
 }

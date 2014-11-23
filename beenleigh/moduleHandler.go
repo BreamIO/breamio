@@ -2,19 +2,18 @@ package beenleigh
 
 import (
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/module"
 	"reflect"
 	"strings"
 )
 
-func RunFactory(l Logic, f module.Factory) {
+func RunFactory(l Logic, f Factory) {
 	news := l.RootEmitter().Subscribe("new:"+f.String(), Spec{}).(<-chan Spec)
 	defer l.RootEmitter().Unsubscribe("new:"+f.String(), news)
 	for n := range news {
 		// Would have prefered m as the logger object,
 		// but until such time where I can call a method on a
 		// object before creating it, I have to use the factory
-		m := f.New(module.Constructor{
+		m := f.New(Constructor{
 			Logger:     NewLogger(f),
 			Parameters: n.Data,
 		})
@@ -34,7 +33,7 @@ type exportedMethod struct {
 	returnevents []string
 }
 
-func RunModule(l Logic, emitterId int, m module.Module) {
+func RunModule(l Logic, emitterId int, m Module) {
 	typ := reflect.TypeOf(m)
 	val := reflect.ValueOf(m)
 
@@ -102,7 +101,7 @@ func returnable(m reflect.Method) bool {
 	return false
 }
 
-func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitter, l module.Logger) {
+func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitter, l Logger) {
 	t := reflect.New(method.Type().In(0))
 	ch := emitter.Subscribe(em.event, t)
 	defer emitter.Unsubscribe(em.event, ch)
