@@ -3,7 +3,6 @@ package director
 import (
 	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/module"
 	"reflect"
 )
 
@@ -21,8 +20,8 @@ func (Director) Run(logic beenleigh.Logic) {
 	briee.RegisterGlobalEventType("drawer:settings", reflect.TypeOf(DrawerSettings{}))
 }
 
-func (Director) New(module.Constructor) module.Module {
-	return module.Dummy
+func (Director) New(beenleigh.Constructor) beenleigh.Module {
+	return beenleigh.Dummy
 }
 
 type DrawerSettings struct {
