@@ -9,10 +9,8 @@ package beenleigh
 
 import (
 	"fmt"
-	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/comte"
-	"github.com/maxnordlund/breamio/module"
 	"path/filepath"
 
 	"errors"
@@ -22,12 +20,12 @@ import (
 	"sync"
 )
 
-var factories = make(map[string]module.Factory)
+var factories = make(map[string]Factory)
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
-func Register(c module.Factory) {
+func Register(c Factory) {
 	factories[c.String()] = c
 }
 
@@ -37,9 +35,9 @@ func Register(c module.Factory) {
 type Logic interface {
 	RootEmitter() briee.EventEmitter
 	CreateEmitter(id int) briee.EventEmitter
-	aioli.EmitterLookuper
+	EmitterLookup(int) (briee.EventEmitter, error) //Cant use aioli.EmitterLookuper due to circluar dependecy
 	ListenAndServe()
-	Logger() module.Logger
+	Logger() Logger
 	io.Closer
 }
 
@@ -52,9 +50,9 @@ func New(eef func() briee.EventEmitter) Logic {
 // Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root                    briee.EventEmitter
-	logger                  module.Logger
+	logger                  Logger
 	closer                  chan struct{}
-	wg                      sync.WaitGroup
+	wg                      *sync.WaitGroup
 	eventEmitterConstructor func() briee.EventEmitter
 	emitters                map[int]briee.EventEmitter
 	lock                    sync.RWMutex
@@ -66,6 +64,7 @@ func newBL(eef func() briee.EventEmitter) *breamLogic {
 	logic.closer = make(chan struct{})
 	logic.emitters = make(map[int]briee.EventEmitter)
 	logic.eventEmitterConstructor = eef
+	logic.wg = new(sync.WaitGroup)
 
 	//Create the first event emitter
 	logic.root = eef()
@@ -126,8 +125,15 @@ func (bl *breamLogic) ListenAndServe() {
 func (bl *breamLogic) Close() error {
 	defer bl.lock.Unlock()
 	bl.lock.Lock()
+
+	for _, emitter := range bl.emitters {
+		emitter.Close()
+	}
+
 	close(bl.closer)
+	bl.Logger().Println("Alive")
 	bl.wg.Wait()
+	bl.Logger().Println("Alive")
 	return nil
 }
 
@@ -173,7 +179,7 @@ func (breamLogic) LoadConfig() error {
 	return comte.Load(f)
 }
 
-func (bl breamLogic) Logger() module.Logger {
+func (bl breamLogic) Logger() Logger {
 	return bl.logger
 }
 
