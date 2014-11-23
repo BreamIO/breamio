@@ -2,7 +2,8 @@ package mock
 
 import (
 	"errors"
-	"log"
+	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/module"
 	"math"
 	"math/rand"
 	"time"
@@ -24,14 +25,15 @@ func mockSporadic(t float64) (float64, float64) {
 }
 
 var prevX, prevY float64
+
 func mockRandomFixation(t float64) (float64, float64) {
 	var retX, retY float64
 
 	// Stay or go?
 	if math.Abs(rand.NormFloat64()) <= 2.0 {
 		// Stay
-		retX = prevX + rand.NormFloat64() * 0.01
-		retY = prevY + rand.NormFloat64() * 0.01
+		retX = prevX + rand.NormFloat64()*0.01
+		retY = prevY + rand.NormFloat64()*0.01
 	} else {
 		// Go
 		//dx = math.Cos(2*3.1415*rand.Float64())/5.0
@@ -47,8 +49,10 @@ func mockRandomFixation(t float64) (float64, float64) {
 }
 
 func mockConstantFixation(t float64) (float64, float64) {
-	return 0.5 + rand.NormFloat64() * 0.01, 0.5 + rand.NormFloat64() * 0.01
+	return 0.5 + rand.NormFloat64()*0.01, 0.5 + rand.NormFloat64()*0.01
 }
+
+var log module.Logger = beenleigh.NewLoggerS("MockDriver")
 
 type MockDriver struct{}
 
@@ -56,27 +60,28 @@ func (d MockDriver) List() []string {
 	return []string{"standard", "constant"}
 }
 
-func (d MockDriver) Create() (Tracker, error) {
-	return New(mockStandard), nil
+func (d MockDriver) Create(c module.Constructor) (Tracker, error) {
+	return New(c, mockStandard), nil
 }
-func (d MockDriver) CreateFromId(identifier string) (Tracker, error) {
+func (d MockDriver) CreateFromId(c module.Constructor, identifier string) (Tracker, error) {
 	switch identifier {
 	case "standard":
-		return New(mockStandard), nil
+		return New(c, mockStandard), nil
 	case "constant":
-		return New(mockConstant), nil
+		return New(c, mockConstant), nil
 	case "sporadic":
-		return New(mockSporadic), nil
-	case "random_fix":
-		return New(mockRandomFixation), nil
-	case "constant_fix":
-		return New(mockConstantFixation), nil
+		return New(c, mockSporadic), nil
+	case "fixations":
+		return New(c, mockRandomFixation), nil
+	case "constfix":
+		return New(c, mockConstantFixation), nil
 	default:
 		return nil, errors.New("No such tracker.")
 	}
 }
 
 type MockTracker struct {
+	module.SimpleModule
 	f                 func(float64) (float64, float64)
 	t                 float64
 	calibrating       bool
@@ -84,10 +89,15 @@ type MockTracker struct {
 	calibrationPoints int
 	validationPoints  int
 	closer            chan struct{}
+
+	MethodCalibrateStart module.EventMethod `event:"tracker:calibrate:start",returns:"tracker:calibrate:next"`
+	MethodCalibrateAdd module.EventMethod `event:"tracker:calibrate:add",returns:"tracker:calibrate:next,tracker:calibrate:end,tracker:validate:start"`
+	MethodValidateStart module.EventMethod `event:"tracker:validate:start",returns:"tracker:validate:add"`
+	MethodValidateAdd module.EventMethod `event:"tracker:validate:add","returns":"tracker:validate:next,tracker:validate:end"`
 }
 
-func New(f func(float64) (float64, float64)) *MockTracker {
-	return &MockTracker{f, 0, false, false, 0, 0, nil}
+func New(c module.Constructor, f func(float64) (float64, float64)) *MockTracker {
+	return &MockTracker{module.NewSimpleModule("Mock eye tracker", c), f, 0, false, false, 0, 0, nil}
 }
 
 func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
@@ -155,86 +165,31 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 	}
 }
 
-func (m *MockTracker) calibrateStartHandler(ee briee.PublishSubscriber) {
-	inCh := ee.Subscribe("tracker:calibrate:start", struct{}{}).(<-chan struct{})
-	outCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
-	defer ee.Unsubscribe("tracker:calibrate:start", outCh)
-	defer close(outCh)
-	for {
-		select {
-		case <-inCh:
-			log.Println("MockTracker#calibrateStartHandler", "tracker:calibrate:start")
-			m.calibrating = true
-			m.calibrationPoints = 0
-			outCh <- struct{}{}
-		case <-m.closer:
-			return
-		}
+func (m *MockTracker) CalibrateStart() struct{} {
+	log.Println("MockTracker#calibrateStartHandler", "tracker:calibrate:start")
+	m.calibrating = true
+	m.calibrationPoints = 0
+	return struct{}{}
+}
+
+func (m *MockTracker) CalibrateAdd() (next, end, validate *struct{}) {
+	log.Println("MockTracker#calibrateAddHandler", "tracker:calibrate:add")
+	m.calibrationPoints++
+	if m.calibrationPoints >= 5 {
+		return nil, &struct{}{}, &struct{}{}
+	} else {
+		return &struct{}{}, nil, nil
 	}
 }
 
-func (m *MockTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
-	inCh := ee.Subscribe("tracker:calibrate:add", Point2D{}).(<-chan Point2D)
-	defer ee.Unsubscribe("tracker:calibrate:add", inCh)
-
-	nextCh := ee.Publish("tracker:calibrate:next", struct{}{}).(chan<- struct{})
-	defer close(nextCh)
-
-	endCh := ee.Publish("tracker:calibrate:end", struct{}{}).(chan<- struct{})
-	defer close(endCh)
-
-	vstartCh := ee.Publish("tracker:validate:start", struct{}{}).(chan<- struct{})
-	defer close(vstartCh)
-
-	for {
-		select {
-		case <-inCh:
-			log.Println("MockTracker#calibrateAddHandler", "tracker:calibrate:add")
-			m.calibrationPoints++
-			if m.calibrationPoints >= 5 {
-				endCh <- struct{}{}
-				vstartCh <- struct{}{}
-			} else {
-				nextCh <- struct{}{}
-			}
-		case <-m.closer:
-			return
-		}
-	}
-}
-
-func (m *MockTracker) validateStartHandler(ee briee.PublishSubscriber) {
-	inCh := ee.Subscribe("tracker:validate:start", struct{}{}).(<-chan struct{})
-	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
-	defer ee.Unsubscribe("tracker:validate:start", inCh)
-	//defer close(nextCh)
-
-	for {
-		select {
-		case <-inCh:
+func (m *MockTracker) ValidateStart() struct{} {
 			log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
 			m.calibrating = true
 			m.validationPoints = 0
-			nextCh <- struct{}{}
-		case <-m.closer:
-			return
-		}
-	}
+			return struct{}{}
 }
 
-func (m *MockTracker) validateAddHandler(ee briee.PublishSubscriber) {
-	inCh := ee.Subscribe("tracker:validate:add", Point2D{}).(<-chan Point2D)
-	defer ee.Unsubscribe("tracker:validate:add", inCh)
-
-	nextCh := ee.Publish("tracker:validate:next", struct{}{}).(chan<- struct{})
-	//defer close(nextCh)
-
-	qualityCh := ee.Publish("tracker:validate:end", float64(0)).(chan<- float64)
-	//defer close(qualityCh)
-
-	for {
-		select {
-		case <-inCh:
+func (m *MockTracker) validateAdd() (*struct, *float64) {
 			log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
 			m.validationPoints++
 			if m.validationPoints >= 5 {
@@ -242,10 +197,6 @@ func (m *MockTracker) validateAddHandler(ee briee.PublishSubscriber) {
 			} else {
 				nextCh <- struct{}{}
 			}
-		case <-m.closer:
-			return
-		}
-	}
 }
 
 func init() {
