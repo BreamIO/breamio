@@ -3,7 +3,6 @@ package mock
 import (
 	"errors"
 	"github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/module"
 	"math"
 	"math/rand"
 	"time"
@@ -81,7 +80,7 @@ func (d MockDriver) CreateFromId(c module.Constructor, identifier string) (Track
 }
 
 type MockTracker struct {
-	module.SimpleModule
+	beenleigh.SimpleModule
 	f                 func(float64) (float64, float64)
 	t                 float64
 	calibrating       bool
@@ -189,7 +188,7 @@ func (m *MockTracker) ValidateStart() struct{} {
 			return struct{}{}
 }
 
-func (m *MockTracker) validateAdd() (*struct, *float64) {
+func (m *MockTracker) ValidateAdd() (next *struct, end *float64) {
 			log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
 			m.validationPoints++
 			if m.validationPoints >= 5 {

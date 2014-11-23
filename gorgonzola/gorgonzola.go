@@ -2,7 +2,6 @@ package gorgonzola
 
 import (
 	"github.com/maxnordlund/breamio/comte"
-	"github.com/maxnordlund/breamio/module"
 	//"encoding/json"
 	"errors"
 	"strings"
@@ -33,7 +32,7 @@ func Trackers() map[Tracker]Metadata {
 }
 
 type GorgonzolaRun struct {
-	logger  module.Logger
+	logger  bl.Logger
 	closing chan struct{}
 }
 
@@ -47,7 +46,7 @@ func (GorgonzolaRun) Config() comte.ConfigSection {
 	return make(Config, 0, 10)
 }
 
-func (gr GorgonzolaRun) New(c module.Constructor) module.Module {
+func (gr GorgonzolaRun) New(c bl.Constructor) bl.Module {
 	tracker, err := CreateFromURI(c,
 		c.Parameters["URI"].(string))
 	if err != nil {
@@ -60,8 +59,6 @@ func (gr GorgonzolaRun) New(c module.Constructor) module.Module {
 		panic(err)
 	}
 
-	bl.RunModule(c.Logic, c.Parameters["Emitter"], tracker)
-
 	return tracker
 }
 
@@ -70,9 +67,12 @@ func (gr GorgonzolaRun) Run(logic bl.Logic) {
 	comte.Section(gr.String(), &conf)
 	for _, md := range conf {
 		gr.logger.Printf("Creating %s on %d from config", md.URI, md.Emitter)
-		if tracker, err := gr.NewTracker(logic, md); err != nil {
-			logic.RootEmitter().Dispatch("gorgonzola:error", err)
-		}
+		c := bl.Constructor{Logic: logic, Logger: gr.logger, Parameters: map[string]interface{}{
+			"URI":     md.URI,
+			"Emitter": md.Emitter,
+		}}
+		tracker := gr.New(c)
+		bl.RunModule(c.Logic, md.Emitter, tracker)
 	}
 
 	bl.RunFactory(logic, gr)
@@ -84,31 +84,11 @@ func (gr GorgonzolaRun) Close() error {
 	return nil
 }
 
-func (gr GorgonzolaRun) NewTracker(logic bl.Logic, event Metadata) (Tracker, error) {
-	tracker, err := CreateFromURI(event.URI)
-	if err != nil {
-		gr.logger.Printf("Could not create new tracker with uri %s: %s", event.URI, err)
-		return err
-	}
-	err = tracker.Connect()
-	if err != nil {
-		gr.logger.Println("Unable to connect to tracker:", err)
-		return err
-	}
-
-	ee := logic.CreateEmitter(event.Emitter)
-	go tracker.Link(ee)
-
-	gr.logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.URI, event.Emitter)
-	trackers[tracker] = event
-	return nil
-}
-
 // Creates a tracker using a URI.
 // The URI is on the form <driver>://<id>.
 // The driver part is used to find a registered driver in the tracker driver table.
 // The id part is used as a argument for the selected drivers CreateFromId method.
-func CreateFromURI(c module.Constructor, uri string) (Tracker, error) {
+func CreateFromURI(c bl.Constructor, uri string) (Tracker, error) {
 	split := strings.SplitN(uri, "://", 2)
 	if len(split) < 2 {
 		return nil, errors.New("Malformed URI.")
