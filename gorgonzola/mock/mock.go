@@ -2,11 +2,11 @@ package mock
 
 import (
 	"errors"
-	"github.com/maxnordlund/breamio/beenleigh"
 	"math"
 	"math/rand"
 	"time"
 
+	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	. "github.com/maxnordlund/breamio/gorgonzola"
 )
@@ -51,7 +51,7 @@ func mockConstantFixation(t float64) (float64, float64) {
 	return 0.5 + rand.NormFloat64()*0.01, 0.5 + rand.NormFloat64()*0.01
 }
 
-var log module.Logger = beenleigh.NewLoggerS("MockDriver")
+var log beenleigh.Logger = beenleigh.NewLoggerS("MockDriver")
 
 type MockDriver struct{}
 
@@ -59,10 +59,10 @@ func (d MockDriver) List() []string {
 	return []string{"standard", "constant"}
 }
 
-func (d MockDriver) Create(c module.Constructor) (Tracker, error) {
+func (d MockDriver) Create(c beenleigh.Constructor) (Tracker, error) {
 	return New(c, mockStandard), nil
 }
-func (d MockDriver) CreateFromId(c module.Constructor, identifier string) (Tracker, error) {
+func (d MockDriver) CreateFromId(c beenleigh.Constructor, identifier string) (Tracker, error) {
 	switch identifier {
 	case "standard":
 		return New(c, mockStandard), nil
@@ -89,14 +89,22 @@ type MockTracker struct {
 	validationPoints  int
 	closer            chan struct{}
 
-	MethodCalibrateStart module.EventMethod `event:"tracker:calibrate:start",returns:"tracker:calibrate:next"`
-	MethodCalibrateAdd module.EventMethod `event:"tracker:calibrate:add",returns:"tracker:calibrate:next,tracker:calibrate:end,tracker:validate:start"`
-	MethodValidateStart module.EventMethod `event:"tracker:validate:start",returns:"tracker:validate:add"`
-	MethodValidateAdd module.EventMethod `event:"tracker:validate:add","returns":"tracker:validate:next,tracker:validate:end"`
+	MethodCalibrateStart beenleigh.EventMethod `event:"tracker:calibrate:start",returns:"tracker:calibrate:next"`
+	MethodCalibrateAdd   beenleigh.EventMethod `event:"tracker:calibrate:add",returns:"tracker:calibrate:next,tracker:calibrate:end,tracker:validate:start"`
+	MethodValidateStart  beenleigh.EventMethod `event:"tracker:validate:start",returns:"tracker:validate:add"`
+	MethodValidateAdd    beenleigh.EventMethod `event:"tracker:validate:add","returns":"tracker:validate:next,tracker:validate:end"`
 }
 
-func New(c module.Constructor, f func(float64) (float64, float64)) *MockTracker {
-	return &MockTracker{module.NewSimpleModule("Mock eye tracker", c), f, 0, false, false, 0, 0, nil}
+func New(c beenleigh.Constructor, f func(float64) (float64, float64)) *MockTracker {
+	mt := &MockTracker{
+		SimpleModule: beenleigh.NewSimpleModule("Mock eye tracker", c),
+		f:            f,
+		closer:       make(chan struct{}),
+	}
+
+	emitter := c.Logic.CreateEmitter(c.Emitter)
+	mt.Link(emitter)
+	return mt
 }
 
 func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
@@ -109,29 +117,6 @@ func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
 func (m *MockTracker) Link(ee briee.PublishSubscriber) {
 	etDataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	go m.generate(etDataCh)
-	m.setupCalibrationEvents(ee)
-
-	go func() {
-		defer RemoveTracker(m)
-		shutdownCh := ee.Subscribe("shutdown", struct{}{}).(<-chan struct{})
-		tShutdownCh := ee.Subscribe("tracker:shutdown", struct{}{}).(<-chan struct{})
-		defer ee.Unsubscribe("shutdown", shutdownCh)
-		defer ee.Unsubscribe("tracker:shutdown", tShutdownCh)
-		select {
-		case <-shutdownCh:
-		case <-tShutdownCh:
-		}
-		m.Close()
-	}()
-
-}
-
-func (m *MockTracker) setupCalibrationEvents(ee briee.PublishSubscriber) {
-	go m.calibrateStartHandler(ee)
-	go m.calibrateAddHandler(ee)
-
-	go m.validateStartHandler(ee)
-	go m.validateAddHandler(ee)
 }
 
 func (m *MockTracker) Close() error {
@@ -140,8 +125,6 @@ func (m *MockTracker) Close() error {
 }
 
 func (m *MockTracker) Connect() error {
-	m.t = 0
-	m.closer = make(chan struct{})
 	return nil
 }
 
@@ -182,20 +165,22 @@ func (m *MockTracker) CalibrateAdd() (next, end, validate *struct{}) {
 }
 
 func (m *MockTracker) ValidateStart() struct{} {
-			log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
-			m.calibrating = true
-			m.validationPoints = 0
-			return struct{}{}
+	log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
+	m.calibrating = true
+	m.validationPoints = 0
+	return struct{}{}
 }
 
-func (m *MockTracker) ValidateAdd() (next *struct, end *float64) {
-			log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
-			m.validationPoints++
-			if m.validationPoints >= 5 {
-				qualityCh <- float64(0.05)
-			} else {
-				nextCh <- struct{}{}
-			}
+func (m *MockTracker) ValidateAdd() (next *struct{}, end *float64) {
+	log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
+	m.validationPoints++
+	if m.validationPoints >= 5 {
+		ans := 0.05
+		return nil, &ans
+	} else {
+
+		return &struct{}{}, nil
+	}
 }
 
 func init() {

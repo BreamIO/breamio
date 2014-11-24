@@ -36,8 +36,10 @@ type Logger interface {
 }
 
 type Constructor struct {
-	Logic      Logic
-	Logger     Logger
+	Logic  Logic
+	Logger Logger
+
+	Emitter    int //Static parameter
 	Parameters map[string]interface{}
 }
 

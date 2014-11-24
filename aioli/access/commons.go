@@ -8,7 +8,7 @@ import (
 )
 
 type AccessServer interface {
-	Listen(aioli.IOManager, module.Logger)
+	Listen(aioli.IOManager, beenleigh.Logger)
 }
 
 var servers = make(map[string]AccessServer)
@@ -34,8 +34,8 @@ func (AioliAccess) String() string {
 	return "AioliAccess"
 }
 
-func (AioliAccess) New(module.Constructor) module.Module {
-	return module.Dummy
+func (AioliAccess) New(beenleigh.Constructor) beenleigh.Module {
+	return beenleigh.Dummy
 }
 
 func (aa *AioliAccess) Run(logic beenleigh.Logic) {
