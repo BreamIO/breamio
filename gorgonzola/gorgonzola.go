@@ -67,9 +67,8 @@ func (gr GorgonzolaRun) Run(logic bl.Logic) {
 	comte.Section(gr.String(), &conf)
 	for _, md := range conf {
 		gr.logger.Printf("Creating %s on %d from config", md.URI, md.Emitter)
-		c := bl.Constructor{Logic: logic, Logger: gr.logger, Parameters: map[string]interface{}{
-			"URI":     md.URI,
-			"Emitter": md.Emitter,
+		c := bl.Constructor{Logic: logic, Logger: gr.logger, Emitter: md.Emitter, Parameters: map[string]interface{}{
+			"URI": md.URI,
 		}}
 		tracker := gr.New(c)
 		bl.RunModule(c.Logic, md.Emitter, tracker)

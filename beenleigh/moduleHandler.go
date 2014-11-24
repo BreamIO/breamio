@@ -1,6 +1,7 @@
 package beenleigh
 
 import (
+	"fmt"
 	"github.com/maxnordlund/breamio/briee"
 	"reflect"
 	"strings"
@@ -38,6 +39,14 @@ func RunModule(l Logic, emitterId int, m Module) {
 	val := reflect.ValueOf(m)
 
 	var exported []exportedMethod
+
+	for typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	if typ.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("RunModule does not support %s of %s", typ.Kind(), typ.String()))
+	}
 
 	//Look for EventMethods among fields
 	for i := 0; i < typ.NumField(); i++ {

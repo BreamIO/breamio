@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 
 	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/module"
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 
 var Root = "web"
 
-var webber = New(module.Constructor{
+var webber = New(bl.Constructor{
 	Logger: bl.NewLoggerS("Webber"),
 })
 
@@ -34,13 +33,13 @@ func init() {
 		Root = path.Join(installpath, "web")
 	}
 
-	bl.Register(module.SingletonFactory{Name: "Webber", Module: webber})
+	bl.Register(bl.SingletonFactory{Name: "Webber", Module: webber})
 
 }
 
-func New(c module.Constructor) *Webber {
+func New(c bl.Constructor) *Webber {
 	w := &Webber{
-		SimpleModule: module.NewSimpleModule("Webber", c),
+		SimpleModule: bl.NewSimpleModule("Webber", c),
 		mux:          mux.NewRouter(),
 	}
 
@@ -85,7 +84,7 @@ func PublishError(w http.ResponseWriter, e Error) *Error {
 }
 
 type Webber struct {
-	module.SimpleModule
+	bl.SimpleModule
 	mux      *mux.Router
 	listener net.Listener
 }

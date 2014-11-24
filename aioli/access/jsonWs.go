@@ -17,11 +17,11 @@ func init() {
 // Server is websocket server using the default decoder
 type WSServer struct {
 	manager aioli.IOManager
-	logger  module.Logger
+	logger  beenleigh.Logger
 }
 
 // Serve static files and listen for incoming websocket messages
-func (s *WSServer) Listen(ioman aioli.IOManager, logger module.Logger) {
+func (s *WSServer) Listen(ioman aioli.IOManager, logger beenleigh.Logger) {
 	s.manager = ioman
 	s.logger = logger
 	webber.Instance().HandleWebSocket("/api/json", s.handler)

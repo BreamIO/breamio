@@ -5,6 +5,7 @@ import (
 	"log"
 
 	//"log"
+	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	. "github.com/maxnordlund/breamio/gorgonzola"
 	"github.com/zephyyrr/gobii/gaze"
@@ -13,10 +14,15 @@ import (
 // Driver implementation for Gobii
 type GazeDriver struct{}
 
-func (GazeDriver) Create() (Tracker, error) {
+func (GazeDriver) String() string {
+	return "GazeDriver"
+}
+
+func (g GazeDriver) Create(c beenleigh.Constructor) (Tracker, error) {
 	tracker, err := gaze.AnyEyeTracker()
 	return &GazeTracker{
 		tracker,
+		beenleigh.NewSimpleModule(g.String(), c),
 		make(chan struct{}),
 		nil,
 		false,
@@ -25,13 +31,17 @@ func (GazeDriver) Create() (Tracker, error) {
 	}, err
 }
 
-func (g GazeDriver) CreateFromId(id string) (Tracker, error) {
+func (g GazeDriver) CreateFromId(c beenleigh.Constructor, id string) (Tracker, error) {
 	if id == "any" {
-		return g.Create()
+		return g.Create(c)
 	}
 	url := "tet-usb://" + id
 	tracker, err := gaze.EyeTrackerFromURL(url)
-	return &GazeTracker{tracker, make(chan struct{}), nil, false, 0, 0}, err
+	return &GazeTracker{
+		EyeTracker:   tracker,
+		SimpleModule: beenleigh.NewSimpleModule(g.String(), c),
+		closer:       make(chan struct{}),
+	}, err
 }
 
 func (GazeDriver) List() (res []string) {
@@ -48,6 +58,7 @@ func (GazeDriver) List() (res []string) {
 
 type GazeTracker struct {
 	gaze.EyeTracker
+	beenleigh.SimpleModule
 	closer            chan struct{}
 	etdataCh          chan<- *ETData
 	calibrated        bool
