@@ -221,11 +221,13 @@ func (web *Webber) addServings() {
 		if err != nil {
 			web.Logger().Println("Template parse error:", err)
 			PublishError(w, Error{500, "Template parse error"})
+			return
 		}
-		normalizeSource, err := ioutil.ReadFile(normalize)
+		normalizeSource, err := ioutil.ReadFile(path.Join(Root, normalize))
 		if err != nil {
 			web.Logger().Println("File read error:", err)
 			PublishError(w, Error{500, "File read error"})
+			return
 		}
 		cali := Calibrate{
 			Id: 1,
