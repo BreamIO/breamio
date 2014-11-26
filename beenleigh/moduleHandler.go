@@ -27,7 +27,7 @@ func RunFactory(l Logic, f Factory) {
 	}
 }
 
-var methodType = reflect.TypeOf(MethodEvent{})
+var methodType = reflect.TypeOf(EventMethod{})
 
 type exportedMethod struct {
 	name, event  string
@@ -40,17 +40,19 @@ func RunModule(l Logic, emitterId int, m Module) {
 
 	var exported []exportedMethod
 
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
+	styp := typ
+
+	for styp.Kind() == reflect.Ptr {
+		styp = typ.Elem()
 	}
 
-	if typ.Kind() != reflect.Struct {
+	if styp.Kind() != reflect.Struct {
 		panic(fmt.Sprintf("RunModule does not support %s of %s", typ.Kind(), typ.String()))
 	}
 
 	//Look for EventMethods among fields
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
+	for i := 0; i < styp.NumField(); i++ {
+		field := styp.Field(i)
 		if field.Type == methodType {
 			//Evented method declaration
 			//Figure out method name from field name and tag
@@ -87,6 +89,7 @@ func RunModule(l Logic, emitterId int, m Module) {
 	emitter := l.CreateEmitter(emitterId)
 
 	for _, em := range exported {
+		m.Logger().Println("Automatic export of", em.name, "on", em.event)
 		methodType, ok := typ.MethodByName(em.name)
 		if !ok {
 			l.Logger().Panicf("Method %s on %s does not exist.", em.name, typ.Name())
@@ -100,9 +103,12 @@ func RunModule(l Logic, emitterId int, m Module) {
 	}
 }
 
+// Helper function to determine if a method signature is suitable for
+// event exporting.
+// Returns true iff the method takes a single or no arguments.
+// In the future this might also check the argument and return types for serlializability aswell.
 func suitable(m reflect.Method) bool {
-	//TODO implement me
-	return false
+	return m.Type.NumIn() <= 2
 }
 
 func returnable(m reflect.Method) bool {
@@ -110,9 +116,18 @@ func returnable(m reflect.Method) bool {
 	return false
 }
 
+type Signal *struct{}
+
+var Pulse Signal = Signal(&struct{}{})
+
 func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitter, l Logger) {
-	t := reflect.New(method.Type().In(0))
-	ch := emitter.Subscribe(em.event, t)
+	t := reflect.ValueOf(Pulse)
+	if method.Type().NumIn() == 1 {
+		//Argument availiable
+		t = reflect.New(method.Type().In(0)).Elem()
+	}
+	// l.Println(em.event, t)
+	ch := emitter.Subscribe(em.event, t.Interface())
 	defer emitter.Unsubscribe(em.event, ch)
 	if len(em.returnevents) > method.Type().NumOut() {
 		l.Panicf("More return events than return values.")
@@ -121,10 +136,12 @@ func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitt
 	returns := make([]reflect.Value, method.Type().NumOut())
 	for i, retevent := range em.returnevents {
 		if retevent == "_" {
+			l.Printf("Method (%s) does not want to export returnvalue %d", em.name, i)
 			continue
 		}
-		t := reflect.New(method.Type().Out(i))
-		rch := emitter.Publish(retevent, t)
+		t := reflect.New(method.Type().Out(i)).Elem()
+		// l.Println(retevent, t)
+		rch := emitter.Publish(retevent, t.Interface())
 		returns[i] = reflect.ValueOf(rch)
 	}
 
@@ -134,12 +151,32 @@ func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitt
 		if !ok {
 			return //Event is closed.
 		}
-		rets := method.Call([]reflect.Value{val})
+		var rets []reflect.Value
+		if method.Type().NumIn() == 0 {
+			// Only reciever as argument
+			rets = method.Call([]reflect.Value{})
+		} else if method.Type().NumIn() == 1 {
+			// reciever + 1 argument
+			rets = method.Call([]reflect.Value{val})
+		} else {
+			l.Panicf("Wrong amount of arguments %d to method %s. Expected 0 or 1.", method.Type().NumIn(), method.Type().Name())
+		}
 		//Send return values to their respective
 		for i, val := range rets {
-			if returns[i].IsValid() {
+			//The nil check allows a method to give out different events depending on circumstances
+			//A nil event is simply discarded. If a event with no meaning other that "it has happened" is wanted, use Signal or *Signal instead.
+			if returns[i].IsValid() && !toBeSent(val) {
 				returns[i].Send(val)
 			}
 		}
+	}
+}
+
+func toBeSent(val reflect.Value) bool {
+	switch val.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func, reflect.Interface:
+		return val.IsNil()
+	default:
+		return true
 	}
 }
