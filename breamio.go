@@ -23,8 +23,8 @@ var (
 const (
 	Company     = "Bream IO"
 	Product     = "EyeStream"
-	Version     = "v0.9"
-	evalEndDate = "5 Jan 2015"
+	Version     = "v1.3-alpha"
+	evalEndDate = "1 Apr 2015"
 	evalLayout  = "2 Jan 2006"
 )
 
@@ -35,6 +35,10 @@ func main() {
 		printVersionInfo()
 		return // We do not want to run the rest of the program if version flag is set
 	}
+
+	defer func() {
+		fmt.Println("Thank you for using our product.")
+	}()
 
 	// We want to be able to print version information before quitting because of ended eval period
 	// Start a routine that will check that we do not pass
@@ -51,11 +55,12 @@ func main() {
 
 	go func() {
 		<-done
+		signal.Stop(done)
 		logic.Close()
+		logic.Logger().Println("Closed")
 	}()
 
 	logic.ListenAndServe()
-	fmt.Println("Thank you for using our product.")
 }
 
 func init() {
