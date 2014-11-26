@@ -89,15 +89,15 @@ type MockTracker struct {
 	validationPoints  int
 	closer            chan struct{}
 
-	MethodCalibrateStart beenleigh.EventMethod `event:"tracker:calibrate:start",returns:"tracker:calibrate:next"`
-	MethodCalibrateAdd   beenleigh.EventMethod `event:"tracker:calibrate:add",returns:"tracker:calibrate:next,tracker:calibrate:end,tracker:validate:start"`
-	MethodValidateStart  beenleigh.EventMethod `event:"tracker:validate:start",returns:"tracker:validate:add"`
-	MethodValidateAdd    beenleigh.EventMethod `event:"tracker:validate:add","returns":"tracker:validate:next,tracker:validate:end"`
+	MethodCalibrateStart beenleigh.EventMethod `event:"tracker:calibrate:start" returns:"calibrate:next"`
+	MethodCalibrateAdd   beenleigh.EventMethod `event:"tracker:calibrate:add" returns:"calibrate:next,calibrate:end,validate:start"`
+	MethodValidateStart  beenleigh.EventMethod `event:"tracker:validate:start" returns:"validate:next"`
+	MethodValidateAdd    beenleigh.EventMethod `event:"tracker:validate:add" returns:"validate:next,validate:end"`
 }
 
 func New(c beenleigh.Constructor, f func(float64) (float64, float64)) *MockTracker {
 	mt := &MockTracker{
-		SimpleModule: beenleigh.NewSimpleModule("Mock eye tracker", c),
+		SimpleModule: beenleigh.NewSimpleModule("tracker", c),
 		f:            f,
 		closer:       make(chan struct{}),
 	}
@@ -147,31 +147,31 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 	}
 }
 
-func (m *MockTracker) CalibrateStart() struct{} {
+func (m *MockTracker) CalibrateStart() beenleigh.Signal {
 	log.Println("MockTracker#calibrateStartHandler", "tracker:calibrate:start")
 	m.calibrating = true
 	m.calibrationPoints = 0
-	return struct{}{}
+	return beenleigh.Pulse
 }
 
-func (m *MockTracker) CalibrateAdd() (next, end, validate *struct{}) {
+func (m *MockTracker) CalibrateAdd(p Point2D) (next, end, validate beenleigh.Signal) {
 	log.Println("MockTracker#calibrateAddHandler", "tracker:calibrate:add")
 	m.calibrationPoints++
 	if m.calibrationPoints >= 5 {
-		return nil, &struct{}{}, &struct{}{}
+		return nil, beenleigh.Pulse, beenleigh.Pulse
 	} else {
-		return &struct{}{}, nil, nil
+		return beenleigh.Pulse, nil, nil
 	}
 }
 
-func (m *MockTracker) ValidateStart() struct{} {
+func (m *MockTracker) ValidateStart() beenleigh.Signal {
 	log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
 	m.calibrating = true
 	m.validationPoints = 0
-	return struct{}{}
+	return beenleigh.Pulse
 }
 
-func (m *MockTracker) ValidateAdd() (next *struct{}, end *float64) {
+func (m *MockTracker) ValidateAdd(p Point2D) (next beenleigh.Signal, end *float64) {
 	log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
 	m.validationPoints++
 	if m.validationPoints >= 5 {
@@ -179,7 +179,7 @@ func (m *MockTracker) ValidateAdd() (next *struct{}, end *float64) {
 		return nil, &ans
 	} else {
 
-		return &struct{}{}, nil
+		return beenleigh.Pulse, nil
 	}
 }
 
