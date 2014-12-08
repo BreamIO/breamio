@@ -2,6 +2,7 @@ package regionStats
 
 import (
 	"errors"
+	"github.com/maxnordlund/breamio/comte"
 	"github.com/mitchellh/mapstructure"
 	"math"
 	"strconv"
@@ -67,6 +68,28 @@ func (r *Factory) Close() error {
 	return nil
 }
 
+func (r *Factory) Run(l beenleigh.Logic) {
+	confs := make([]Config, 0)
+	comte.Section(r.String(), &confs)
+
+	for _, conf := range confs {
+		c := beenleigh.Constructor{
+			Logic:   l,
+			Logger:  beenleigh.NewLogger(r),
+			Emitter: conf.Emitter,
+			Parameters: map[string]interface{}{
+				"Duration":           conf.Duration,
+				"GenerationInterval": conf.GenerationInterval,
+				"Hertz":              conf.Hertz,
+			}, //Not beautiful, but necessary evil.
+		} // TODO, add a Logic.NewConstructor(emitter id, params interface{}) Constructor
+		c.Logger.Println("Starting a new generator for emitter:", c.Emitter)
+		r.generators[c.Emitter] = New(c)
+	}
+
+	beenleigh.RunFactory(l, r)
+}
+
 type RegionStatistics struct {
 	beenleigh.SimpleModule
 
@@ -123,7 +146,7 @@ func New(c beenleigh.Constructor) *RegionStatistics {
 		for {
 			select {
 			case <-genTicker:
-				rs.Generate(publisher)
+				rs.generate(publisher)
 			case <-rs.closeChan:
 				return
 			}
@@ -131,6 +154,10 @@ func New(c beenleigh.Constructor) *RegionStatistics {
 	}(rs.generationInterval)
 
 	return rs
+}
+
+func (rs RegionStatistics) OnETData(data *gr.ETData) {
+	rs.dataCh <- data
 }
 
 func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
@@ -207,8 +234,8 @@ func (rs *RegionStatistics) RemoveRegions(regs []string) error {
 
 // Generates a RegionStatsMap and
 // sends it away on the publish channel.
-func (rs RegionStatistics) Generate(publisher chan<- RegionStatsMap) {
-	publisher <- rs.generate()
+func (rs RegionStatistics) generate(publisher chan<- RegionStatsMap) {
+	publisher <- rs.Generate()
 }
 
 // inRange determines if the two coordinates are within range
@@ -228,7 +255,7 @@ func newFixation(p1, p2 gr.XYer, numPoints int) *gr.Point2D {
 	}
 }
 
-func (rs RegionStatistics) generate() RegionStatsMap {
+func (rs RegionStatistics) Generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
 
