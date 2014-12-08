@@ -2,14 +2,19 @@ package beenleigh
 
 import (
 	"fmt"
-	"github.com/maxnordlund/breamio/briee"
+	"io"
 	"reflect"
 	"strings"
+
+	"github.com/maxnordlund/breamio/briee"
 )
 
 func RunFactory(l Logic, f Factory) {
 	news := l.RootEmitter().Subscribe("new:"+f.String(), Spec{}).(<-chan Spec)
 	defer l.RootEmitter().Unsubscribe("new:"+f.String(), news)
+	if closer, ok := f.(io.Closer); ok {
+		defer closer.Close()
+	}
 	for n := range news {
 		// Would have prefered m as the logger object,
 		// but until such time where I can call a method on a
@@ -20,7 +25,12 @@ func RunFactory(l Logic, f Factory) {
 		})
 		m.Logger().Println("Booting up!")
 		if runner, ok := m.(Runner); ok {
-			go runner.Run(l)
+			go func(runner Runner) {
+				runner.Run(l)
+				if closer, ok := runner.(io.Closer); ok {
+					closer.Close()
+				}
+			}(runner)
 		} else {
 			go RunModule(l, n.Emitter, m)
 		}
