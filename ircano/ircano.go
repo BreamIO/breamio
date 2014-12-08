@@ -37,7 +37,7 @@ type Settings struct {
 type Factory struct{}
 
 func (Factory) String() string {
-	return "Ircano"
+	return "IRC"
 }
 
 func (f Factory) New(c bl.Constructor) bl.Module {
