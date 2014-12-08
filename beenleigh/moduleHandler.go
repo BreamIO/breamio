@@ -52,7 +52,7 @@ func RunModule(l Logic, emitterId int, m Module) {
 
 	styp := typ
 
-	for styp.Kind() == reflect.Ptr {
+	if styp.Kind() == reflect.Ptr {
 		styp = typ.Elem()
 	}
 
@@ -72,9 +72,6 @@ func RunModule(l Logic, emitterId int, m Module) {
 			if name == "" {
 				//Use heuristic and field name
 				name = strings.TrimPrefix(field.Name, "Method")
-				if name == "" {
-					name = "Method" //If all else fails.
-				}
 			}
 
 			event := field.Tag.Get("event")
