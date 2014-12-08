@@ -54,6 +54,9 @@ func (c Configuration) Section(key string, mall ConfigSection) (cs ConfigSection
 			cs = v
 		}()
 	}
+	if c[key] == nil {
+		return nil
+	}
 	json.Unmarshal(*c[key], mall)
 	return mall
 }
