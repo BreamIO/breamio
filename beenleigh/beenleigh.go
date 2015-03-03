@@ -8,9 +8,10 @@ but not the actual implementation.
 package beenleigh
 
 import (
-	"github.com/maxnordlund/breamio/aioli"
+	"fmt"
 	"github.com/maxnordlund/breamio/briee"
 	"github.com/maxnordlund/breamio/comte"
+	"path/filepath"
 
 	"errors"
 	"io"
@@ -19,13 +20,13 @@ import (
 	"sync"
 )
 
-var modules []RunCloser
+var factories = make(map[string]Factory)
 
 // Allows a module to register a constructor to be called during startup.
 // The system also allows for destructors through the Close() error method.
 // This is typically used to register global events and similar.
-func Register(c RunCloser) {
-	modules = append(modules, c)
+func Register(c Factory) {
+	factories[c.String()] = c
 }
 
 // The interface of a BreamIO logic.
@@ -34,8 +35,9 @@ func Register(c RunCloser) {
 type Logic interface {
 	RootEmitter() briee.EventEmitter
 	CreateEmitter(id int) briee.EventEmitter
-	aioli.EmitterLookuper
+	EmitterLookup(int) (briee.EventEmitter, error) //Cant use aioli.EmitterLookuper due to circluar dependecy
 	ListenAndServe()
+	Logger() Logger
 	io.Closer
 }
 
@@ -48,9 +50,9 @@ func New(eef func() briee.EventEmitter) Logic {
 // Allows creation of trackers and statistics modules using the "new" event.
 type breamLogic struct {
 	root                    briee.EventEmitter
-	logger                  *log.Logger
+	logger                  Logger
 	closer                  chan struct{}
-	wg                      sync.WaitGroup
+	wg                      *sync.WaitGroup
 	eventEmitterConstructor func() briee.EventEmitter
 	emitters                map[int]briee.EventEmitter
 	lock                    sync.RWMutex
@@ -58,10 +60,11 @@ type breamLogic struct {
 
 func newBL(eef func() briee.EventEmitter) *breamLogic {
 	logic := new(breamLogic)
-	logic.logger = log.New(os.Stdout, "[Beenleigh] ", log.LstdFlags)
+	logic.logger = NewLogger(logic)
 	logic.closer = make(chan struct{})
 	logic.emitters = make(map[int]briee.EventEmitter)
 	logic.eventEmitterConstructor = eef
+	logic.wg = new(sync.WaitGroup)
 
 	//Create the first event emitter
 	logic.root = eef()
@@ -77,15 +80,25 @@ func (bl *breamLogic) RootEmitter() briee.EventEmitter {
 func (bl *breamLogic) ListenAndServe() {
 	defer bl.root.Close()
 
+	bl.Logger().Println("Loading configuration")
 	err := bl.LoadConfig()
 	if err != nil {
 		bl.logger.Fatalln(err)
 	}
 
 	//Subscribe to events
-	for _, c := range modules {
-		go c.Run(bl)
-		defer c.Close()
+	for _, f := range factories {
+		bl.Logger().Printf("Starting module %s.", f)
+		if closer, ok := f.(io.Closer); ok {
+			defer closer.Close()
+		}
+		if runner, ok := f.(Runner); ok {
+			// Legacy module or simply require special behaviour
+			go runner.Run(bl)
+		} else {
+			//Default behaviour
+			go RunFactory(bl, f)
+		}
 	}
 
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
@@ -112,8 +125,15 @@ func (bl *breamLogic) ListenAndServe() {
 func (bl *breamLogic) Close() error {
 	defer bl.lock.Unlock()
 	bl.lock.Lock()
+
+	for _, emitter := range bl.emitters {
+		emitter.Close()
+	}
+
 	close(bl.closer)
+	bl.Logger().Println("Alive")
 	bl.wg.Wait()
+	bl.Logger().Println("Alive")
 	return nil
 }
 
@@ -147,6 +167,10 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 
 func (breamLogic) LoadConfig() error {
 	configFile := comte.DefaultConfigFile
+	if os.Getenv("EYESTREAM") != "" {
+		configFile = filepath.Join(os.Getenv("EYESTREAM"), configFile)
+	}
+
 	f, err := os.Open(configFile)
 	if err != nil {
 		return err
@@ -155,8 +179,18 @@ func (breamLogic) LoadConfig() error {
 	return comte.Load(f)
 }
 
-func NewLogger(n interface {
-	Name() string
-}) *log.Logger {
-	return log.New(os.Stderr, "[ "+n.Name()+" ] ", log.LstdFlags|log.Lshortfile)
+func (bl breamLogic) Logger() Logger {
+	return bl.logger
+}
+
+func (breamLogic) String() string {
+	return "Beenleigh"
+}
+
+func NewLogger(n fmt.Stringer) *log.Logger {
+	return NewLoggerS(n.String())
+}
+
+func NewLoggerS(name string) *log.Logger {
+	return log.New(os.Stderr, "[ "+name+" ] ", log.LstdFlags|log.Lshortfile)
 }

@@ -1,15 +1,14 @@
 package access
 
 import (
-	"log"
-	"os"
+	"fmt"
 
 	"github.com/maxnordlund/breamio/aioli"
 	"github.com/maxnordlund/breamio/beenleigh"
 )
 
 type AccessServer interface {
-	Listen(aioli.IOManager, *log.Logger)
+	Listen(aioli.IOManager, beenleigh.Logger)
 }
 
 var servers = make(map[string]AccessServer)
@@ -20,24 +19,35 @@ func Register(name string, as AccessServer) {
 }
 
 func init() {
-	beenleigh.Register(beenleigh.NewRunHandler(accessRun))
+	beenleigh.Register(&AioliAccess{})
 }
 
 func GetIOManager() aioli.IOManager {
 	return ioman
 }
 
-func accessRun(logic beenleigh.Logic, closeCh <-chan struct{}) {
-	ioman = aioli.New(logic)
-	log.Println("Starting ExternalAccessService")
+type AioliAccess struct {
+	ioman aioli.IOManager
+}
+
+func (AioliAccess) String() string {
+	return "AioliAccess"
+}
+
+func (AioliAccess) New(beenleigh.Constructor) beenleigh.Module {
+	return beenleigh.Dummy
+}
+
+func (aa *AioliAccess) Run(logic beenleigh.Logic) {
+	ioman = aioli.New(logic, beenleigh.NewLoggerS("Aioli"))
 	go ioman.Run()
-	go func() {
-		<-closeCh
-		ioman.Close()
-	}()
 
 	for name, as := range servers {
-		logger := log.New(os.Stdout, "["+name+"] ", log.LstdFlags)
+		logger := beenleigh.NewLoggerS(fmt.Sprintf("AioliAccess (%s)", name))
 		go as.Listen(ioman, logger)
 	}
+}
+
+func (aa *AioliAccess) Close() error {
+	return aa.ioman.Close()
 }

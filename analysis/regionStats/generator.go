@@ -2,15 +2,14 @@ package regionStats
 
 import (
 	"errors"
-	"log"
+	"github.com/maxnordlund/breamio/comte"
+	"github.com/mitchellh/mapstructure"
 	"math"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/briee"
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
@@ -35,45 +34,31 @@ type Config struct {
 
 // Register in Logic
 func init() {
-	beenleigh.Register(&RegionRun{
+	beenleigh.Register(&Factory{
 		generators: make(map[int]*RegionStatistics),
 		closeChan:  make(chan struct{}),
 	})
 }
 
-// RegionRun creates and runs generators,
-// and terminates them once closed.
-type RegionRun struct {
+// RegionRun creates generators,
+// and terminates them when closing.
+type Factory struct {
 	generators map[int]*RegionStatistics
 	closeChan  chan struct{}
 }
 
-func (r *RegionRun) Run(logic beenleigh.Logic) {
-	log := log.New(os.Stderr, "[ RegionRun ] ", log.LstdFlags)
-	log.Println("Registering in EE")
-	var newChan <-chan *Config
-	var ee briee.EventEmitter
-
-	ee = logic.RootEmitter()
-	newChan = ee.Subscribe("new:regionStats", new(Config)).(<-chan *Config)
-	defer ee.Unsubscribe("new:regionStats", newChan)
-	for {
-		select {
-		case rc, ok := <-newChan:
-			if !ok {
-				continue
-			}
-			log.Println("Starting a new generator for emitter:", rc.Emitter)
-			r.generators[rc.Emitter] =
-				New(logic.CreateEmitter(rc.Emitter), rc.Duration, rc.Hertz, rc.GenerationInterval)
-		case <-r.closeChan:
-			log.Println("Shutting down")
-			return
-		}
-	}
+func (Factory) String() string {
+	return "RegionStats"
 }
 
-func (r *RegionRun) Close() error {
+func (r *Factory) New(c beenleigh.Constructor) beenleigh.Module {
+	c.Logger.Println("Starting a new generator for emitter:", c.Emitter)
+
+	r.generators[c.Emitter] = New(c)
+	return r.generators[c.Emitter]
+}
+
+func (r *Factory) Close() error {
 	close(r.closeChan)
 
 	for _, generator := range r.generators {
@@ -83,135 +68,103 @@ func (r *RegionRun) Close() error {
 	return nil
 }
 
-type RegionStatistics struct {
-	coordinates        *analysis.CoordBuffer
-	regions            []Region
-	publish            chan<- RegionStatsMap
-	closeChan          chan struct{}
-	generationInterval time.Duration
+func (r *Factory) Run(l beenleigh.Logic) {
+	confs := make([]Config, 0)
+	comte.Section(r.String(), &confs)
+
+	for _, conf := range confs {
+		c := beenleigh.Constructor{
+			Logic:   l,
+			Logger:  beenleigh.NewLogger(r),
+			Emitter: conf.Emitter,
+			Parameters: map[string]interface{}{
+				"Duration":           conf.Duration,
+				"GenerationInterval": conf.GenerationInterval,
+				"Hertz":              conf.Hertz,
+			}, //Not beautiful, but necessary evil.
+		} // TODO, add a Logic.NewConstructor(emitter id, params interface{}) Constructor
+		c.Logger.Println("Starting a new generator for emitter:", c.Emitter)
+		r.generators[c.Emitter] = New(c)
+	}
+
+	beenleigh.RunFactory(l, r)
 }
 
-func New(ee briee.PublishSubscriber, dur string, hertz uint, genIntv string) *RegionStatistics {
-	log := log.New(os.Stderr, "[ RegionStats ] ", log.LstdFlags)
+type RegionStatistics struct {
+	beenleigh.SimpleModule
 
-	duration, err := time.ParseDuration(dur)
+	coordinates        *analysis.CoordBuffer
+	regions            []Region
+	dataCh             chan<- *gr.ETData
+	closeChan          chan struct{}
+	generationInterval time.Duration
+
+	//Event Export Declarations
+
+	MethodOnETData     beenleigh.EventMethod `event:"tracker:etdata"`
+	MethodAddRegion    beenleigh.EventMethod `returns:"AddRegion:error"`
+	MethodUpdateRegion beenleigh.EventMethod `returns:"UpdateRegion:error"`
+	MethodRemoveRegion beenleigh.EventMethod `returns:"RemoveRegion:error"`
+	MethodGetRegions   beenleigh.EventMethod `returns:"Regions"`
+
+	MethodStart  beenleigh.EventMethod
+	MethodStop   beenleigh.EventMethod
+	MetodRestart beenleigh.EventMethod
+}
+
+func New(c beenleigh.Constructor) *RegionStatistics {
+	var rc Config
+	mapstructure.Decode(c.Parameters, &rc)
+
+	duration, err := time.ParseDuration(rc.Duration)
 	if err != nil {
-		log.Println(err, "Defaulting duration to 60 seconds")
+		c.Logger.Println(err, "Defaulting duration to 60 seconds")
 		duration = time.Minute
 	}
-	generationInterval, err := time.ParseDuration(genIntv)
+	generationInterval, err := time.ParseDuration(rc.GenerationInterval)
 	if err != nil {
-		log.Println(err, "Defaulting generation interval to 60 seconds")
+		c.Logger.Println(err, "Defaulting generation interval to 60 seconds")
 		duration = time.Minute
 	}
 
-	ch := ee.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData)
-
-	addRegionCh := ee.Subscribe("regionStats:addRegion", new(RegionDefinitionPackage)).(<-chan *RegionDefinitionPackage)
-	updateRegionCh := ee.Subscribe("regionStats:updateRegion", new(RegionUpdatePackage)).(<-chan *RegionUpdatePackage)
-	removeRegionCh := ee.Subscribe("regionStats:removeRegion", make([]string, 0, 0)).(<-chan []string)
-
-	startch := ee.Subscribe("regionStats:start", struct{}{}).(<-chan struct{})
-	stopch := ee.Subscribe("regionStats:stop", struct{}{}).(<-chan struct{})
-	restartch := ee.Subscribe("regionStats:restart", struct{}{}).(<-chan struct{})
+	datach := make(chan *gr.ETData)
 
 	rs := &RegionStatistics{
-		coordinates:        analysis.NewCoordBuffer(ch, duration, hertz),
+		SimpleModule:       beenleigh.NewSimpleModule("RegionStats", c),
+		coordinates:        analysis.NewCoordBuffer(datach, duration, rc.Hertz),
 		regions:            make([]Region, 0),
-		publish:            ee.Publish("regionStats:regions", make(RegionStatsMap)).(chan<- RegionStatsMap),
+		dataCh:             datach,
 		closeChan:          make(chan struct{}),
 		generationInterval: generationInterval,
 	}
 
-	go func(rs *RegionStatistics) {
-		defer func() {
-			close(rs.publish)
-			ee.Unsubscribe("regionStats:addRegion", addRegionCh)
-			ee.Unsubscribe("regionStats:updateRegion", updateRegionCh)
-			ee.Unsubscribe("regionStats:removeRegion", removeRegionCh)
-			ee.Unsubscribe("regionStats:start", startch)
-			ee.Unsubscribe("regionStats:stop", stopch)
-			ee.Unsubscribe("regionStats:restart", restartch)
-			ee.Unsubscribe("tracker:etdata", ch)
-		}()
+	go func(generationInterval time.Duration) {
+		genTicker := time.Tick(generationInterval)
+		emitter := c.Logic.CreateEmitter(c.Emitter)
+		publisher := emitter.Publish(rs.String()+":Stats", make(RegionStatsMap)).(chan<- RegionStatsMap)
+		defer close(publisher)
 		for {
 			select {
+			case <-genTicker:
+				rs.generate(publisher)
 			case <-rs.closeChan:
-				log.Println("Closing down regionStatistics")
 				return
-
-			// TODO refactor select case structure
-			case regionDefPak, ok := <-addRegionCh:
-				if !ok {
-					return
-				}
-				log.Println("Adding region: ", regionDefPak.Name)
-				err := rs.addRegion(regionDefPak)
-
-				if err != nil {
-					log.Println(err.Error())
-				}
-
-			case regionUpdate, ok := <-updateRegionCh:
-				if !ok {
-					return
-				}
-				log.Println("Updating region: ", regionUpdate.Name)
-				err := rs.updateRegion(regionUpdate)
-
-				if err != nil {
-					log.Println(err.Error())
-				}
-
-			case regs, ok := <-removeRegionCh:
-				if !ok {
-					return
-				}
-				log.Println("Removing region(s):", regs)
-				err := rs.removeRegions(regs)
-
-				if err != nil {
-					log.Println(err.Error())
-				}
-
-			// start
-			case _, ok := <-startch:
-				if !ok {
-					return
-				}
-				rs.Start()
-				log.Println("Starting region stats buffer")
-
-			// stop
-			case _, ok := <-stopch:
-				if !ok {
-					return
-				}
-				rs.Stop()
-				log.Println("Stopping region stats buffer")
-
-			// flush
-			case _, ok := <-restartch:
-				if !ok {
-					return
-				}
-				rs.Flush()
-				log.Println("Flushing region stats buffer")
-
-			case <-time.After(rs.generationInterval):
-				rs.Generate()
 			}
 		}
-	}(rs)
+	}(rs.generationInterval)
 
 	return rs
+}
+
+func (rs RegionStatistics) OnETData(data *gr.ETData) {
+	rs.dataCh <- data
 }
 
 func (rs RegionStatistics) getCoords() (coords chan *gr.ETData) {
 	return rs.coordinates.GetCoords()
 }
 
-func (rs *RegionStatistics) addRegion(pack *RegionDefinitionPackage) error {
+func (rs *RegionStatistics) AddRegion(pack *RegionDefinitionPackage) error {
 	if pack == nil {
 		return errors.New("Got nil RegionDefinitionPackage.")
 	}
@@ -241,7 +194,7 @@ func (rs *RegionStatistics) AddRegions(defs RegionDefinitionMap) error {
 	return nil
 }
 
-func (r *RegionStatistics) updateRegion(pack *RegionUpdatePackage) error {
+func (r *RegionStatistics) UpdateRegion(pack *RegionUpdatePackage) error {
 	if pack == nil {
 		return errors.New("Got nil RegionUpdatePackage.")
 	}
@@ -256,7 +209,11 @@ func (r *RegionStatistics) updateRegion(pack *RegionUpdatePackage) error {
 	return errors.New("No such region: " + pack.Name)
 }
 
-func (rs *RegionStatistics) removeRegions(regs []string) error {
+func (rs *RegionStatistics) RemoveRegion(region string) error {
+	return rs.RemoveRegions([]string{region})
+}
+
+func (rs *RegionStatistics) RemoveRegions(regs []string) error {
 	if regs == nil {
 		return errors.New("Got nil RegionRemovePackage.")
 	}
@@ -277,8 +234,8 @@ func (rs *RegionStatistics) removeRegions(regs []string) error {
 
 // Generates a RegionStatsMap and
 // sends it away on the publish channel.
-func (rs RegionStatistics) Generate() {
-	rs.publish <- rs.generate()
+func (rs RegionStatistics) generate(publisher chan<- RegionStatsMap) {
+	publisher <- rs.Generate()
 }
 
 // inRange determines if the two coordinates are within range
@@ -298,7 +255,7 @@ func newFixation(p1, p2 gr.XYer, numPoints int) *gr.Point2D {
 	}
 }
 
-func (rs RegionStatistics) generate() RegionStatsMap {
+func (rs RegionStatistics) Generate() RegionStatsMap {
 	stats := make([]RegionStatInfo, len(rs.regions))
 	prevTime := make([]*time.Time, len(stats)) // The last time stamp within the region
 
@@ -380,6 +337,11 @@ func (rs RegionStatistics) Stop() {
 	rs.coordinates.Stop()
 }
 
+func (rs RegionStatistics) Restart() {
+	rs.Flush()
+	//rs.Logger().Println("Flushing region stats buffer")
+}
+
 // Restart calls the Restart method of coordhandler, flushing the collection of data
 func (rs RegionStatistics) Flush() {
 	rs.coordinates.Flush()
@@ -397,7 +359,7 @@ type RegionStats map[string]RegionStats
 
 type InsideTime time.Duration
 
-func (it InsideTime) MarshalJSON() ([]byte, error) {
+func (it InsideTime) MarshalText() ([]byte, error) {
 	return []byte("\"" + timeToString(time.Duration(it).Minutes()) +
 		":" + timeToString(time.Duration(it).Seconds()) + "\""), nil
 }

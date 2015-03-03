@@ -1,15 +1,20 @@
 package gorgonzola
 
 import (
+	"github.com/maxnordlund/breamio/comte"
 	//"encoding/json"
 	"errors"
-	"log"
-	"os"
 	"strings"
 	"time"
 
 	bl "github.com/maxnordlund/breamio/beenleigh"
 )
+
+func init() {
+	gorgonzola := &GorgonzolaRun{closing: make(chan struct{})}
+	gorgonzola.logger = bl.NewLogger(gorgonzola)
+	bl.Register(gorgonzola)
+}
 
 var trackers = make(map[Tracker]Metadata)
 
@@ -27,21 +32,50 @@ func Trackers() map[Tracker]Metadata {
 }
 
 type GorgonzolaRun struct {
+	logger  bl.Logger
 	closing chan struct{}
 }
 
-func (gr GorgonzolaRun) Run(logic bl.Logic) {
-	newCh := logic.RootEmitter().Subscribe("new:tracker", bl.Spec{}).(<-chan bl.Spec)
-	for {
-		select {
-		case <-gr.closing:
-			return
-		case spec := <-newCh:
-			if err := gr.onNewEvent(logic, spec); err != nil {
-				logic.RootEmitter().Dispatch("gorgonzola:error", err)
-			}
-		}
+func (GorgonzolaRun) String() string {
+	return "EyeTracking"
+}
+
+type Config []Metadata
+
+func (GorgonzolaRun) Config() comte.ConfigSection {
+	return make(Config, 0, 10)
+}
+
+func (gr GorgonzolaRun) New(c bl.Constructor) bl.Module {
+	tracker, err := CreateFromURI(c,
+		c.Parameters["URI"].(string))
+	if err != nil {
+		gr.logger.Printf("Could not create new tracker with uri %s: %s", c.Parameters["URI"].(string), err)
+		panic(err)
 	}
+	err = tracker.Connect()
+	if err != nil {
+		gr.logger.Println("Unable to connect to tracker:", err)
+		panic(err)
+	}
+
+	return tracker
+}
+
+func (gr GorgonzolaRun) Run(logic bl.Logic) {
+	var conf Config
+	comte.Section(gr.String(), &conf)
+	for _, md := range conf {
+		gr.logger.Printf("Creating %s on %d from config", md.URI, md.Emitter)
+		c := bl.Constructor{Logic: logic, Logger: gr.logger, Emitter: md.Emitter, Parameters: map[string]interface{}{
+			"URI": md.URI,
+		}}
+		tracker := gr.New(c)
+		bl.RunModule(c.Logic, md.Emitter, tracker)
+	}
+
+	bl.RunFactory(logic, gr)
+
 }
 
 func (gr GorgonzolaRun) Close() error {
@@ -49,39 +83,11 @@ func (gr GorgonzolaRun) Close() error {
 	return nil
 }
 
-func (gr GorgonzolaRun) onNewEvent(logic bl.Logic, event bl.Spec) error {
-	logger.Println("Recieved new:tracker event.")
-
-	tracker, err := CreateFromURI(event.Data)
-	if err != nil {
-		logger.Printf("Could not create new tracker with uri %s: %s", event.Data, err)
-		return err
-	}
-	err = tracker.Connect()
-	if err != nil {
-		logger.Println("Unable to connect to tracker:", err)
-		return err
-	}
-
-	ee := logic.CreateEmitter(event.Emitter)
-	go tracker.Link(ee)
-
-	logger.Printf("Created a new tracker with uri %s on EE %d.\n", event.Data, event.Emitter)
-	trackers[tracker] = Metadata{Emitter: event.Emitter, Name: event.Data}
-	return nil
-}
-
-func init() {
-	bl.Register(&GorgonzolaRun{make(chan struct{})})
-}
-
-var logger = log.New(os.Stdout, "[Gorgonzola] ", log.LstdFlags)
-
 // Creates a tracker using a URI.
 // The URI is on the form <driver>://<id>.
 // The driver part is used to find a registered driver in the tracker driver table.
 // The id part is used as a argument for the selected drivers CreateFromId method.
-func CreateFromURI(uri string) (Tracker, error) {
+func CreateFromURI(c bl.Constructor, uri string) (Tracker, error) {
 	split := strings.SplitN(uri, "://", 2)
 	if len(split) < 2 {
 		return nil, errors.New("Malformed URI.")
@@ -91,7 +97,7 @@ func CreateFromURI(uri string) (Tracker, error) {
 	if driver == nil {
 		return nil, errors.New("No such driver.")
 	}
-	return GetDriver(typ).CreateFromId(id)
+	return GetDriver(typ).CreateFromId(c, id)
 }
 
 // A interface specifying something that can deliver
@@ -179,7 +185,7 @@ type ETData struct {
 
 type Metadata struct {
 	Emitter int
-	Name    string
+	URI     string
 }
 
 // Due to the lack of interface types in the briee.EventEmitter events,

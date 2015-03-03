@@ -7,11 +7,21 @@ import (
 )
 
 func init() {
-	beenleigh.Register(beenleigh.NewRunHandler(runner))
+	beenleigh.Register(Director{})
 }
 
-func runner(logic beenleigh.Logic, closer <-chan struct{}) {
+type Director struct{}
+
+func (Director) String() string {
+	return "Director"
+}
+
+func (Director) Run(logic beenleigh.Logic) {
 	briee.RegisterGlobalEventType("drawer:settings", reflect.TypeOf(DrawerSettings{}))
+}
+
+func (Director) New(beenleigh.Constructor) beenleigh.Module {
+	return beenleigh.Dummy
 }
 
 type DrawerSettings struct {

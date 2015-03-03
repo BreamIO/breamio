@@ -3,10 +3,10 @@ package access
 import (
 	"encoding/gob"
 	"io"
-	"log"
 	"net"
 
 	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/beenleigh"
 )
 
 //Access server port for JSON encoded events over normal TCP connections.
@@ -37,7 +37,7 @@ type TCPServer struct {
 //
 // When a connection is established,
 // it starts reading packages from it, handling them as it goes.
-func (t TCPServer) Listen(ioman aioli.IOManager, logger *log.Logger) {
+func (t TCPServer) Listen(ioman aioli.IOManager, logger beenleigh.Logger) {
 	ln, err := net.Listen("tcp", tcpJSONaddr)
 	if err != nil {
 		logger.Printf("Failed to listen on %s: %s\n", tcpJSONaddr, err)

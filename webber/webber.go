@@ -1,19 +1,20 @@
 package webber
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"fmt"
-	"github.com/gorilla/mux"
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"path"
 	"strconv"
+
+	"code.google.com/p/go.net/websocket"
+	"github.com/gorilla/mux"
+
+	bl "github.com/maxnordlund/breamio/beenleigh"
 )
 
 const (
@@ -23,33 +24,39 @@ const (
 
 var Root = "web"
 
-func GetInstance() *Webber {
-	return webber
-}
-
-var webber = New()
+var webber = New(bl.Constructor{
+	Logger: bl.NewLoggerS("Webber"),
+})
 
 func init() {
 	if installpath := os.Getenv("EYESTREAM"); installpath != "" {
 		Root = path.Join(installpath, "web")
 	}
 
-	bl.Register(bl.NewRunHandler(func(logic bl.Logic, closer <-chan struct{}) {
-		webber.logger.Println("Initializing Webserver")
-		//drawerTmpl := template.Must(template.ParseFiles(path.Join(Root, drawer)))
+	bl.Register(bl.SingletonFactory{Name: "Webber", Module: webber})
 
-		webber.addServings()
+}
 
-		go func() {
-			err := webber.ListenAndServe()
-			if err != nil {
-				webber.logger.Println("Listen and Serve error:", err)
-			}
-		}()
-		<-closer
-		webber.logger.Println("Stopping Webserver")
-		webber.Close()
-	}))
+func New(c bl.Constructor) *Webber {
+	w := &Webber{
+		SimpleModule: bl.NewSimpleModule("Webber", c),
+		mux:          mux.NewRouter(),
+	}
+
+	w.Logger().Println("Initializing Webserver")
+	//drawerTmpl := template.Must(template.ParseFiles(drawer))
+
+	w.addServings()
+
+	go func() {
+		err := w.ListenAndServe()
+		if err != nil {
+			w.Logger().Println("Listen and Serve error:", err)
+		}
+		w.Logger().Println("Stopping Webserver")
+	}()
+
+	return w
 }
 
 type Error struct {
@@ -77,17 +84,13 @@ func PublishError(w http.ResponseWriter, e Error) *Error {
 }
 
 type Webber struct {
-	mux *mux.Router
-
-	logger   *log.Logger
+	bl.SimpleModule
+	mux      *mux.Router
 	listener net.Listener
 }
 
-func New() *Webber {
-	return &Webber{
-		mux:    mux.NewRouter(),
-		logger: log.New(os.Stdout, "[Webber] ", log.LstdFlags),
-	}
+func Instance() *Webber {
+	return webber
 }
 
 func (web *Webber) ListenAndServe() (err error) {
@@ -109,9 +112,9 @@ func (web *Webber) ListenAndServe() (err error) {
 		return err
 	}
 
-	web.logger.Printf("Listening on %s", listenAddress)
+	web.Logger().Printf("Listening on %s", listenAddress)
 	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
+		web.Logger().Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	http.Serve(web.listener, web.mux)
@@ -122,14 +125,14 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
 		formId := req.FormValue("id")
 		if formId == "" {
-			web.logger.Println("Requires id parameter.")
+			web.Logger().Println("Requires id parameter.")
 			PublishError(w, Error{406, "Requires id parameter."})
 			return
 		}
 
 		id, err := strconv.Atoi(formId)
 		if err != nil {
-			log.Println("id parameter should contain integer.")
+			web.Logger().Println("id parameter should contain integer.")
 			PublishError(w, Error{400, "id parameter should contain integer."})
 			return
 		}
@@ -140,9 +143,9 @@ func (web *Webber) Handle(pattern string, publisher WebPublisher) {
 
 func (web *Webber) HandleStatic(pattern, file string) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, req *http.Request) {
-		web.logger.Printf("Static request for %s.", pattern)
-		web.logger.Println(file)
-		http.ServeFile(w, req, file)
+		web.Logger().Printf("Static request for %s.", pattern)
+		web.Logger().Println(file)
+		http.ServeFile(w, req, path.Join(Root, file))
 	})
 }
 
@@ -150,7 +153,7 @@ func (web *Webber) HandleWebSocket(pattern string, handler websocket.Handler) {
 	web.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		// Handle websocket requests separately, but still serve static files
 		if r.Header.Get("Upgrade") == "websocket" && r.Header.Get("Connection") == "Upgrade" {
-			web.logger.Printf("Websocket request recieved on %s.", pattern)
+			web.Logger().Printf("Websocket request recieved on %s.", pattern)
 			handler.ServeHTTP(w, r)
 		} else {
 			PublishError(w, Error{405, "Upgrade Required"})
@@ -167,31 +170,31 @@ func (web *Webber) Close() error {
 }
 
 func (web *Webber) addServings() {
-	web.HandleStatic("/control", path.Join(Root, "control.html"))
-	web.HandleStatic("/consumer", path.Join(Root, "consumer.html"))
-	web.HandleStatic("/api/eyestream.js", path.Join(Root, "eyestream.js"))
-	web.HandleStatic("/dep/bluebird.js", path.Join(Root, "bluebird.js"))
-	web.HandleStatic("/crossdomain.xml", path.Join(Root, "crossdomain.xml"))
-	web.HandleStatic("/gui", path.Join(Root, "simple_web_gui.html"))
+	web.HandleStatic("/control", "control.html")
+	web.HandleStatic("/consumer", "consumer.html")
+	web.HandleStatic("/api/eyestream.js", "eyestream.js")
+	web.HandleStatic("/dep/bluebird.js", "bluebird.js")
+	web.HandleStatic("/crossdomain.xml", "crossdomain.xml")
+	web.HandleStatic("/gui", "simple_web_gui.html")
 
-	web.HandleStatic("/colorpicker.min.js", path.Join(Root, "colorpicker.min.js"))
-	web.HandleStatic("/colorpicker.min.css", path.Join(Root, "colorpicker.min.css"))
+	web.HandleStatic("/colorpicker.min.js", "colorpicker.min.js")
+	web.HandleStatic("/colorpicker.min.css", "colorpicker.min.css")
 
-	web.HandleStatic("/images/select.gif", path.Join(Root,"/images/select.gif" ))
-	web.HandleStatic("/images/overlay.png", path.Join(Root,"/images/overlay.png" ))
-	web.HandleStatic("/images/select_hue.png", path.Join(Root, "/images/select_hue.png"))
-	web.HandleStatic("/images/indic.gif", path.Join(Root, "/images/indic.gif"))
-	web.HandleStatic("/images/gradient_input.png", path.Join(Root, "/images/gradient_input.png"))
-	web.HandleStatic("/images/grabber.png", path.Join(Root, "/images/grabber.png"))
-	web.HandleStatic("/images/submit.png", path.Join(Root, "/images/submit.png"))
+	web.HandleStatic("/images/select.gif", "/images/select.gif")
+	web.HandleStatic("/images/overlay.png", "/images/overlay.png")
+	web.HandleStatic("/images/select_hue.png", "/images/select_hue.png")
+	web.HandleStatic("/images/indic.gif", "/images/indic.gif")
+	web.HandleStatic("/images/gradient_input.png", "/images/gradient_input.png")
+	web.HandleStatic("/images/grabber.png", "/images/grabber.png")
+	web.HandleStatic("/images/submit.png", "/images/submit.png")
 
-	web.HandleStatic("/breamio.css", path.Join(Root, "breamio.css"))
-	web.HandleStatic("/LANENAR_.ttf", path.Join(Root, "LANENAR_.ttf"))
+	web.HandleStatic("/breamio.css", "breamio.css")
+	web.HandleStatic("/LANENAR_.ttf", "LANENAR_.ttf")
 
 	web.Handle("/trail", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		drawerTmpl, err := template.ParseFiles(path.Join(Root, "trail.html"))
 		if err != nil {
-			web.logger.Println("Template parse error:", err)
+			web.Logger().Println("Template parse error:", err)
 			return PublishError(w, Error{500, "Template parse error"})
 		}
 		drwr := drawer{
@@ -203,7 +206,7 @@ func (web *Webber) addServings() {
 	web.Handle("/stats", PublisherFunc(func(id int, w http.ResponseWriter, req *http.Request) *Error {
 		tmpl, err := template.ParseFiles(path.Join(Root, "stats.html"))
 		if err != nil {
-			web.logger.Println("Template parse error:", err)
+			web.Logger().Println("Template parse error:", err)
 			PublishError(w, Error{500, "Template parse error"})
 		}
 		drwr := drawer{
@@ -212,17 +215,19 @@ func (web *Webber) addServings() {
 		tmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
-	// web.HandleStatic("/stats", path.Join(Root, "stats.html"))
+	// web.HandleStatic("/stats", "stats.html")
 	web.mux.HandleFunc("/calibrate", func(w http.ResponseWriter, req *http.Request) {
 		calibrateTmpl, err := template.ParseFiles(path.Join(Root, calibrate))
 		if err != nil {
-			web.logger.Println("Template parse error:", err)
+			web.Logger().Println("Template parse error:", err)
 			PublishError(w, Error{500, "Template parse error"})
+			return
 		}
 		normalizeSource, err := ioutil.ReadFile(path.Join(Root, normalize))
 		if err != nil {
-			web.logger.Println("File read error:", err)
+			web.Logger().Println("File read error:", err)
 			PublishError(w, Error{500, "File read error"})
+			return
 		}
 		cali := Calibrate{
 			Id: 1,
@@ -235,7 +240,7 @@ func (web *Webber) addServings() {
 			},
 			Normalize: template.CSS(string(normalizeSource)),
 		}
-		web.logger.Println("Serving request for calibrate")
+		web.Logger().Println("Serving request for calibrate")
 		err = calibrateTmpl.Execute(w, cali)
 	})
 }
