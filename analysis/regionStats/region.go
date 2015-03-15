@@ -75,6 +75,7 @@ func newRegion(name string, rd RegionDefinition) (Region, error) {
 	return nil, errors.New(rd.Type + " is not a recognized region type.")
 }
 
+//Ellipse is a type of region.
 type Ellipse struct {
 	nameHolder
 	point
@@ -99,6 +100,7 @@ func newEllipse(name string, cx, cy, width, height float64) *Ellipse {
 	}
 }
 
+//Loads configuration to the ellipse
 func (e *Ellipse) Update(pack RegionUpdatePackage) {
 	e.setName(pack.NewName)
 	e.setX(pack.X)
@@ -132,6 +134,7 @@ func newCircle(name string, cx, cy, radius float64) *Ellipse {
 	return newEllipse(name, cx, cy, radius, radius)
 }
 
+//Rectangle is a type of region
 type Rectangle struct {
 	nameHolder
 	point
@@ -146,6 +149,7 @@ func newRectangle(name string, x, y, width, height float64) *Rectangle {
 	}
 }
 
+//Loads configuration to the rectangle
 func (e *Rectangle) Update(pack RegionUpdatePackage) {
 	e.setName(pack.NewName)
 	e.setX(pack.X)
