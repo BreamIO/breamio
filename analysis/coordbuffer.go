@@ -6,6 +6,7 @@ import (
 	gr "github.com/maxnordlund/breamio/gorgonzola"
 )
 
+//A struct that can buffers eye tracking data
 type CoordBuffer struct {
 	interval    time.Duration
 	desiredFreq uint
@@ -39,7 +40,7 @@ func NewCoordBuffer(coordSource <-chan *gr.ETData, interval time.Duration, desir
 }
 
 // Returns a channel containing all ETData structs in
-// t sorted chronologically
+// the coordbuffer sorted chronologically
 func (c *CoordBuffer) GetCoords() (coords chan *gr.ETData) {
 	coords = make(chan *gr.ETData)
 	c.refresh()
@@ -55,6 +56,7 @@ func (c *CoordBuffer) GetCoords() (coords chan *gr.ETData) {
 	return coords
 }
 
+// Adds a coordinate to the buffer
 func (c *CoordBuffer) add(coord *gr.ETData) {
 	c.data[c.end] = *coord
 
@@ -75,29 +77,34 @@ func (c *CoordBuffer) refresh() {
 	}
 }
 
-//Currently removes all data collected if duration updates
+// Updates interval for the buffer and removes
+// all data collected if duration updates
 func (c *CoordBuffer) SetInterval(interval time.Duration) {
 	c.interval = interval
 	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds())+1)
 }
 
-//Currently removes all data if desiredFreq updates
+// Updates frequency and removes
+// all data if desiredFreq updates
 func (c *CoordBuffer) SetDesiredFreq(desiredFreq uint) {
 	c.desiredFreq = desiredFreq
 	c.data = make([]gr.ETData, c.desiredFreq*uint(c.interval.Seconds())+1)
 }
 
-//Empties the buffer. That is removing all cords.
+// Empties the buffer.
+// That is removing all cords.
 func (c *CoordBuffer) Flush() {
 	c.end = c.start
 }
 
-//Starts the buffer if it is stopped. Does nothing if it is running.
+// Starts the buffer if it is stopped.
+// Does nothing if it is running.
 func (c *CoordBuffer) Start() {
 	c.running = true
 }
 
-//Stops the buffer and flushes the data if the buffer is running. Else it does nothing.
+//Stops the buffer and flushes the data if the buffer is running.
+// Otherwise it does nothing.
 func (c *CoordBuffer) Stop() {
 	if c.running {
 		c.running = false
