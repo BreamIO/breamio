@@ -17,12 +17,13 @@ func init() {
 	been.Register(new(HeatmapRun))
 }
 
+// The config for the heatmap
 type Config struct {
 	Emitter  int
-	Duration time.Duration
-	Hertz    uint
-	Res      *Resolution
-	Color    *color.NRGBA
+	Duration time.Duration //Timespan that the heatmap collects data for
+	Hertz    uint          //The frequency that the data should arrive with
+	Res      *Resolution   //Resolution of the produced heatmap
+	Color    *color.NRGBA  //The color of the heatmap
 }
 
 type Resolution struct {
@@ -34,6 +35,8 @@ type HeatmapRun struct {
 	closeChan chan struct{}
 }
 
+//Start listening for commands of new:heatmap.
+//When such arrives, it starts a new heatmap generator
 func (h *HeatmapRun) Run(logic been.Logic) {
 	ee := logic.RootEmitter()
 
@@ -60,6 +63,7 @@ const (
 	limitRadius = 10
 )
 
+//Generator generates heatmaps
 type Generator struct {
 	coordinateHandler analysis.CoordinateHandler
 	width, height     int
@@ -79,7 +83,7 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 		publish:           ee.Publish("heatmap:image", new(image.NRGBA)).(chan<- *image.NRGBA),
 	}
 
-	if (c.Color == nil) {
+	if c.Color == nil {
 		g.color = &color.NRGBA{
 			R: 255,
 			G: 0,
@@ -90,6 +94,8 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 		g.color = c.Color
 	}
 
+	// Set up a process that listens after configuration updates
+	// for this generator.
 	go func() {
 		defer ee.Unsubscribe("heatmap:update", updateSettings)
 		for {
@@ -108,9 +114,11 @@ func NewGenerator(ee briee.EventEmitter, c *Config) *Generator {
 	return g
 }
 
+// Make a generator start producing heatmaps.
 func (gen *Generator) generate() {
 	width, height := gen.width, gen.height
 
+	// heat is how "warm" all the pixels on the screen are
 	heat := make([][]float64, height)
 
 	for i := range heat {
@@ -126,12 +134,19 @@ func (gen *Generator) generate() {
 
 	limSq := float64(limitRadius * limitRadius)
 
+	// Go through all coordinates that are in the buffer
+	// and increase the heat on the corresponding positions
+	// in the "heat" matrix.
 	for coord := range coords {
 		f := coord.Filtered
-		if valid(f) {
+		if valid(f) { //f is on screen
+			//Calculate the position in the "heat" matrix since
+			//the coordinates are normalized [0,1]
 			x = f.X() * float64(width)
 			y = f.Y() * float64(height)
 
+			//Also increase the heat of all points in a circle around
+			//the position. Hence the two for-loops
 			for dx := -limitRadius; dx <= limitRadius; dx++ {
 				px = dx + int(x)
 				if px >= width || px < 0 {
@@ -147,8 +162,8 @@ func (gen *Generator) generate() {
 					dist = float64(dx*dx + dy*dy)
 
 					if dist <= limSq {
+						//A point closer to the center is warmer
 						heat[py][px] += math.Cos(dist / limSq)
-						//heat[py][px] += 1
 					}
 				}
 			}
@@ -166,6 +181,7 @@ func (gen *Generator) generate() {
 
 	heatmap := image.NewNRGBA(image.Rect(0, 0, width, height))
 
+	//Draw the heatmap
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			v := heat[y][x] / maxHeat
@@ -176,8 +192,6 @@ func (gen *Generator) generate() {
 				G: gen.color.G,
 				B: gen.color.B,
 				A: alpha,
-				// I don't know what this previous row did, because it overflowed uint8
-				//A: uint8(gen.color.A - uint8(float64(gen.color.A)*math.Cos(v*math.Pi))),
 			})
 		}
 	}
@@ -185,60 +199,12 @@ func (gen *Generator) generate() {
 	gen.publish <- heatmap
 }
 
-/*func colorFor(val float64) (r, g, b byte) {
-	return hsl2rgb((1-val)*100, 100, val*50)
-}
-
-func hsl2rgb(h, s, l float64) (r, g, b byte) {
-	var q, p float64
-
-	if s == 0 {
-		ret := byte(l * 255)
-		return ret, ret, ret
-	}
-
-	if l < 0.5 {
-		q = l * (1 + s)
-	} else {
-		q = l + s - l*s
-	}
-	p = 2*l - q
-
-	return byte(hue2rgb(p, q, h+1/3) * 255), byte(hue2rgb(p, q, h) * 255), byte(hue2rgb(p, q, h-1/3) * 255)
-
-}
-
-func hue2rgb(p, q, t float64) float64 {
-	if t < 0 {
-		t += 1
-	} else if t > 1 {
-		t -= 1
-	}
-
-	if t < 1/6 {
-		return p + (q-p)*6*t
-	}
-
-	if t < 1/2 {
-		return q
-	}
-
-	if t < 2/3 {
-		return p + (q-p)*(2/3-t)*6
-	}
-
-	return p
-}*/
-
 func valid(coord gr.XYer) bool {
-	return coord.X() < 1 && coord.X() >= 0 && coord.Y() < 1 && coord.Y() >= 0
+	return coord.X() < 1 &&
+		coord.X() >= 0 &&
+		coord.Y() < 1 &&
+		coord.Y() >= 0
 }
-
-/*
-func (gen *Generator) GetCoordinateHandler() *analysis.CoordinateHandler {
-	return &gen.coordinateHandler
-}
-*/
 
 func (gen *Generator) updateSettings(conf *Config) {
 	//Config:
