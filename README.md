@@ -1,6 +1,7 @@
 # Bream IO
 The [golang][] implementation of Eye Stream, aka our event software.
 
+
 ## Calibration protocol
 
 |                Client | Direction | Server           |
