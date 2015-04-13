@@ -27,20 +27,20 @@ type SyncReadWriter struct {
 }
 
 func (srw *SyncReadWriter) Read(p []byte) (n int, err error) {
-	// defer srw.lock.Unlock()
-	// srw.lock.Lock()
+	// defer srw.lock.Unlock()  Should be removed??
+	// srw.lock.Lock()  Should be removed??
 	return srw.RW.Read(p)
 }
 
 func (srw *SyncReadWriter) Write(p []byte) (n int, err error) {
-	// defer srw.lock.Unlock()
-	// srw.lock.Lock()
+	// defer srw.lock.Unlock()  Should be removed?? 
+	// srw.lock.Lock()  Should be removed??
 	return srw.RW.Write(p)
 }
 
 // NewDecoder returns the default implementation JSONDecoder
 func NewCodec(r io.ReadWriter) Codec {
-	//return NewJSONDecoder(r)
+	//return NewJSONDecoder(r)  Should be removed??
 	srw := &SyncReadWriter{RW: r}
 	return Codec{json.NewEncoder(srw), json.NewDecoder(srw)}
 }
