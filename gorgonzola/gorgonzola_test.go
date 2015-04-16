@@ -1,8 +1,6 @@
 package gorgonzola
 
 import (
-	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/comte"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )

@@ -1,6 +1,7 @@
 package beenleigh
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -41,6 +42,25 @@ type Constructor struct {
 
 	Emitter    int //Static parameter
 	Parameters map[string]interface{}
+}
+
+func MakeConstructor(l Logic, emitter int, s fmt.Stringer, params interface{}) Constructor {
+	data, err := json.Marshal(params)
+	if err != nil {
+		panic(err)
+	}
+	var pm map[string]interface{}
+	err = json.Unmarshal(data, &pm)
+	if err != nil {
+		panic(err)
+	}
+
+	return Constructor{
+		Logic:      l,
+		Logger:     NewLogger(s),
+		Emitter:    emitter,
+		Parameters: pm,
+	}
 }
 
 //Type allowing struct-tagging of method
