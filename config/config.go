@@ -1,4 +1,4 @@
-package comte
+package config
 
 import (
 	"encoding/json"

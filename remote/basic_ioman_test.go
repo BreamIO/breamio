@@ -1,4 +1,4 @@
-package aioli_test
+package remote_test
 
 import (
 	"bytes"
@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 
-	. "github.com/maxnordlund/breamio/aioli"
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
+	bl "github.com/maxnordlund/breamio/moduler"
+	. "github.com/maxnordlund/breamio/remote"
 )
 
 type Payload struct {

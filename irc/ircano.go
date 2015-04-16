@@ -1,9 +1,8 @@
-package ircano
+package irc
 
 import (
 	rs "github.com/maxnordlund/breamio/analysis/regionStats"
-	bl "github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/briee"
+	bl "github.com/maxnordlund/breamio/moduler"
 
 	"github.com/sorcix/irc"
 
@@ -15,7 +14,7 @@ import (
 )
 
 const (
-	SettingsEvent    = "ircano:settings"
+	SettingsEvent    = "irc:settings"
 	RegionStatsEvent = "regionStats:regions"
 )
 
@@ -92,10 +91,10 @@ func (bot *ircBot) FillDefaults() {
 }
 
 func (bot *ircBot) OnRegionStats() {
-	logger.Println("Region stats update")
+	bot.Logger().Println("Region stats update")
 
-	names := make(nameSlice, 0, len(regionStats))
-	for name, _ := range regionStats {
+	names := make(nameSlice, 0, len(rs.RegionStats))
+	for name, _ := range names {
 		names = append(names, name)
 	}
 	sort.Sort(names)

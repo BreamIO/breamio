@@ -1,7 +1,7 @@
 package testing
 
 import (
-	. "github.com/maxnordlund/breamio/gorgonzola"
+	. "github.com/maxnordlund/breamio/eyetracker"
 )
 
 type MockEmitter struct {

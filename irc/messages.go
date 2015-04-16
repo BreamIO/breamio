@@ -1,4 +1,4 @@
-package ircano
+package irc
 
 const infoMessage = `The blue circle on the screen is a gazemarker.
 The gazemarker utilizes EyeStream, a software developed by Bream iO, to show my audience where I look on the screen.

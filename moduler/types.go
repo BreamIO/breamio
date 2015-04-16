@@ -1,4 +1,4 @@
-package beenleigh
+package moduler
 
 type Runner interface {
 	Run(Logic)

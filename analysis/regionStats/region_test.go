@@ -3,7 +3,7 @@ package regionStats
 import (
 	"testing"
 
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
 )
 
 func TestCircle(t *testing.T) {

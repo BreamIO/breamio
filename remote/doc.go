@@ -1,15 +1,15 @@
 /*
-Package aioli declares and implements the IOManager interface. The package is used for decoding messages from active listerners and redirecting the wrapped content to selected registered event emitters.
+Package remote declares and implements the IOManager interface. The package is used for decoding messages from active listerners and redirecting the wrapped content to selected registered event emitters.
 
 Uses the event emitter package briee:
 		import "github.com/maxnordlund/breamio/briee"
-		import "github.com/maxnordlund/breamio/beenleigh"
+		import "github.com/maxnordlund/breamio/moduler"
 
 Example use:
 		ee := briee.New()
 		go ee.Run()
 
-		bl := beenleigh.New(briee.New) //Something to keep track of emitters.
+		bl := moduler.New(briee.New) //Something to keep track of emitters.
 		bl.ListenAndServe()
 
 		ioman := New(bl)
@@ -23,4 +23,4 @@ Example use:
 		logger := log.New(os.Stdout, "", os.LstdFlags)
 		go ioman.Listen(dec, logger)
 */
-package aioli
+package remote

@@ -5,9 +5,9 @@ import (
 	"log"
 
 	//"log"
-	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	. "github.com/maxnordlund/breamio/gorgonzola"
+	. "github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/moduler"
 	"github.com/zephyyrr/gobii/gaze"
 )
 
@@ -18,11 +18,11 @@ func (GazeDriver) String() string {
 	return "GazeDriver"
 }
 
-func (g GazeDriver) Create(c beenleigh.Constructor) (Tracker, error) {
+func (g GazeDriver) Create(c moduler.Constructor) (Tracker, error) {
 	tracker, err := gaze.AnyEyeTracker()
 	return &GazeTracker{
 		tracker,
-		beenleigh.NewSimpleModule(g.String(), c),
+		moduler.NewSimpleModule(g.String(), c),
 		make(chan struct{}),
 		nil,
 		false,
@@ -31,7 +31,7 @@ func (g GazeDriver) Create(c beenleigh.Constructor) (Tracker, error) {
 	}, err
 }
 
-func (g GazeDriver) CreateFromId(c beenleigh.Constructor, id string) (Tracker, error) {
+func (g GazeDriver) CreateFromId(c moduler.Constructor, id string) (Tracker, error) {
 	if id == "any" {
 		return g.Create(c)
 	}
@@ -39,7 +39,7 @@ func (g GazeDriver) CreateFromId(c beenleigh.Constructor, id string) (Tracker, e
 	tracker, err := gaze.EyeTrackerFromURL(url)
 	return &GazeTracker{
 		EyeTracker:   tracker,
-		SimpleModule: beenleigh.NewSimpleModule(g.String(), c),
+		SimpleModule: moduler.NewSimpleModule(g.String(), c),
 		closer:       make(chan struct{}),
 	}, err
 }
@@ -58,7 +58,7 @@ func (GazeDriver) List() (res []string) {
 
 type GazeTracker struct {
 	gaze.EyeTracker
-	beenleigh.SimpleModule
+	moduler.SimpleModule
 	closer            chan struct{}
 	etdataCh          chan<- *ETData
 	calibrated        bool

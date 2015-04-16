@@ -1,19 +1,19 @@
-package gorgonzola
+package eyetracker
 
 import (
-	"github.com/maxnordlund/breamio/comte"
+	"github.com/maxnordlund/breamio/config"
 	//"encoding/json"
 	"errors"
 	"strings"
 	"time"
 
-	bl "github.com/maxnordlund/breamio/beenleigh"
+	bl "github.com/maxnordlund/breamio/moduler"
 )
 
 func init() {
-	gorgonzola := &GorgonzolaRun{closing: make(chan struct{})}
-	gorgonzola.logger = bl.NewLogger(gorgonzola)
-	bl.Register(gorgonzola)
+	eyetracker := &GorgonzolaRun{closing: make(chan struct{})}
+	eyetracker.logger = bl.NewLogger(eyetracker)
+	bl.Register(eyetracker)
 }
 
 var trackers = make(map[Tracker]Metadata)
@@ -42,7 +42,7 @@ func (GorgonzolaRun) String() string {
 
 type Config []Metadata
 
-func (GorgonzolaRun) Config() comte.ConfigSection {
+func (GorgonzolaRun) Config() config.ConfigSection {
 	return make(Config, 0, 10)
 }
 
@@ -64,7 +64,7 @@ func (gr GorgonzolaRun) New(c bl.Constructor) bl.Module {
 
 func (gr GorgonzolaRun) Run(logic bl.Logic) {
 	var conf Config
-	comte.Section(gr.String(), &conf)
+	config.Section(gr.String(), &conf)
 	for _, md := range conf {
 		gr.logger.Printf("Creating %s on %d from config", md.URI, md.Emitter)
 		c := bl.Constructor{Logic: logic, Logger: gr.logger, Emitter: md.Emitter, Parameters: map[string]interface{}{

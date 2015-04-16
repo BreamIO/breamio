@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	. "github.com/maxnordlund/breamio/gorgonzola"
+	. "github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/moduler"
 )
 
 func mockStandard(t float64) (float64, float64) {
@@ -51,7 +51,7 @@ func mockConstantFixation(t float64) (float64, float64) {
 	return 0.5 + rand.NormFloat64()*0.01, 0.5 + rand.NormFloat64()*0.01
 }
 
-var log beenleigh.Logger = beenleigh.NewLoggerS("MockDriver")
+var log moduler.Logger = moduler.NewLoggerS("MockDriver")
 
 type MockDriver struct{}
 
@@ -59,10 +59,10 @@ func (d MockDriver) List() []string {
 	return []string{"standard", "constant"}
 }
 
-func (d MockDriver) Create(c beenleigh.Constructor) (Tracker, error) {
+func (d MockDriver) Create(c moduler.Constructor) (Tracker, error) {
 	return New(c, mockStandard), nil
 }
-func (d MockDriver) CreateFromId(c beenleigh.Constructor, identifier string) (Tracker, error) {
+func (d MockDriver) CreateFromId(c moduler.Constructor, identifier string) (Tracker, error) {
 	switch identifier {
 	case "standard":
 		return New(c, mockStandard), nil
@@ -80,7 +80,7 @@ func (d MockDriver) CreateFromId(c beenleigh.Constructor, identifier string) (Tr
 }
 
 type MockTracker struct {
-	beenleigh.SimpleModule
+	moduler.SimpleModule
 	f                 func(float64) (float64, float64)
 	t                 float64
 	calibrating       bool
@@ -89,15 +89,15 @@ type MockTracker struct {
 	validationPoints  int
 	closer            chan struct{}
 
-	MethodCalibrateStart beenleigh.EventMethod `event:"tracker:calibrate:start" returns:"calibrate:next"`
-	MethodCalibrateAdd   beenleigh.EventMethod `event:"tracker:calibrate:add" returns:"calibrate:next,calibrate:end,validate:start"`
-	MethodValidateStart  beenleigh.EventMethod `event:"tracker:validate:start" returns:"validate:next"`
-	MethodValidateAdd    beenleigh.EventMethod `event:"tracker:validate:add" returns:"validate:next,validate:end"`
+	MethodCalibrateStart moduler.EventMethod `event:"tracker:calibrate:start" returns:"calibrate:next"`
+	MethodCalibrateAdd   moduler.EventMethod `event:"tracker:calibrate:add" returns:"calibrate:next,calibrate:end,validate:start"`
+	MethodValidateStart  moduler.EventMethod `event:"tracker:validate:start" returns:"validate:next"`
+	MethodValidateAdd    moduler.EventMethod `event:"tracker:validate:add" returns:"validate:next,validate:end"`
 }
 
-func New(c beenleigh.Constructor, f func(float64) (float64, float64)) *MockTracker {
+func New(c moduler.Constructor, f func(float64) (float64, float64)) *MockTracker {
 	mt := &MockTracker{
-		SimpleModule: beenleigh.NewSimpleModule("tracker", c),
+		SimpleModule: moduler.NewSimpleModule("tracker", c),
 		f:            f,
 		closer:       make(chan struct{}),
 	}
@@ -147,31 +147,31 @@ func (m *MockTracker) generate(ch chan<- *ETData) {
 	}
 }
 
-func (m *MockTracker) CalibrateStart() beenleigh.Signal {
+func (m *MockTracker) CalibrateStart() moduler.Signal {
 	log.Println("MockTracker#calibrateStartHandler", "tracker:calibrate:start")
 	m.calibrating = true
 	m.calibrationPoints = 0
-	return beenleigh.Pulse
+	return moduler.Pulse
 }
 
-func (m *MockTracker) CalibrateAdd(p Point2D) (next, end, validate beenleigh.Signal) {
+func (m *MockTracker) CalibrateAdd(p Point2D) (next, end, validate moduler.Signal) {
 	log.Println("MockTracker#calibrateAddHandler", "tracker:calibrate:add")
 	m.calibrationPoints++
 	if m.calibrationPoints >= 5 {
-		return nil, beenleigh.Pulse, beenleigh.Pulse
+		return nil, moduler.Pulse, moduler.Pulse
 	} else {
-		return beenleigh.Pulse, nil, nil
+		return moduler.Pulse, nil, nil
 	}
 }
 
-func (m *MockTracker) ValidateStart() beenleigh.Signal {
+func (m *MockTracker) ValidateStart() moduler.Signal {
 	log.Println("MockTracker#validateStartHandler", "tracker:validate:start")
 	m.calibrating = true
 	m.validationPoints = 0
-	return beenleigh.Pulse
+	return moduler.Pulse
 }
 
-func (m *MockTracker) ValidateAdd(p Point2D) (next beenleigh.Signal, end *float64) {
+func (m *MockTracker) ValidateAdd(p Point2D) (next moduler.Signal, end *float64) {
 	log.Println("MockTracker#validateAddHandler", "tracker:validate:add")
 	m.validationPoints++
 	if m.validationPoints >= 5 {
@@ -179,7 +179,7 @@ func (m *MockTracker) ValidateAdd(p Point2D) (next beenleigh.Signal, end *float6
 		return nil, &ans
 	} else {
 
-		return beenleigh.Pulse, nil
+		return moduler.Pulse, nil
 	}
 }
 

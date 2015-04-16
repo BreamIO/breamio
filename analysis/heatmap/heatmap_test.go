@@ -4,16 +4,16 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"os"
 	"log"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 	//"github.com/maxnordlund/breamio/analysis"
 	"github.com/maxnordlund/breamio/briee"
-	//gr "github.com/maxnordlund/breamio/gorgonzola"
-	"github.com/maxnordlund/breamio/gorgonzola/mock"
-	//been "github.com/maxnordlund/breamio/beenleigh"
+	//gr "github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/eyetracker/mock"
+	//been "github.com/maxnordlund/breamio/moduler"
 )
 
 func TestHeatmap(t *testing.T) {
@@ -61,7 +61,7 @@ func saveHeatmap(outFilename string, m *image.NRGBA) {
 	//outFilename := "blank.png"
 	outFile, err := os.Create(outFilename)
 	if err != nil {
-	log.Fatal(err)
+		log.Fatal(err)
 	}
 	defer outFile.Close()
 	log.Print("Saving image to: ", outFilename)

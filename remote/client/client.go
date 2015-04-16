@@ -1,40 +1,24 @@
 package client
 
 import (
-	"github.com/maxnordlund/breamio/aioli"
-	//	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/remote"
 	"io"
 	"log"
 	"sync"
-	//	"net"
 )
 
-/*
-func main() {
-	conn, err := net.Dial("tcp", "localhost:4041")
-	defer conn.Close()
-	if err != nil {
-		log.Println("Could not connnect to server:", err)
-		return
-	}
-	c := NewClient(conn)
-	payload, err := json.Marshal(beenleigh.Spec{1, "mock://standard"})
-	c.Send(aioli.ExtPkg{"new:tracker", 256, payload})
-	c.Wait()
-}*/
-
 type Client struct {
-	out    chan aioli.ExtPkg
-	in     chan aioli.ExtPkg
-	encdec aioli.EncodeDecoder
+	out    chan remote.ExtPkg
+	in     chan remote.ExtPkg
+	encdec remote.EncodeDecoder
 	wg     sync.WaitGroup
 	io.ReadWriteCloser
 }
 
 func NewClient(conn io.ReadWriteCloser) *Client {
-	out := make(chan aioli.ExtPkg)
-	in := make(chan aioli.ExtPkg)
-	c := &Client{out, in, aioli.NewCodec(conn), sync.WaitGroup{}, conn}
+	out := make(chan remote.ExtPkg)
+	in := make(chan remote.ExtPkg)
+	c := &Client{out, in, remote.NewCodec(conn), sync.WaitGroup{}, conn}
 	go c.run()
 	return c
 }
@@ -44,7 +28,7 @@ func (c *Client) run() {
 
 	go func() {
 		for {
-			var pkg aioli.ExtPkg
+			var pkg remote.ExtPkg
 			err := c.encdec.Decode(pkg)
 			if err != nil {
 				return
@@ -62,12 +46,12 @@ func (c *Client) run() {
 	}
 }
 
-func (c *Client) Send(pkg aioli.ExtPkg) {
+func (c *Client) Send(pkg remote.ExtPkg) {
 	c.wg.Add(1)
 	c.out <- pkg
 }
 
-func (c *Client) Recieve() (pkg aioli.ExtPkg) {
+func (c *Client) Recieve() (pkg remote.ExtPkg) {
 	return <-c.in
 }
 

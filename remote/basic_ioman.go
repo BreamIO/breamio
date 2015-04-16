@@ -1,9 +1,9 @@
-package aioli
+package remote
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/moduler"
 	"io"
 	"reflect"
 	"sync/atomic"
@@ -15,12 +15,12 @@ type BasicIOManager struct {
 	lookuper EmitterLookuper
 	dataChan chan ExtPkg
 	publMap  map[publMapEntry]*reflect.Value
-	logger   beenleigh.Logger
+	logger   moduler.Logger
 	closed   int32
 }
 
 // newBasicIOManager creates a new BasicIOManager.
-func newBasicIOManager(lookuper EmitterLookuper, logger beenleigh.Logger) *BasicIOManager {
+func newBasicIOManager(lookuper EmitterLookuper, logger moduler.Logger) *BasicIOManager {
 	return &BasicIOManager{
 		lookuper: lookuper,
 		dataChan: make(chan ExtPkg),
@@ -38,7 +38,7 @@ type publMapEntry struct {
 // Listen will try to decode ExtPkg structs from the underlying data stream of the provided decoder and handle the structs accordingly.
 //
 // Requires that the IOManager Run method is running.
-func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger beenleigh.Logger) {
+func (biom *BasicIOManager) Listen(codec EncodeDecoder, logger moduler.Logger) {
 	for !biom.IsClosed() {
 		var ep ExtPkg
 		err := codec.Decode(&ep)
@@ -103,7 +103,7 @@ func (biom *BasicIOManager) handle(recvData ExtPkg) {
 	}
 }
 
-func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, logger beenleigh.Logger) {
+func (biom *BasicIOManager) handleSubscription(recvData ExtPkg, enc Encoder, logger moduler.Logger) {
 	ee, err := biom.lookuper.EmitterLookup(recvData.ID)
 	if err != nil {
 		logger.Printf("Subscription for event \"%s\" failed: No such emitter %d.\n", recvData.Event, recvData.ID)

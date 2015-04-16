@@ -2,12 +2,12 @@ package access
 
 import (
 	"code.google.com/p/go.net/websocket"
-	"github.com/maxnordlund/breamio/webber"
+	"github.com/maxnordlund/breamio/webserver"
 
 	// "net/http"
 
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/moduler"
+	"github.com/maxnordlund/breamio/remote"
 )
 
 func init() {
@@ -16,21 +16,21 @@ func init() {
 
 // Server is websocket server using the default decoder
 type WSServer struct {
-	manager aioli.IOManager
-	logger  beenleigh.Logger
+	manager remote.IOManager
+	logger  moduler.Logger
 }
 
 // Serve static files and listen for incoming websocket messages
-func (s *WSServer) Listen(ioman aioli.IOManager, logger beenleigh.Logger) {
+func (s *WSServer) Listen(ioman remote.IOManager, logger moduler.Logger) {
 	s.manager = ioman
 	s.logger = logger
-	webber.Instance().HandleWebSocket("/api/json", s.handler)
+	webserver.Instance().HandleWebSocket("/api/json", s.handler)
 
 	s.logger.Println("Websocket server is up and running.")
 }
 
 // handler is called for every established connection and will send data to the manager
 func (s *WSServer) handler(ws *websocket.Conn) {
-	codec := aioli.NewCodec(ws)
+	codec := remote.NewCodec(ws)
 	s.manager.Listen(codec, s.logger)
 }

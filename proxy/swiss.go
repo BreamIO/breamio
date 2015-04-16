@@ -6,12 +6,12 @@ import (
 	"os"
 	"os/signal"
 
-	_ "github.com/maxnordlund/breamio/aioli/access"
-	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	_ "github.com/maxnordlund/breamio/gorgonzola/mock"
-	_ "github.com/maxnordlund/breamio/gorgonzola/tobii"
-	_ "github.com/maxnordlund/breamio/swiss/proxy"
+	_ "github.com/maxnordlund/breamio/eyetracker/mock"
+	_ "github.com/maxnordlund/breamio/eyetracker/tobii"
+	"github.com/maxnordlund/breamio/moduler"
+	_ "github.com/maxnordlund/breamio/proxy/proxy"
+	_ "github.com/maxnordlund/breamio/remote/access"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt)
 
-	l := beenleigh.New(briee.New)
+	l := moduler.New(briee.New)
 	go func() {
 		<-done
 		l.Close()

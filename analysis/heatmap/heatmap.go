@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/maxnordlund/breamio/analysis"
-	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
+	been "github.com/maxnordlund/breamio/moduler"
 )
 
 func init() {

@@ -1,8 +1,8 @@
-package beenleigh_test
+package moduler_test
 
 import (
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
+	bl "github.com/maxnordlund/breamio/moduler"
 	"testing"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 func TestRunHandle_Run(t *testing.T) {
 	test := false
 	rc := bl.NewRunHandler(func(logic bl.Logic, closeCh <-chan struct{}) {
-		test = true;
+		test = true
 	})
 	rc.Run(bl.New(briee.New))
 	if !test {
@@ -22,7 +22,7 @@ func TestRunHandle_Close(t *testing.T) {
 	test := false
 	rc := bl.NewRunHandler(func(logic bl.Logic, closeCh <-chan struct{}) {
 		<-closeCh
-		test = true;
+		test = true
 	})
 	go rc.Run(bl.New(briee.New))
 	rc.Close()

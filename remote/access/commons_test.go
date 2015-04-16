@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
+	"github.com/maxnordlund/breamio/io"
+	"github.com/maxnordlund/breamio/moduler"
 )
 
 func TestRegister(t *testing.T) {
@@ -26,7 +26,7 @@ func TestRegister(t *testing.T) {
 
 func TestAccessRun(t *testing.T) {
 	servers = make(map[string]AccessServer) // Reset servers.
-	bl := beenleigh.New(briee.New)
+	bl := moduler.New(briee.New)
 	ts := &TestServer{}
 	Register("test", ts)
 	cCh := make(chan struct{})
@@ -42,10 +42,10 @@ func TestAccessRun(t *testing.T) {
 
 type TestServer struct {
 	started bool
-	manager aioli.IOManager
+	manager io.IOManager
 }
 
-func (ts *TestServer) Listen(ioman aioli.IOManager, l *log.Logger) {
+func (ts *TestServer) Listen(ioman io.IOManager, l *log.Logger) {
 	ts.started = true
 	ts.manager = ioman
 }

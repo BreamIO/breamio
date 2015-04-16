@@ -2,17 +2,17 @@ package proxy
 
 import (
 	"encoding/json"
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/aioli/client"
-	bl "github.com/maxnordlund/breamio/beenleigh"
+	"flag"
+	"fmt"
 	"github.com/maxnordlund/breamio/briee"
-	gr "github.com/maxnordlund/breamio/gorgonzola"
-	"github.com/maxnordlund/breamio/aioli/access"
+	gr "github.com/maxnordlund/breamio/eyetracker"
+	bl "github.com/maxnordlund/breamio/moduler"
+	"github.com/maxnordlund/breamio/remote"
+	"github.com/maxnordlund/breamio/remote/access"
+	"github.com/maxnordlund/breamio/remote/client"
 	"log"
 	"net"
 	"os"
-	"flag"
-	"fmt"
 )
 
 var mainServerAddr = flag.String("ip", "localhost", "This is the ip that the main server is located on.")
@@ -23,7 +23,7 @@ func init() {
 }
 
 func startup(logic bl.Logic, closer <-chan struct{}) {
-	MainServer := fmt.Sprintf("%s:%d",*mainServerAddr, *mainServerPort)
+	MainServer := fmt.Sprintf("%s:%d", *mainServerAddr, *mainServerPort)
 	logger := log.New(os.Stdout, "[Distributor] ", log.LstdFlags)
 	conn, err := net.Dial("tcp", MainServer)
 
@@ -40,7 +40,7 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 	c := client.NewClient(conn)
 
 	//TODO Add close chan for routine (not relevant on DH14)
-	go func() {//Listen for all external events
+	go func() { //Listen for all external events
 		ioman := access.GetIOManager()
 		for {
 			pkg := c.Recieve()
@@ -63,24 +63,24 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 }
 
 type etDataProxy struct {
-	subs     briee.Subscriber
-	closer   <-chan struct{}
-	dataChan <-chan *gr.ETData
+	subs        briee.Subscriber
+	closer      <-chan struct{}
+	dataChan    <-chan *gr.ETData
 	calNextChan <-chan struct{}
-	calEndChan <-chan struct{}
+	calEndChan  <-chan struct{}
 	valNextChan <-chan struct{}
-	valEndChan <-chan float64
+	valEndChan  <-chan float64
 }
 
 func newListener(id int, subs briee.Subscriber, c *client.Client, closer <-chan struct{}) *etDataProxy {
 	listener := &etDataProxy{
-		closer:   closer,
-		subs:     subs,
-		dataChan: subs.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData),
+		closer:      closer,
+		subs:        subs,
+		dataChan:    subs.Subscribe("tracker:etdata", &gr.ETData{}).(<-chan *gr.ETData),
 		calNextChan: subs.Subscribe("tracker:calibrate:next", struct{}{}).(<-chan struct{}),
-		calEndChan: subs.Subscribe("tracker:calibrate:end", struct{}{}).(<-chan struct{}),
+		calEndChan:  subs.Subscribe("tracker:calibrate:end", struct{}{}).(<-chan struct{}),
 		valNextChan: subs.Subscribe("tracker:validate:next", struct{}{}).(<-chan struct{}),
-		valEndChan: subs.Subscribe("tracker:validate:end", float64(0)).(<-chan float64),
+		valEndChan:  subs.Subscribe("tracker:validate:end", float64(0)).(<-chan float64),
 	}
 	go func() {
 		defer listener.subs.Unsubscribe("tracker:etdata", listener.dataChan)
@@ -93,30 +93,30 @@ func newListener(id int, subs briee.Subscriber, c *client.Client, closer <-chan 
 			case <-listener.closer:
 				return
 			case data := <-listener.dataChan:
-				swissSend(c, "tracker:etdata", id, data)
+				proxySend(c, "tracker:etdata", id, data)
 			case data := <-listener.calNextChan:
-				swissSend(c, "tracker:calibrate:next", id, data)
+				proxySend(c, "tracker:calibrate:next", id, data)
 			case data := <-listener.calEndChan:
-				swissSend(c, "tracker:calibrate:end", id, data)
+				proxySend(c, "tracker:calibrate:end", id, data)
 			case data := <-listener.valNextChan:
-				swissSend(c, "tracker:validate:next", id, data)
+				proxySend(c, "tracker:validate:next", id, data)
 			case data := <-listener.valEndChan:
-				swissSend(c, "tracker:validate:end", id, data)
+				proxySend(c, "tracker:validate:end", id, data)
 			}
 		}
 	}()
 	return listener
 }
 
-func swissSend(c *client.Client, event string, id int, data interface{}) {
-				dat, err := json.Marshal(data)
-				if err != nil {
-					fmt.Println(err)
-				} else {
-					c.Send(aioli.ExtPkg{
-						Event: event,
-						ID:    id,
-						Data:  dat,
-					})
-				}
+func proxySend(c *client.Client, event string, id int, data interface{}) {
+	dat, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		c.Send(remote.ExtPkg{
+			Event: event,
+			ID:    id,
+			Data:  dat,
+		})
+	}
 }

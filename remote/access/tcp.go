@@ -5,8 +5,8 @@ import (
 	"io"
 	"net"
 
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/moduler"
+	"github.com/maxnordlund/breamio/remote"
 )
 
 //Access server port for JSON encoded events over normal TCP connections.
@@ -18,26 +18,26 @@ func init() {
 }
 
 func registerTCPJSON() {
-	Register("TCP(JSON)", TCPServer{func(conn io.ReadWriteCloser) aioli.EncodeDecoder {
-		return aioli.NewCodec(conn)
+	Register("TCP(JSON)", TCPServer{func(conn io.ReadWriteCloser) remote.EncodeDecoder {
+		return remote.NewCodec(conn)
 	}})
 }
 
 func registerTCPGOB() {
-	Register("TCP(GOB)", TCPServer{func(conn io.ReadWriteCloser) aioli.EncodeDecoder {
-		return aioli.Codec{gob.NewEncoder(conn), gob.NewDecoder(conn)}
+	Register("TCP(GOB)", TCPServer{func(conn io.ReadWriteCloser) remote.EncodeDecoder {
+		return remote.Codec{gob.NewEncoder(conn), gob.NewDecoder(conn)}
 	}})
 }
 
 type TCPServer struct {
-	codecConstructor func(io.ReadWriteCloser) aioli.EncodeDecoder
+	codecConstructor func(io.ReadWriteCloser) remote.EncodeDecoder
 }
 
 // Listen starts the TCP server, listening for incoming connections.
 //
 // When a connection is established,
 // it starts reading packages from it, handling them as it goes.
-func (t TCPServer) Listen(ioman aioli.IOManager, logger beenleigh.Logger) {
+func (t TCPServer) Listen(ioman remote.IOManager, logger moduler.Logger) {
 	ln, err := net.Listen("tcp", tcpJSONaddr)
 	if err != nil {
 		logger.Printf("Failed to listen on %s: %s\n", tcpJSONaddr, err)

@@ -2,15 +2,15 @@ package regionStats
 
 import (
 	"errors"
-	"github.com/maxnordlund/breamio/comte"
+	"github.com/maxnordlund/breamio/config"
 	"github.com/mitchellh/mapstructure"
 	"math"
 	"strconv"
 	"time"
 
 	"github.com/maxnordlund/breamio/analysis"
-	"github.com/maxnordlund/breamio/beenleigh"
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/moduler"
 )
 
 type Generator interface {
@@ -34,7 +34,7 @@ type Config struct {
 
 // Register in Logic
 func init() {
-	beenleigh.Register(&Factory{
+	moduler.Register(&Factory{
 		generators: make(map[int]*RegionStatistics),
 		closeChan:  make(chan struct{}),
 	})
@@ -51,7 +51,7 @@ func (Factory) String() string {
 	return "RegionStats"
 }
 
-func (r *Factory) New(c beenleigh.Constructor) beenleigh.Module {
+func (r *Factory) New(c moduler.Constructor) moduler.Module {
 	c.Logger.Println("Starting a new generator for emitter:", c.Emitter)
 
 	r.generators[c.Emitter] = New(c)
@@ -68,14 +68,14 @@ func (r *Factory) Close() error {
 	return nil
 }
 
-func (r *Factory) Run(l beenleigh.Logic) {
+func (r *Factory) Run(l moduler.Logic) {
 	confs := make([]Config, 0)
-	comte.Section(r.String(), &confs)
+	config.Section(r.String(), &confs)
 
 	for _, conf := range confs {
-		c := beenleigh.Constructor{
+		c := moduler.Constructor{
 			Logic:   l,
-			Logger:  beenleigh.NewLogger(r),
+			Logger:  moduler.NewLogger(r),
 			Emitter: conf.Emitter,
 			Parameters: map[string]interface{}{
 				"Duration":           conf.Duration,
@@ -87,11 +87,11 @@ func (r *Factory) Run(l beenleigh.Logic) {
 		r.generators[c.Emitter] = New(c)
 	}
 
-	beenleigh.RunFactory(l, r)
+	moduler.RunFactory(l, r)
 }
 
 type RegionStatistics struct {
-	beenleigh.SimpleModule
+	moduler.SimpleModule
 
 	coordinates        *analysis.CoordBuffer
 	regions            []Region
@@ -101,18 +101,18 @@ type RegionStatistics struct {
 
 	//Event Export Declarations
 
-	MethodOnETData     beenleigh.EventMethod `event:"tracker:etdata"`
-	MethodAddRegion    beenleigh.EventMethod `returns:"AddRegion:error"`
-	MethodUpdateRegion beenleigh.EventMethod `returns:"UpdateRegion:error"`
-	MethodRemoveRegion beenleigh.EventMethod `returns:"RemoveRegion:error"`
-	MethodGetRegions   beenleigh.EventMethod `returns:"Regions"`
+	MethodOnETData     moduler.EventMethod `event:"tracker:etdata"`
+	MethodAddRegion    moduler.EventMethod `returns:"AddRegion:error"`
+	MethodUpdateRegion moduler.EventMethod `returns:"UpdateRegion:error"`
+	MethodRemoveRegion moduler.EventMethod `returns:"RemoveRegion:error"`
+	MethodGetRegions   moduler.EventMethod `returns:"Regions"`
 
-	MethodStart  beenleigh.EventMethod
-	MethodStop   beenleigh.EventMethod
-	MetodRestart beenleigh.EventMethod
+	MethodStart  moduler.EventMethod
+	MethodStop   moduler.EventMethod
+	MetodRestart moduler.EventMethod
 }
 
-func New(c beenleigh.Constructor) *RegionStatistics {
+func New(c moduler.Constructor) *RegionStatistics {
 	var rc Config
 	mapstructure.Decode(c.Parameters, &rc)
 
@@ -130,7 +130,7 @@ func New(c beenleigh.Constructor) *RegionStatistics {
 	datach := make(chan *gr.ETData)
 
 	rs := &RegionStatistics{
-		SimpleModule:       beenleigh.NewSimpleModule("RegionStats", c),
+		SimpleModule:       moduler.NewSimpleModule("RegionStats", c),
 		coordinates:        analysis.NewCoordBuffer(datach, duration, rc.Hertz),
 		regions:            make([]Region, 0),
 		dataCh:             datach,
