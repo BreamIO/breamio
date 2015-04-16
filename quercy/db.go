@@ -32,7 +32,7 @@ type DBHandler struct {
 	module.SimpleModule
 	*sql.DB
 	insertETData      *sql.Stmt
-	MethodStoreETData module.EventMethod `event:"tracker:etdata",returns:"quercy:errors"`
+	MethodStoreETData module.EventMethod `event:"tracker:etdata" returns:"quercy:errors"`
 	MethodClearETData module.EventMethod `returns:"quercy:errors"`
 }
 
