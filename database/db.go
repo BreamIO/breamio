@@ -1,4 +1,4 @@
-package quercy
+package database
 
 import (
 	"github.com/maxnordlund/breamio/module"
@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	sqlite "github.com/mattn/go-sqlite3"
 
-	"github.com/maxnordlund/breamio/beenleigh"
-	"github.com/maxnordlund/breamio/gorgonzola"
+	"github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/moduler"
 )
 
 type QuercyFactory struct{}
@@ -25,15 +25,15 @@ func (QuercyFactory) New(c module.Constructor) module.Module {
 }
 
 func init() {
-	beenleigh.Register(QuercyFactory{})
+	moduler.Register(QuercyFactory{})
 }
 
 type DBHandler struct {
 	module.SimpleModule
 	*sql.DB
 	insertETData      *sql.Stmt
-	MethodStoreETData module.EventMethod `event:"tracker:etdata" returns:"quercy:errors"`
-	MethodClearETData module.EventMethod `returns:"quercy:errors"`
+	MethodStoreETData module.EventMethod `event:"tracker:etdata" returns:"database:errors"`
+	MethodClearETData module.EventMethod `returns:"database:errors"`
 }
 
 func New(c module.Constructor) (db *DBHandler, err error) {
@@ -76,7 +76,7 @@ func (db *DBHandler) createETDataTable() error {
 	return err
 }
 
-func (db *DBHandler) StoreETData(data *gorgonzola.ETData) error {
+func (db *DBHandler) StoreETData(data *eyetracker.ETData) error {
 	if db.insertETData == nil {
 		var err error
 		db.insertETData, err = db.Prepare("INSERT INTO ETData (leftX, leftY, rightX, rightY, Timestamp) VALUES (?, ?, ?, ?, ?);")

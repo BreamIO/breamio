@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/aioli/client"
+	"github.com/maxnordlund/breamio/remote"
+	"github.com/maxnordlund/breamio/remote/client"
 
 	"container/ring"
 	"encoding/json"
@@ -83,12 +83,12 @@ func main() {
 	logger.Println("Over and out!")
 }
 
-func toExtPkg(a Action) aioli.ExtPkg {
+func toExtPkg(a Action) remote.ExtPkg {
 	data, err := json.Marshal(a.Data)
 	if err != nil {
 		panic(err)
 	}
-	return aioli.ExtPkg{
+	return remote.ExtPkg{
 		Event: a.Event,
 		ID:    a.Id,
 		Data:  data,

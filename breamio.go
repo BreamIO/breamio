@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"runtime"
 
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
 	licence "github.com/maxnordlund/breamio/licence"
+	bl "github.com/maxnordlund/breamio/moduler"
 )
 
 var (

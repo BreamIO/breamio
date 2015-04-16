@@ -1,4 +1,4 @@
-package gorgonzola
+package eyetracker
 
 import (
 	. "github.com/smartystreets/goconvey/convey"

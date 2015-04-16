@@ -3,51 +3,51 @@ package access
 import (
 	"fmt"
 
-	"github.com/maxnordlund/breamio/aioli"
-	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/moduler"
+	"github.com/maxnordlund/breamio/remote"
 )
 
 type AccessServer interface {
-	Listen(aioli.IOManager, beenleigh.Logger)
+	Listen(remote.IOManager, moduler.Logger)
 }
 
 var servers = make(map[string]AccessServer)
-var ioman aioli.IOManager
+var remoteman remote.IOManager
 
 func Register(name string, as AccessServer) {
 	servers[name] = as
 }
 
 func init() {
-	beenleigh.Register(&AioliAccess{})
+	moduler.Register(&AremoteliAccess{})
 }
 
-func GetIOManager() aioli.IOManager {
-	return ioman
+func GetIOManager() remote.IOManager {
+	return remoteman
 }
 
-type AioliAccess struct {
-	ioman aioli.IOManager
+type AremoteliAccess struct {
+	remoteman remote.IOManager
 }
 
-func (AioliAccess) String() string {
-	return "AioliAccess"
+func (AremoteliAccess) String() string {
+	return "AremoteliAccess"
 }
 
-func (AioliAccess) New(beenleigh.Constructor) beenleigh.Module {
-	return beenleigh.Dummy
+func (AremoteliAccess) New(moduler.Constructor) moduler.Module {
+	return moduler.Dummy
 }
 
-func (aa *AioliAccess) Run(logic beenleigh.Logic) {
-	ioman = aioli.New(logic, beenleigh.NewLoggerS("Aioli"))
-	go ioman.Run()
+func (aa *AremoteliAccess) Run(logic moduler.Logic) {
+	remoteman = remote.New(logic, moduler.NewLoggerS("Aremoteli"))
+	go remoteman.Run()
 
 	for name, as := range servers {
-		logger := beenleigh.NewLoggerS(fmt.Sprintf("AioliAccess (%s)", name))
-		go as.Listen(ioman, logger)
+		logger := moduler.NewLoggerS(fmt.Sprintf("AremoteliAccess (%s)", name))
+		go as.Listen(remoteman, logger)
 	}
 }
 
-func (aa *AioliAccess) Close() error {
-	return aa.ioman.Close()
+func (aa *AremoteliAccess) Close() error {
+	return aa.remoteman.Close()
 }

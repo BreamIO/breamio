@@ -5,12 +5,12 @@ Beenleigh handles all business logic of Bream IO Eye Stream
 It exposes a interface for interacting with this logic
 but not the actual implementation.
 */
-package beenleigh
+package moduler
 
 import (
 	"fmt"
 	"github.com/maxnordlund/breamio/briee"
-	"github.com/maxnordlund/breamio/comte"
+	"github.com/maxnordlund/breamio/config"
 	"path/filepath"
 
 	"errors"
@@ -35,7 +35,7 @@ func Register(c Factory) {
 type Logic interface {
 	RootEmitter() briee.EventEmitter
 	CreateEmitter(id int) briee.EventEmitter
-	EmitterLookup(int) (briee.EventEmitter, error) //Cant use aioli.EmitterLookuper due to circluar dependecy
+	EmitterLookup(int) (briee.EventEmitter, error) //Cant use remote.EmitterLookuper due to circluar dependecy
 	ListenAndServe()
 	Logger() Logger
 	io.Closer
@@ -104,8 +104,8 @@ func (bl *breamLogic) ListenAndServe() {
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 
 	//Set up servers.
-	//ts := aioli.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
-	//ws := aioli.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
+	//ts := remote.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
+	//ws := remote.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
 	//go ts.Listen()
 	//go ws.Listen()
 
@@ -166,7 +166,7 @@ func (bl *breamLogic) EmitterLookup(id int) (briee.EventEmitter, error) {
 }
 
 func (breamLogic) LoadConfig() error {
-	configFile := comte.DefaultConfigFile
+	configFile := config.DefaultConfigFile
 	if os.Getenv("EYESTREAM") != "" {
 		configFile = filepath.Join(os.Getenv("EYESTREAM"), configFile)
 	}
@@ -176,7 +176,7 @@ func (breamLogic) LoadConfig() error {
 		return err
 	}
 	defer f.Close()
-	return comte.Load(f)
+	return config.Load(f)
 }
 
 func (bl breamLogic) Logger() Logger {

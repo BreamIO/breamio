@@ -1,16 +1,16 @@
-package gorgonzola_test
+package eyetracker_test
 
 import (
 	"fmt"
 
-	"github.com/maxnordlund/breamio/gorgonzola"
-	"github.com/maxnordlund/breamio/gorgonzola/mock"
+	"github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/eyetracker/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
 func ExampleUsage() {
-	mocker := gorgonzola.GetDriver("mock")
+	mocker := eyetracker.GetDriver("mock")
 	if mocker == nil {
 		fmt.Println("No Mock driver installed! :(")
 		return
@@ -35,24 +35,24 @@ func ExampleUsage() {
 
 func TestRegisterDriver(t *testing.T) {
 	Convey("Reregistration is not allowed", t, func() {
-		So(gorgonzola.RegisterDriver("mock", new(mock.MockDriver)), ShouldNotBeNil)
+		So(eyetracker.RegisterDriver("mock", new(mock.MockDriver)), ShouldNotBeNil)
 	})
 
 	Convey("But new registrations should be allowed", t, func() {
-		So(gorgonzola.RegisterDriver("mock2", new(mock.MockDriver)), ShouldBeNil)
+		So(eyetracker.RegisterDriver("mock2", new(mock.MockDriver)), ShouldBeNil)
 	})
 
 	Convey("But only if the driver is not nil", t, func() {
-		So(gorgonzola.RegisterDriver("mock3", nil), ShouldNotBeNil)
+		So(eyetracker.RegisterDriver("mock3", nil), ShouldNotBeNil)
 	})
 }
 
 func TestList(t *testing.T) {
 	Convey("List should not return nil", t, func() {
-		So(gorgonzola.List(), ShouldNotBeNil)
+		So(eyetracker.List(), ShouldNotBeNil)
 	})
 
 	Convey("List should contain at least two elements", t, func() {
-		So(len(gorgonzola.List()), ShouldBeGreaterThanOrEqualTo, 2)
+		So(len(eyetracker.List()), ShouldBeGreaterThanOrEqualTo, 2)
 	})
 }

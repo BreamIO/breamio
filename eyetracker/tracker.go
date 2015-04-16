@@ -1,9 +1,9 @@
-package gorgonzola
+package eyetracker
 
 import (
 	"errors"
 	"fmt"
-	"github.com/maxnordlund/breamio/beenleigh"
+	"github.com/maxnordlund/breamio/moduler"
 	"io"
 
 	"github.com/maxnordlund/breamio/briee"
@@ -35,12 +35,12 @@ type Driver interface {
 	//Creates any tracker from this driver.
 	//No promises are made to the uniqueness of the tracker returned.
 	//If no tracker can be returned, a error is returned instead.
-	Create(beenleigh.Constructor) (Tracker, error)
+	Create(moduler.Constructor) (Tracker, error)
 
 	//Creates a tracker connected to the identifier string.
 	//The driver is obliged to return that tracker and only that tracker.
 	//If the identifier is invalid or no longer connected, a error is returned.
-	CreateFromId(c beenleigh.Constructor, identifier string) (Tracker, error)
+	CreateFromId(c moduler.Constructor, identifier string) (Tracker, error)
 
 	//Returns a list of valid identifiers that can be used with CreateS.
 	//Empty if no trackers can be created.
@@ -49,7 +49,7 @@ type Driver interface {
 
 //A common interface for all trackers.
 type Tracker interface {
-	beenleigh.Module
+	moduler.Module
 
 	// Returns a channel of tracking data.
 	// A error channel is also returned.

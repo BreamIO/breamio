@@ -1,4 +1,4 @@
-package beenleigh
+package moduler
 
 import (
 	"fmt"

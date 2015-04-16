@@ -1,4 +1,4 @@
-package webber
+package webserver
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/gorilla/mux"
 
-	bl "github.com/maxnordlund/breamio/beenleigh"
+	bl "github.com/maxnordlund/breamio/moduler"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 
 var Root = "web"
 
-var webber = New(bl.Constructor{
+var webserver = New(bl.Constructor{
 	Logger: bl.NewLoggerS("Webber"),
 })
 
@@ -33,7 +33,7 @@ func init() {
 		Root = path.Join(installpath, "web")
 	}
 
-	bl.Register(bl.SingletonFactory{Name: "Webber", Module: webber})
+	bl.Register(bl.SingletonFactory{Name: "Webber", Module: webserver})
 
 }
 
@@ -90,7 +90,7 @@ type Webber struct {
 }
 
 func Instance() *Webber {
-	return webber
+	return webserver
 }
 
 func (web *Webber) ListenAndServe() (err error) {

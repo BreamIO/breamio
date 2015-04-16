@@ -1,4 +1,4 @@
-package aioli
+package remote
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ func (srw *SyncReadWriter) Read(p []byte) (n int, err error) {
 }
 
 func (srw *SyncReadWriter) Write(p []byte) (n int, err error) {
-	// defer srw.lock.Unlock()  Should be removed?? 
+	// defer srw.lock.Unlock()  Should be removed??
 	// srw.lock.Lock()  Should be removed??
 	return srw.RW.Write(p)
 }

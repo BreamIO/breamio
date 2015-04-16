@@ -1,4 +1,4 @@
-package webber
+package webserver
 
 import (
 	"html/template"

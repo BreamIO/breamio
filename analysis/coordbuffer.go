@@ -3,7 +3,7 @@ package analysis
 import (
 	"time"
 
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
 )
 
 //A struct that can buffers eye tracking data

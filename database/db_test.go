@@ -1,10 +1,10 @@
-package quercy
+package database
 
 import (
-	bl "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	g "github.com/maxnordlund/breamio/gorgonzola"
-	//"github.com/maxnordlund/breamio/quercy"
+	g "github.com/maxnordlund/breamio/eyetracker"
+	bl "github.com/maxnordlund/breamio/moduler"
+	//"github.com/maxnordlund/breamio/database"
 
 	"database/sql"
 	"testing"
@@ -13,7 +13,7 @@ import (
 
 func setup(t *testing.T) (briee.EventEmitter, *DBHandler) {
 	ee := briee.New()
-	dbh, _ := New(ee, "quercy_test.db")
+	dbh, _ := New(ee, "database_test.db")
 	return ee, dbh
 }
 
@@ -35,7 +35,7 @@ func TestRunner(t *testing.T) {
 	time.Sleep(time.Second) //Wait for subscriptions to be setup.
 	errorCh := logic.RootEmitter().Subscribe("storage:error", string("")).(<-chan string)
 
-	logic.RootEmitter().Dispatch("new:storage", bl.Spec{1, "quercy_test.db"})
+	logic.RootEmitter().Dispatch("new:storage", bl.Spec{1, "database_test.db"})
 	select {
 	case err := <-errorCh:
 		t.Error(err)
@@ -50,7 +50,7 @@ func TestCreateTables(t *testing.T) {
 	defer teardown(dbh, t)
 	dbh.createTables()
 
-	db, _ := sql.Open("sqlite3", "quercy_test.db")
+	db, _ := sql.Open("sqlite3", "database_test.db")
 	defer db.Close()
 	_, err := db.Query("Select * from ETDATA;")
 	if err != nil {

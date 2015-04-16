@@ -2,10 +2,10 @@ package regionStats
 
 import (
 	"encoding/json"
-	been "github.com/maxnordlund/breamio/beenleigh"
 	"github.com/maxnordlund/breamio/briee"
-	gr "github.com/maxnordlund/breamio/gorgonzola"
-	"github.com/maxnordlund/breamio/gorgonzola/mock"
+	gr "github.com/maxnordlund/breamio/eyetracker"
+	"github.com/maxnordlund/breamio/eyetracker/mock"
+	been "github.com/maxnordlund/breamio/moduler"
 	"log"
 	"math"
 	"testing"

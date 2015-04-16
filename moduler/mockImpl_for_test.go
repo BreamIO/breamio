@@ -1,10 +1,10 @@
-package beenleigh
+package moduler
 
 import (
 	"reflect"
 	"time"
 
-	"github.com/maxnordlund/breamio/aioli"
+	"github.com/maxnordlund/breamio/remote"
 	//"github.com/maxnordlund/breamio/briee"
 )
 
@@ -94,13 +94,13 @@ func (m *mockEmitter) subscribedTo(chid string) bool {
 }
 
 type mockIOManager struct {
-	aioli.IOManager
+	remote.IOManager
 	started bool
 }
 
-func newMockIOManager(el aioli.EmitterLookuper) *mockIOManager {
+func newMockIOManager(el remote.EmitterLookuper) *mockIOManager {
 	return &mockIOManager{
-		aioli.New(el),
+		remote.New(el),
 		false,
 	}
 }
