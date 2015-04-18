@@ -11,6 +11,8 @@ var (
 	defaultClient = &http.Client{} //a default client used by http for GET, HEAD and POST
 )
 
+//Gets the time from googles server,
+//returns error if it fails to do so.
 func getGoogleTime() (time.Time, error) {
 	resp, err := defaultClient.Head("http://www.google.com")
 	if err != nil {
@@ -26,6 +28,7 @@ func getGoogleTime() (time.Time, error) {
 }
 
 //This function is blocking
+//Calls checkEvalPeriod every 24h.
 func RepeatedlyCheckEvalTime(evalLayout, evalEndDate string) {
 	err := checkEvalPeriod(evalLayout, evalEndDate)
 	if err != nil {
