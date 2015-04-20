@@ -3,7 +3,7 @@ package analysis
 import (
 	"time"
 
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
 )
 
 // A ETData handler is a module that can receive ETData structs

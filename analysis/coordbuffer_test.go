@@ -1,7 +1,7 @@
 package analysis
 
 import (
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
 	"testing"
 	"time"
 )

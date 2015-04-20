@@ -3,7 +3,7 @@ package regionStats
 import (
 	"errors"
 
-	gr "github.com/maxnordlund/breamio/gorgonzola"
+	gr "github.com/maxnordlund/breamio/eyetracker"
 )
 
 // Region is an interface describing Regions
