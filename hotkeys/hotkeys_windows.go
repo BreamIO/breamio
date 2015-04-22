@@ -4,6 +4,8 @@ import (
 	"sync"
 )
 
+//TODO commented code 
+
 //#include "hotkey_windows.h"
 //#include <windows.h>
 import "C"
@@ -70,6 +72,7 @@ func (wr *WindowsRegistrer) run() {
 	for {
 		var msg C.MSG
 		if C.ES_GetMessage(&msg) != 0 {
+			// TODO commented code 
 			// logger.Println("Message Get!")
 			if msg.message == WM_HOTKEY {
 				key := Key{Modifier(msg.lParam), byte(msg.lParam >> word)}
