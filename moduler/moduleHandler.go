@@ -119,6 +119,9 @@ func suitable(m reflect.Method) bool {
 }
 
 func returnable(m reflect.Method) bool {
+	
+	//TODO remove or so 
+	
 	//TODO implement me
 	return false
 }
@@ -133,6 +136,7 @@ func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitt
 		//Argument availiable
 		t = reflect.New(method.Type().In(0)).Elem()
 	}
+	// TODO commented code
 	// l.Println(em.event, t)
 	ch := emitter.Subscribe(em.event, t.Interface())
 	defer emitter.Unsubscribe(em.event, ch)
@@ -147,6 +151,7 @@ func RunMethod(method reflect.Value, em exportedMethod, emitter briee.EventEmitt
 			continue
 		}
 		t := reflect.New(method.Type().Out(i)).Elem()
+		// TODO Commented code
 		// l.Println(retevent, t)
 		rch := emitter.Publish(retevent, t.Interface())
 		returns[i] = reflect.ValueOf(rch)
