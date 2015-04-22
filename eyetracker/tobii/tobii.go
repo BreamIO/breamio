@@ -99,7 +99,10 @@ func (g *GazeTracker) Link(ee briee.PublishSubscriber) {
 	err := g.StartTracking(gobiiOnGazeCallback(g.etdataCh))
 	if err != nil {
 		errorCh := ee.Publish("tracker:error", NewError("")).(chan<- Error)
+		
+		//TODO commented code
 		//defer close(errorCh)
+		
 		errorCh <- NewError(err.Error())
 	}
 }
@@ -157,6 +160,7 @@ func gobiiOnGazeCallback(ch chan<- *ETData) func(data *gaze.GazeData) {
 		} else {
 			backlog.Filtered = etdata.Filtered
 		}
+		//TODO commented code 
 		//log.Println(etdata)
 		ch <- etdata
 	}
@@ -214,7 +218,10 @@ func (g *GazeTracker) calibrateAddHandler(ee briee.PublishSubscriber) {
 		case p := <-inCh:
 			log.Println("GazeTracker#calibrateAddHandler", "Calibration Add event recieved.")
 			g.calibrationPoints++
+			
+			//TODO Commented code
 			//println("calibration points:", g.calibrationPoints)
+			
 			log.Printf("Adding point {%f, %f} to calibration.", p.X(), p.Y())
 			g.AddPointToCalibration(gaze.NewPoint2D(p.X(), p.Y()),
 				handleError(errorCh, func() {
@@ -262,6 +269,7 @@ func (g *GazeTracker) validateStartHandler(ee briee.PublishSubscriber) {
 	}
 }
 
+//TODO Something here. 
 //TODO do actual implementation.
 func (g *GazeTracker) validateAddHandler(ee briee.PublishSubscriber) {
 	inCh := ee.Subscribe("tracker:validate:add", Point2D{}).(<-chan Point2D)
