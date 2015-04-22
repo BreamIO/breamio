@@ -205,5 +205,7 @@ func init() {
 
 func sprintf(format string, a ...interface{}) string {
 	return fmt.Sprintf(format, a...)
+	// TODO Commented code 
+	
 	// return strings.Replace(fmt.Sprintf(format, a...), " ", nbsp, -1)
 }
