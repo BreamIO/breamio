@@ -27,7 +27,7 @@ type Generator interface {
 
 type Config struct {
 	Emitter            int
-	Duration           string //The time given parsable bu time.ParseDuration(string), e.g. 2h34m2s3ms
+	Duration           string //The time given parsable by time.ParseDuration(string), e.g. 2h34m2s3ms
 	Hertz              uint
 	GenerationInterval string //Works the same as duration
 }
@@ -82,7 +82,8 @@ func (r *Factory) Run(l moduler.Logic) {
 				"GenerationInterval": conf.GenerationInterval,
 				"Hertz":              conf.Hertz,
 			}, //Not beautiful, but necessary evil.
-		} // TODO, add a Logic.NewConstructor(emitter id, params interface{}) Constructor
+		} // TODO, add a Logic.NewConstructor(emitter id, params interface{}) Constructor 
+		//TODO Exists
 		c.Logger.Println("Starting a new generator for emitter:", c.Emitter)
 		r.generators[c.Emitter] = New(c)
 	}
@@ -340,6 +341,7 @@ func (rs RegionStatistics) Stop() {
 func (rs RegionStatistics) Restart() {
 	rs.Flush()
 	//rs.Logger().Println("Flushing region stats buffer")
+	//Out commented code 
 }
 
 // Restart calls the Restart method of coordhandler, flushing the collection of data
