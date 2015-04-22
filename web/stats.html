@@ -43,8 +43,7 @@
 
 				function drawTable() {
 					EyeStream.subscribe("regionStats:regions", id, function(regionsMap) {
-						console.log("Regions map", regionsMap)
-
+						console.log("Regions map", regionsMap
 						var mytable = document.getElementById("stats_table")
 						var mytbody = document.getElementById("stats_tbody")
 						var myNewtbody = document.createElement("tbody")
@@ -91,6 +90,8 @@
 		</script>
 	</head>
 	<body>
+		
+		<!--TODO commented code -->
 		<!-- <table id="stats_table" border>
 			<tbody id="stats_tbody">
 			</tbody>
