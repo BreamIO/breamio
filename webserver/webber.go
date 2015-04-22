@@ -44,6 +44,7 @@ func New(c bl.Constructor) *Webber {
 	}
 
 	w.Logger().Println("Initializing Webserver")
+	//TODO Commented code
 	//drawerTmpl := template.Must(template.ParseFiles(drawer))
 
 	w.addServings()
@@ -200,6 +201,7 @@ func (web *Webber) addServings() {
 		drwr := drawer{
 			Id: id,
 		}
+		//TODO remove todo
 		drawerTmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
@@ -212,9 +214,11 @@ func (web *Webber) addServings() {
 		drwr := drawer{
 			Id: id,
 		}
+		//TODO remove todo
 		tmpl.Execute(w, drwr) //TODO catch any errors.
 		return nil
 	}))
+	// TODO remove comented code
 	// web.HandleStatic("/stats", "stats.html")
 	web.mux.HandleFunc("/calibrate", func(w http.ResponseWriter, req *http.Request) {
 		calibrateTmpl, err := template.ParseFiles(path.Join(Root, calibrate))
