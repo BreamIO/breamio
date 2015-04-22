@@ -38,7 +38,9 @@ func startup(logic bl.Logic, closer <-chan struct{}) {
 	}()
 
 	c := client.NewClient(conn)
-
+	
+	//TODO remove todo
+	
 	//TODO Add close chan for routine (not relevant on DH14)
 	go func() { //Listen for all external events
 		ioman := access.GetIOManager()
