@@ -10,6 +10,8 @@ import (
 	bl "github.com/maxnordlund/breamio/moduler"
 )
 
+//TODO Rename is needed
+
 func init() {
 	eyetracker := &GorgonzolaRun{closing: make(chan struct{})}
 	eyetracker.logger = bl.NewLogger(eyetracker)
