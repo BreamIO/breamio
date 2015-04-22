@@ -104,6 +104,9 @@ func (bl *breamLogic) ListenAndServe() {
 	shutdownEvents := bl.root.Subscribe("shutdown", struct{}{}).(<-chan struct{})
 
 	//Set up servers.
+	
+	//TODO Commented code
+	
 	//ts := remote.NewTCPServer(ioman, log.New(os.Stdout, "[TCPServer] ", log.LstdFlags))
 	//ws := remote.NewWSServer(ioman, log.New(os.Stdout, "[WSServer] ", log.LstdFlags))
 	//go ts.Listen()
