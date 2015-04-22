@@ -35,6 +35,9 @@ func mockRandomFixation(t float64) (float64, float64) {
 		retY = prevY + rand.NormFloat64()*0.01
 	} else {
 		// Go
+		
+		//TODO Commented code 
+		
 		//dx = math.Cos(2*3.1415*rand.Float64())/5.0
 		//dy = math.Sin(2*3.1415*rand.Float64())/5.0
 		retX = rand.Float64()
@@ -114,6 +117,8 @@ func (m *MockTracker) Stream() (<-chan *ETData, <-chan error) {
 	return ch, errs
 }
 
+
+ 
 func (m *MockTracker) Link(ee briee.PublishSubscriber) {
 	etDataCh := ee.Publish("tracker:etdata", &ETData{}).(chan<- *ETData)
 	go m.generate(etDataCh)
