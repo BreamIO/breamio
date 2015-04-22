@@ -10,3 +10,5 @@ import (
 	_ "github.com/maxnordlund/breamio/analysis/regionStats"
 	// _ "github.com/maxnordlund/breamio/irc"
 )
+
+//TODO remove commented code 
