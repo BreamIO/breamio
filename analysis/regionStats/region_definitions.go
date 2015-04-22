@@ -28,5 +28,7 @@ type RegionUpdatePackage struct {
 	Height  *float64 `json:height`
 }
 
+// What is this below
+
 // type RegionRemovePackage []string
 //              simply send ~~^
