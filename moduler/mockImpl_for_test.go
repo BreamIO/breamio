@@ -5,9 +5,13 @@ import (
 	"time"
 
 	"github.com/maxnordlund/breamio/remote"
+	
+	// TODO Commented code 
 	//"github.com/maxnordlund/breamio/briee"
 )
 
+
+// TODO FUN but not necessary 
 /*
 	HERE BEGINS THE LANDS OF THE MOCK IMPLEMENTATIONS.
 	Seriously. Go on only if invited or if you know what you are doing.
